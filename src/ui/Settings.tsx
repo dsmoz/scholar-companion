@@ -11,6 +11,7 @@ import {
   getApiUrl, setApiUrl, getSyncInterval, setSyncInterval,
   getTheme, setTheme, getAutoSync, getChatModel, getChatMaxChunks, getChatRelatedMax,
   getSyncOnStartup, getDiscoverySources, setPref,
+  getChatRelatedMinLabel, setChatRelatedMinLabel,
 } from '../prefs';
 
 type ConnectionStatus = 'connected' | 'degraded' | 'offline';
@@ -26,6 +27,7 @@ export function Settings() {
   const [chatModel, setChatModelState] = useState(getChatModel());
   const [chatMaxChunks, setChatMaxChunksState] = useState(getChatMaxChunks());
   const [chatRelatedMax, setChatRelatedMaxState] = useState(getChatRelatedMax());
+  const [chatRelatedMinLabel, setChatRelatedMinLabelState] = useState(getChatRelatedMinLabel());
   const [sources, setSourcesState] = useState(getDiscoverySources());
   const [confirmAction, setConfirmAction] = useState<null | 'reindex' | 'clear'>(null);
   const [syncing, setSyncing] = useState(false);
@@ -113,6 +115,9 @@ export function Settings() {
         }))}
         {row('Related docs', segmented(['3', '5', '8', '10'], String(chatRelatedMax), v => {
           const n = parseInt(v); setChatRelatedMaxState(n); setPref('chatRelatedMax', n as any);
+        }))}
+        {row('Minimum match', segmented(['Fair', 'Good', 'Best'], chatRelatedMinLabel, v => {
+          setChatRelatedMinLabelState(v); setChatRelatedMinLabel(v);
         }))}
       </section>
 
