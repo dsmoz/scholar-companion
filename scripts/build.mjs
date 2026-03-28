@@ -46,6 +46,7 @@ await build({
 // 2. Copy static assets
 copyFileSync(join(root, 'src/graph/network.html'), join(dist, 'content/graph/network.html'));
 copyFileSync(join(root, 'src/panel.html'), join(dist, 'content/panel.html'));
+copyFileSync(join(root, 'addon/content/panel.xhtml'), join(dist, 'content/panel.xhtml'));
 copyFileSync(join(root, 'addon/manifest.json'), join(dist, 'manifest.json'));
 copyFileSync(join(root, 'addon/content/icons/favicon.png'), join(dist, 'content/icons/favicon.png'));
 

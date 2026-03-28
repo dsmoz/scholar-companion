@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<!DOCTYPE window>
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:html="http://www.w3.org/1999/xhtml"
+        id="zotero-ai-panel-window"
+        orient="vertical"
+        persist="screenX screenY width height"
+        onload="initPanel()">
+  <browser id="zotero-ai-panel-browser"
+           flex="1"
+           type="chrome"
+           style="width:100%;height:100%"/>
+  <html:script><![CDATA[
+    function initPanel() {
+      var panel = window.arguments && window.arguments[0] ? window.arguments[0] : 'graph';
+      document.getElementById('zotero-ai-panel-browser').setAttribute(
+        'src',
+        'chrome://zotero-ai-companion/content/panel.html?panel=' + panel
+      );
+    }
+  ]]></html:script>
+</window>

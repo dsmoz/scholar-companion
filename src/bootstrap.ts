@@ -132,9 +132,10 @@ async function handleCommand(command: string, win: Window) {
       if (existing) { existing.focus(); break; }
 
       win.openDialog(
-        `chrome://zotero-ai-companion/content/panel.html?panel=${def.panel}`,
+        `chrome://zotero-ai-companion/content/panel.xhtml`,
         winId,
-        `chrome,dialog=no,resizable,width=${def.width},height=${def.height},name=${winId}`,
+        `chrome,dialog=no,resizable,centerscreen,width=${def.width},height=${def.height}`,
+        def.panel,
       );
       break;
     }
