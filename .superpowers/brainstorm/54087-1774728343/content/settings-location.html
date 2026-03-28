@@ -1,0 +1,30 @@
+<h2>Where should the similarity filter live?</h2>
+<p class="subtitle">User sets minimum label threshold — only documents at or above it appear in Related Documents.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Plugin Preferences (existing settings panel)</h3>
+      <p>Added alongside existing settings like "max related docs". Set once, applies globally. User opens Zotero → Tools → zotero-plugin prefs.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Inline filter in the Related Documents panel</h3>
+      <p>Small dropdown or segmented control directly above the list. Instant feedback — change the filter and the list updates immediately. No need to open settings.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Both — inline for quick changes, prefs for default</h3>
+      <p>Preferences stores the default. The inline control overrides it for the current session. Slightly more complexity but maximum flexibility.</p>
+    </div>
+  </div>
+
+</div>
