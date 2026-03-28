@@ -11,6 +11,7 @@ const SOURCE_COLORS: Record<string, string> = {
   pubmed:           '#f38ba8',
   semantic_scholar: '#89b4fa',
   openalex:         '#a6e3a1',
+  tavily:           '#fab387',
 };
 
 function sourceColor(id: string) {
@@ -111,7 +112,7 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && search()}
-          placeholder="Search papers..."
+          placeholder="Search papers, reports, websites..."
           style={{ flex: 1, fontSize: '0.75rem', padding: '4px 8px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4' }}
         />
         <button
@@ -134,9 +135,17 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1, marginRight: 8 }}>
                     <div style={{ color: '#cdd6f4', marginBottom: 2 }}>{r.title}</div>
-                    <div style={{ color: '#6c7086', fontSize: '0.65rem' }}>
-                      {r.authors.slice(0, 3).join(', ')}{r.authors.length > 3 ? ' et al.' : ''}{r.journal ? ` · ${r.journal}` : ''}{r.year ? ` · ${r.year}` : ''}
-                    </div>
+                    {r.url
+                      ? <div style={{ color: '#6c7086', fontSize: '0.65rem', marginBottom: 2 }}>{r.url}</div>
+                      : <div style={{ color: '#6c7086', fontSize: '0.65rem' }}>
+                          {r.authors.slice(0, 3).join(', ')}{r.authors.length > 3 ? ' et al.' : ''}{r.journal ? ` · ${r.journal}` : ''}{r.year ? ` · ${r.year}` : ''}
+                        </div>
+                    }
+                    {r.snippet && (
+                      <div style={{ color: '#6c7086', fontSize: '0.6rem', marginBottom: 2, fontStyle: 'italic' }}>
+                        {r.snippet.length > 120 ? r.snippet.slice(0, 120) + '…' : r.snippet}
+                      </div>
+                    )}
                     <div style={{ marginTop: 2 }}>
                       <span style={{ fontSize: '0.6rem', padding: '1px 5px', borderRadius: 99, background: `color-mix(in srgb, ${sourceColor(r.source)} 15%, transparent)`, color: sourceColor(r.source) }}>
                         {r.source.replace('_', ' ')}

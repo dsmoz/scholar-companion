@@ -24,8 +24,15 @@ export async function importToZotero(results: DiscoveryResult[]): Promise<Import
       if (identifier) {
         // Lookup via CrossRef/PubMed — fetches full metadata automatically (same as Zotero Connector)
         await Z.Utilities.lookupIdentifier(identifier);
+      } else if (r.url) {
+        // Web result (Tavily) — save as webpage item
+        const item = new Z.Item('webpage');
+        item.setField('title', r.title);
+        item.setField('url', r.url);
+        if (r.snippet) item.setField('abstractNote', r.snippet);
+        await item.saveTx();
       } else {
-        // Manual fallback when no identifier available
+        // Manual fallback for academic results with no identifier
         const item = new Z.Item('journalArticle');
         item.setField('title', r.title);
         if (r.journal) item.setField('publicationTitle', r.journal);

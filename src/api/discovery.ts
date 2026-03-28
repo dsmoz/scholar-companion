@@ -11,6 +11,8 @@ export interface DiscoveryResult {
   source: string;
   pmid?: string;
   s2_id?: string;
+  url?: string;
+  snippet?: string;
 }
 
 export async function discoverySearch(

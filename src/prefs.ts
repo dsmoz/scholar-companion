@@ -19,6 +19,7 @@ const DEFAULTS = {
     { id: 'pubmed',           label: 'PubMed',           enabled: true  },
     { id: 'semantic_scholar', label: 'Semantic Scholar',  enabled: true  },
     { id: 'openalex',        label: 'OpenAlex',          enabled: false },
+    { id: 'tavily',          label: 'Web (Tavily)',      enabled: false },
   ]),
 } as const;
 
