@@ -1,24 +1,36 @@
-/* Zotero 7 bootstrap shim — auto-generated, do not edit */
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
-
-let plugin;
+/* Zotero 7 bootstrap shim — auto-generated */
+var chromeHandle;
+var _plugin;
 
 function install(data, reason) {}
-
 function uninstall(data, reason) {}
 
-async function startup(data, reason) {
-  Services.scriptloader.loadSubScript(data.resourceURI.spec + 'content/bootstrap.js', {});
-  // The IIFE assigns itself to _aiCompanionPlugin on the sandbox global
-  plugin = globalThis._aiCompanionPlugin || {};
-  if (typeof plugin.startup === 'function') {
-    await plugin.startup(data, reason);
+async function startup({ id, version, resourceURI, rootURI }, reason) {
+  var aomStartup = Components.classes[
+    "@mozilla.org/addons/addon-manager-startup;1"
+  ].getService(Components.interfaces.amIAddonManagerStartup);
+  var manifestURI = Services.io.newURI(rootURI + "manifest.json");
+  chromeHandle = aomStartup.registerChrome(manifestURI, [
+    ["content", "zotero-ai-companion", rootURI + "content/"],
+  ]);
+
+  var ctx = { rootURI };
+  ctx._globalThis = ctx;
+  Services.scriptloader.loadSubScript(rootURI + "content/bootstrap.js", ctx);
+  _plugin = ctx._aiCompanionPlugin || {};
+  if (typeof _plugin.startup === "function") {
+    await _plugin.startup({ id, version, resourceURI, rootURI }, reason);
   }
 }
 
-async function shutdown(data, reason) {
-  if (typeof plugin?.shutdown === 'function') {
-    await plugin.shutdown(data, reason);
+async function shutdown({ id, version, resourceURI, rootURI }, reason) {
+  if (reason === APP_SHUTDOWN) return;
+  if (typeof _plugin?.shutdown === "function") {
+    await _plugin.shutdown({ id, version, resourceURI, rootURI }, reason);
   }
-  plugin = undefined;
+  _plugin = undefined;
+  if (chromeHandle) {
+    chromeHandle.destruct();
+    chromeHandle = null;
+  }
 }
