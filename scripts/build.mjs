@@ -1,8 +1,7 @@
 import { build } from 'esbuild';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { createWriteStream, rmSync, mkdirSync, copyFileSync, readFileSync } from 'fs';
-import { createGzip } from 'zlib';
+import { createWriteStream, rmSync, mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'fs';
 import archiver from 'archiver';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -11,7 +10,6 @@ const dist = join(root, 'build/dist');
 
 // Clean and recreate dist staging directory
 rmSync(dist, { recursive: true, force: true });
-mkdirSync(dist, { recursive: true });
 mkdirSync(join(dist, 'content/graph'), { recursive: true });
 
 // 1. Bundle TypeScript → content/bootstrap.js
@@ -22,58 +20,61 @@ await build({
   format: 'iife',
   target: 'firefox102',
   external: ['zotero', 'components/'],
-  define: {
-    'process.env.NODE_ENV': '"production"',
-  },
+  define: { 'process.env.NODE_ENV': '"production"' },
   jsx: 'automatic',
   jsxImportSource: 'react',
   minify: true,
 });
 
+// Expose startup/shutdown from the IIFE to the bootstrap shim
+const bundle = readFileSync(join(dist, 'content/bootstrap.js'), 'utf8');
+writeFileSync(join(dist, 'content/bootstrap.js'), bundle + '\nglobalThis._aiCompanionPlugin={startup,shutdown};');
+
 // 2. Copy static assets
 copyFileSync(join(root, 'src/graph/network.html'), join(dist, 'content/graph/network.html'));
 copyFileSync(join(root, 'addon/manifest.json'), join(dist, 'manifest.json'));
 
-// 3. Write Zotero 7 bootstrap shim
-// Zotero calls install/startup/shutdown/uninstall on the bootstrap scope.
-// We load our bundled content/bootstrap.js via Services.scriptloader
-// and forward the lifecycle calls.
-const bootstrapShim = `/* Zotero 7 bootstrap shim — auto-generated, do not edit */
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
-
-let plugin;
+// 3. Write Zotero 7 bootstrap shim using the official registerChrome pattern
+// (matches the pattern used by Actions & Tags, Zotero Make-It-Red, etc.)
+writeFileSync(join(dist, 'bootstrap.js'), `/* Zotero 7 bootstrap shim — auto-generated */
+var chromeHandle;
+var _plugin;
 
 function install(data, reason) {}
-
 function uninstall(data, reason) {}
 
-async function startup(data, reason) {
-  Services.scriptloader.loadSubScript(data.resourceURI.spec + 'content/bootstrap.js', {});
-  // The IIFE assigns itself to _aiCompanionPlugin on the sandbox global
-  plugin = globalThis._aiCompanionPlugin || {};
-  if (typeof plugin.startup === 'function') {
-    await plugin.startup(data, reason);
+async function startup({ id, version, resourceURI, rootURI }, reason) {
+  var aomStartup = Components.classes[
+    "@mozilla.org/addons/addon-manager-startup;1"
+  ].getService(Components.interfaces.amIAddonManagerStartup);
+  var manifestURI = Services.io.newURI(rootURI + "manifest.json");
+  chromeHandle = aomStartup.registerChrome(manifestURI, [
+    ["content", "zotero-ai-companion", rootURI + "content/"],
+  ]);
+
+  var ctx = { rootURI };
+  ctx._globalThis = ctx;
+  Services.scriptloader.loadSubScript(rootURI + "content/bootstrap.js", ctx);
+  _plugin = ctx._aiCompanionPlugin || {};
+  if (typeof _plugin.startup === "function") {
+    await _plugin.startup({ id, version, resourceURI, rootURI }, reason);
   }
 }
 
-async function shutdown(data, reason) {
-  if (typeof plugin?.shutdown === 'function') {
-    await plugin.shutdown(data, reason);
+async function shutdown({ id, version, resourceURI, rootURI }, reason) {
+  if (reason === APP_SHUTDOWN) return;
+  if (typeof _plugin?.shutdown === "function") {
+    await _plugin.shutdown({ id, version, resourceURI, rootURI }, reason);
   }
-  plugin = undefined;
+  _plugin = undefined;
+  if (chromeHandle) {
+    chromeHandle.destruct();
+    chromeHandle = null;
+  }
 }
-`;
+`);
 
-import { writeFileSync } from 'fs';
-writeFileSync(join(dist, 'bootstrap.js'), bootstrapShim);
-
-// 4. Update esbuild IIFE wrapper so startup/shutdown are reachable from the shim
-// The iife wraps everything — we need to expose the exports. Patch the bundle:
-const bundle = readFileSync(join(dist, 'content/bootstrap.js'), 'utf8');
-const patched = bundle + '\nglobalThis._aiCompanionPlugin={startup,shutdown};';
-writeFileSync(join(dist, 'content/bootstrap.js'), patched);
-
-// 5. Package into .xpi (zip)
+// 4. Package into .xpi (zip)
 const xpiPath = join(root, 'build/zotero-ai-companion.xpi');
 const output = createWriteStream(xpiPath);
 const archive = archiver('zip', { zlib: { level: 9 } });
@@ -86,5 +87,4 @@ await new Promise((resolve, reject) => {
   archive.finalize();
 });
 
-const bytes = archive.pointer();
-console.log(`XPI built: build/zotero-ai-companion.xpi (${(bytes / 1024).toFixed(1)} KB)`);
+console.log(`XPI built: build/zotero-ai-companion.xpi (${(archive.pointer() / 1024).toFixed(1)} KB)`);
