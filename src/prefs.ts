@@ -11,6 +11,7 @@ const DEFAULTS = {
   graphNodeSize: 'M',
   chatModel: 'google/gemma-2-9b-it',
   chatMaxChunks: 8,
+  chatRelatedMax: 5,
   chatStream: true,
   discoveryPubmed: true,
   discoverySemanticScholar: true,
@@ -40,6 +41,7 @@ export const setAccentColor = (v: string) => set('accentColor', v as typeof DEFA
 export const getGraphNodeSize = () => get('graphNodeSize') as string;
 export const getChatModel = () => get('chatModel') as string;
 export const getChatMaxChunks = () => get('chatMaxChunks') as number;
+export const getChatRelatedMax = () => get('chatRelatedMax') as number;
 export const getChatStream = () => get('chatStream') as boolean;
 export const getSyncOnStartup = () => get('syncOnStartup') as boolean;
 export const getAutoSync = () => get('autoSync') as boolean;

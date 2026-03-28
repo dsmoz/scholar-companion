@@ -1,6 +1,39 @@
 // src/api/chat.ts
 import { getApiUrl, getChatMaxChunks } from '../prefs';
 
+export interface Source {
+  page?: number;
+  text?: string;
+  zotero_key?: string;
+  title?: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: Source[];
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages: ChatMessage[];
+}
+
+export async function loadChatSession(zoteroKey: string): Promise<ChatSession | null> {
+  try {
+    return await (await import('./client')).apiFetch<ChatSession>(`/chat/sessions/${zoteroKey}`);
+  } catch { return null; }
+}
+
+export async function clearChatSession(zoteroKey: string): Promise<void> {
+  try {
+    await (await import('./client')).apiFetch(`/chat/sessions/${zoteroKey}`, { method: 'DELETE' });
+  } catch { /* ignore */ }
+}
+
 export interface ChatToken {
   token?: string;
   done?: boolean;

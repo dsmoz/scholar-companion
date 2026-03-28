@@ -9,7 +9,7 @@ import { checkConnection } from '../api/client';
 import { triggerSync } from '../api/sync';
 import {
   getApiUrl, setApiUrl, getSyncInterval, setSyncInterval,
-  getTheme, setTheme, getAutoSync, getChatModel, getChatMaxChunks,
+  getTheme, setTheme, getAutoSync, getChatModel, getChatMaxChunks, getChatRelatedMax,
   getSyncOnStartup, getDiscoverySources, setPref,
 } from '../prefs';
 
@@ -25,6 +25,7 @@ export function Settings() {
   const [theme, setThemeState] = useState(getTheme());
   const [chatModel, setChatModelState] = useState(getChatModel());
   const [chatMaxChunks, setChatMaxChunksState] = useState(getChatMaxChunks());
+  const [chatRelatedMax, setChatRelatedMaxState] = useState(getChatRelatedMax());
   const [sources, setSourcesState] = useState(getDiscoverySources());
   const [confirmAction, setConfirmAction] = useState<null | 'reindex' | 'clear'>(null);
   const [syncing, setSyncing] = useState(false);
@@ -109,6 +110,9 @@ export function Settings() {
         )}
         {row('Max chunks', segmented(['4', '8', '12', '20'], String(chatMaxChunks), v => {
           const n = parseInt(v); setChatMaxChunksState(n); setPref('chatMaxChunks', n as any);
+        }))}
+        {row('Related docs', segmented(['3', '5', '8', '10'], String(chatRelatedMax), v => {
+          const n = parseInt(v); setChatRelatedMaxState(n); setPref('chatRelatedMax', n as any);
         }))}
       </section>
 

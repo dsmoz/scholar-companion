@@ -23,3 +23,15 @@ export async function similarItems(zoteroKey: string, limit = 6): Promise<Search
   );
   return data.results;
 }
+
+export async function similarToMany(keys: string[], limit = 5): Promise<SearchResult[]> {
+  if (keys.length === 1) {
+    return similarItems(keys[0], limit);
+  }
+  const data = await apiFetch<{ results: SearchResult[] }>('/similar/multi', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys, limit }),
+  });
+  return data.results;
+}

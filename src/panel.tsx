@@ -6,17 +6,28 @@ import { DiscoveryPanel } from './ui/DiscoveryPanel';
 import { HealthPanel } from './ui/HealthPanel';
 import { IndexQueue } from './ui/IndexQueue';
 import { Settings } from './ui/Settings';
+import { LibraryChat } from './ui/LibraryChat';
+import { MultiDocChat } from './ui/MultiDocChat';
 
-const PANELS: Record<string, React.ComponentType<any>> = {
-  graph:     GraphTab,
-  discovery: DiscoveryPanel,
-  health:    HealthPanel,
-  queue:     IndexQueue,
-  settings:  Settings,
-};
+const params = new URLSearchParams(window.location.search);
+const panel = params.get('panel') ?? 'graph';
 
-const panel = new URLSearchParams(window.location.search).get('panel') ?? 'graph';
-const Component = PANELS[panel] ?? GraphTab;
-
-const root = createRoot(document.getElementById('root')!);
-root.render(createElement(Component, {}));
+if (panel === 'multi-doc-chat') {
+  const keysParam = params.get('keys') ?? '[]';
+  let keys: string[] = [];
+  try { keys = JSON.parse(decodeURIComponent(keysParam)); } catch { keys = []; }
+  const root = createRoot(document.getElementById('root')!);
+  root.render(createElement(MultiDocChat, { zoteroKeys: keys }));
+} else {
+  const PANELS: Record<string, React.ComponentType<any>> = {
+    graph:        GraphTab,
+    discovery:    DiscoveryPanel,
+    health:       HealthPanel,
+    queue:        IndexQueue,
+    settings:     Settings,
+    'library-chat': LibraryChat,
+  };
+  const Component = PANELS[panel] ?? GraphTab;
+  const root = createRoot(document.getElementById('root')!);
+  root.render(createElement(Component, {}));
+}

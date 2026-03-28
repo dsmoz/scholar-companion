@@ -88,13 +88,14 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
   win.document.getElementById('zotero-ai-color-sync')?.remove();
   win.document.getElementById('zotero-ai-update-metadata')?.remove();
   win.document.getElementById('zotero-ai-index-selected')?.remove();
+  win.document.getElementById('zotero-ai-chat-docs')?.remove();
 }
 
 function initWindow(win: Window) {
   registerMenus(win);
   registerContextMenu(win);
   const handler: EventListener = (e: Event) =>
-    handleCommand((e as CustomEvent).detail.command, win).catch((err: unknown) =>
+    handleCommand((e as CustomEvent).detail.command, win, e as CustomEvent).catch((err: unknown) =>
       console.error('[AI Companion] Command error:', err)
     );
   win.addEventListener('zotero-ai-command', handler);
@@ -110,19 +111,21 @@ function scheduleSync() {
   }, intervalMs);
 }
 
-async function handleCommand(command: string, win: Window) {
+async function handleCommand(command: string, win: Window, event?: CustomEvent) {
   switch (command) {
     case 'openGraph':
     case 'openDiscovery':
     case 'openHealth':
     case 'openQueue':
-    case 'openSettings': {
+    case 'openSettings':
+    case 'openLibraryChat': {
       const panelDefs: Record<string, { title: string; panel: string; width: number; height: number }> = {
-        openGraph:     { title: 'Similarity Graph', panel: 'graph',     width: 900, height: 650 },
-        openDiscovery: { title: 'Discovery',         panel: 'discovery', width: 780, height: 620 },
-        openHealth:    { title: 'Library Health',    panel: 'health',    width: 680, height: 520 },
-        openQueue:     { title: 'Index Queue',       panel: 'queue',     width: 680, height: 500 },
-        openSettings:  { title: 'AI Settings',       panel: 'settings',  width: 560, height: 580 },
+        openGraph:       { title: 'Similarity Graph', panel: 'graph',         width: 900, height: 650 },
+        openDiscovery:   { title: 'Discovery',         panel: 'discovery',     width: 780, height: 620 },
+        openHealth:      { title: 'Library Health',    panel: 'health',        width: 680, height: 520 },
+        openQueue:       { title: 'Index Queue',       panel: 'queue',         width: 680, height: 500 },
+        openSettings:    { title: 'AI Settings',       panel: 'settings',      width: 560, height: 580 },
+        openLibraryChat: { title: 'Library Chat',      panel: 'library-chat',  width: 800, height: 600 },
       };
       const def = panelDefs[command];
       const winId = `zotero-ai-${command}`;
@@ -250,6 +253,49 @@ async function handleCommand(command: string, win: Window) {
       } catch (e) {
         console.error('[AI Companion] indexSelected failed:', e);
         win.alert('Failed to queue indexing. Is the Flask server running?');
+      }
+      break;
+    }
+
+    case 'openSingleDocChat': {
+      // Fired from panel windows (RelatedDocsPanel) with keys in event detail
+      const rawKeys = event?.detail?.keys;
+      const keys: string[] = Array.isArray(rawKeys) ? rawKeys : [];
+      if (keys.length === 0) break;
+      try {
+        win.openDialog(
+          `chrome://zotero-ai-companion/content/panel.xhtml`,
+          `zotero-ai-chat-docs-${Date.now()}`,
+          `chrome,dialog=no,resizable,centerscreen,width=720,height=600`,
+          'multi-doc-chat',
+          JSON.stringify(keys),
+        );
+      } catch(e) {
+        console.error('[AI Companion] openDialog failed:', e);
+      }
+      break;
+    }
+
+    case 'chatWithDocuments': {
+      const selectedItems = (Zotero as any).getActiveZoteroPane()?.getSelectedItems() ?? [];
+      const regularItems = selectedItems.filter(
+        (it: any) => it.isRegularItem() && !it.parentKey
+      );
+      if (regularItems.length === 0) {
+        win.alert('Please select one or more regular library items.');
+        break;
+      }
+      const keys = regularItems.map((it: any) => it.key);
+      try {
+        win.openDialog(
+          `chrome://zotero-ai-companion/content/panel.xhtml`,
+          `zotero-ai-chat-docs-${Date.now()}`,
+          `chrome,dialog=no,resizable,centerscreen,width=720,height=600`,
+          'multi-doc-chat',
+          JSON.stringify(keys),
+        );
+      } catch(e) {
+        console.error('[AI Companion] openDialog failed:', e);
       }
       break;
     }
