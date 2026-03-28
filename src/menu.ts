@@ -48,9 +48,7 @@ export function registerMenus(win: Window) {
     menuitem.setAttribute('label', item.label);
     menuitem.setAttribute('image', svgIcon(ICONS[item.icon]));
     menuitem.setAttribute('class', 'menuitem-iconic');
-    menuitem.addEventListener('command', () =>
-      win.dispatchEvent(new CustomEvent('zotero-ai-command', { detail: { command: item.command } }))
-    );
+    menuitem.setAttribute('oncommand', `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'${item.command}'},bubbles:true}))`);
     popup.appendChild(menuitem);
   }
 
@@ -68,9 +66,7 @@ export function registerContextMenu(win: Window) {
   deleteItem.setAttribute('label', 'Delete with AI cleanup');
   deleteItem.setAttribute('image', svgIcon(ICONS.trash));
   deleteItem.setAttribute('class', 'menuitem-iconic');
-  deleteItem.addEventListener('command', () =>
-    win.dispatchEvent(new CustomEvent('zotero-ai-command', { detail: { command: 'cascadeDelete' } }))
-  );
+  deleteItem.setAttribute('oncommand', `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'cascadeDelete'},bubbles:true}))`);
   itemContextMenu.appendChild(deleteItem);
 
   // Separator
@@ -90,9 +86,7 @@ export function registerContextMenu(win: Window) {
     menuitem.setAttribute('label', ci.label);
     menuitem.setAttribute('image', svgIcon(ICONS[ci.icon]));
     menuitem.setAttribute('class', 'menuitem-iconic');
-    menuitem.addEventListener('command', () =>
-      win.dispatchEvent(new CustomEvent('zotero-ai-command', { detail: { command: ci.command } }))
-    );
+    menuitem.setAttribute('oncommand', `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'${ci.command}'},bubbles:true}))`);
     itemContextMenu.appendChild(menuitem);
   }
 }
