@@ -140,9 +140,10 @@ export function LibraryChat() {
           {messages.map((m, i) => (
             <div key={i} style={{
               alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
+              marginLeft: m.role === 'assistant' ? '1.5rem' : 0,
               background: m.role === 'user' ? '#313244' : '#1e1e2e',
-              border: m.role === 'assistant' ? '1px solid #444' : 'none',
-              borderRadius: 6, padding: '6px 10px', maxWidth: '90%', color: '#cdd6f4',
+              border: m.role === 'assistant' ? '1px solid #313244' : 'none',
+              borderRadius: 6, padding: '8px 12px', maxWidth: '85%', color: '#cdd6f4',
             }}>
               {m.role === 'assistant' ? (
                 <AssistantMessage html={renderMarkdown(m.text)} />
