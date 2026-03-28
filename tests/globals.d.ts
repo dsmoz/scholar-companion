@@ -1,5 +1,7 @@
 // tests/globals.d.ts
-// Ambient type declaration for the Zotero global injected by the test mock
+// Ambient type declarations for globals injected in the Jest test environment
+declare const global: typeof globalThis & Record<string, unknown>;
+
 declare const Zotero: {
   Prefs: {
     get: (...args: unknown[]) => unknown;
