@@ -118,6 +118,11 @@ export function HealthPanel() {
                     {ISSUE_LABELS[issue.issue_type]}
                     {issue.error_message ? ` · ${issue.error_message}` : ''}
                   </div>
+                  {issue.updated_at && (
+                    <div style={{ color: '#6c7086', fontSize: '0.6rem', marginTop: 1 }}>
+                      {new Date(issue.updated_at).toLocaleDateString()}
+                    </div>
+                  )}
                 </div>
                 <span style={{ color: 'var(--accent, #89b4fa)', fontSize: '0.7rem', cursor: 'pointer' }}>
                   {ISSUE_ACTIONS[issue.issue_type]}

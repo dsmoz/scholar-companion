@@ -6,6 +6,7 @@ export interface HealthIssue {
   title: string;
   issue_type: 'failed_sync' | 'missing_pdf' | 'not_indexed';
   error_message?: string;
+  updated_at?: string;
 }
 
 export interface LibraryHealth {
