@@ -68,7 +68,9 @@ function shutdown() {
   windowListeners.clear();
 }
 
-function onMainWindowLoad({ window: win }: { window: Window }) {
+async function onMainWindowLoad({ window: win }: { window: Window }) {
+  // Wait for Zotero UI to be fully ready before injecting menus
+  await (Zotero as any).uiReadyPromise;
   initWindow(win);
 }
 
@@ -87,6 +89,8 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
 }
 
 function initWindow(win: Window) {
+  const doc = win.document;
+  console.log('[AI Companion] initWindow, toolsPopup:', !!doc.getElementById('menu_ToolsPopup'), 'itemmenu:', !!doc.getElementById('zotero-itemmenu'));
   registerMenus(win);
   registerContextMenu(win);
   const handler: EventListener = (e: Event) =>
