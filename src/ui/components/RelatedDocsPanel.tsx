@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowsIn, ArrowsOut, Chat } from '@phosphor-icons/react';
 import { similarToMany, semanticSearch, SearchResult } from '../../api/search';
-import { getChatRelatedMax } from '../../prefs';
+import { getChatRelatedMax, getRelatedMinScore } from '../../prefs';
 import { ScoreChip } from './ScoreChip';
 
 function openDocChat(zoteroKey: string) {
@@ -28,16 +28,19 @@ export function RelatedDocsPanel({ sourceKeys = [], query }: Props) {
 
   useEffect(() => {
     const limit = getChatRelatedMax();
+    const minScore = getRelatedMinScore();
+    const filter = (results: SearchResult[]) => results.filter(r => r.score >= minScore);
+
     if (query) {
       setLoading(true);
       semanticSearch(query, limit)
-        .then(setItems)
+        .then(r => setItems(filter(r)))
         .catch(() => setItems([]))
         .finally(() => setLoading(false));
     } else if (sourceKeys.length > 0) {
       setLoading(true);
       similarToMany(sourceKeys, limit)
-        .then(setItems)
+        .then(r => setItems(filter(r)))
         .catch(() => setItems([]))
         .finally(() => setLoading(false));
     } else {
