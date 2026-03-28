@@ -3,7 +3,7 @@ import { apiFetch } from './client';
 
 export interface AuthorProfile {
   author: string;
-  items: Array<{ key: string; title: string; date: string }>;
+  items: Array<{ key: string; title: string; date: string; abstract?: string; itemType?: string }>;
   coauthors: string[];
 }
 

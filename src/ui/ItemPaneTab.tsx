@@ -40,6 +40,8 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
   const [similar, setSimilar] = useState<SearchResult[]>([]);
   const [authorProfile, setAuthorProfile] = useState<AuthorProfile | null>(null);
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
+  const [authorSort, setAuthorSort] = useState<'title' | 'year'>('year');
+  const [expandedAbstracts, setExpandedAbstracts] = useState<Set<string>>(new Set());
   const [authors, setAuthors] = useState<Array<{ firstName: string; lastName: string }>>(initialAuthors);
   const bottomRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -229,40 +231,83 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
             </div>
           ) : !authorProfile ? (
             <div style={{ color: '#6c7086', textAlign: 'center', marginTop: '2rem', fontSize: '0.7rem' }}>Loading...</div>
-          ) : (
-            <div>
-              <button onClick={() => { setSelectedAuthor(null); setAuthorProfile(null); }} style={{
-                background: 'transparent', border: 'none', color: 'var(--accent, #89b4fa)',
-                fontSize: '0.7rem', cursor: 'pointer', marginBottom: 8, padding: 0,
-              }}>Back</button>
-              <div style={{ fontWeight: 600, color: '#cdd6f4', marginBottom: 4 }}>{authorProfile.author}</div>
-              <div style={{ color: '#6c7086', fontSize: '0.65rem', marginBottom: 8 }}>
-                {authorProfile.items.length} papers in library
-              </div>
-              {authorProfile.coauthors.length > 0 && (
-                <div style={{ color: '#6c7086', fontSize: '0.65rem', marginBottom: 8 }}>
-                  Co-authors: {authorProfile.coauthors.slice(0, 5).join(', ')}
+          ) : (() => {
+            const sortedItems = [...authorProfile.items].sort((a, b) => {
+              if (authorSort === 'year') {
+                const ya = (a.date || '').slice(0, 4);
+                const yb = (b.date || '').slice(0, 4);
+                return yb.localeCompare(ya); // newest first
+              }
+              return (a.title || '').localeCompare(b.title || '');
+            });
+            return (
+              <div>
+                <button onClick={() => { setSelectedAuthor(null); setAuthorProfile(null); setExpandedAbstracts(new Set()); }} style={{
+                  background: 'transparent', border: 'none', color: 'var(--accent, #89b4fa)',
+                  fontSize: '0.7rem', cursor: 'pointer', marginBottom: 8, padding: 0,
+                }}>Back</button>
+                <div style={{ fontWeight: 600, color: '#cdd6f4', marginBottom: 4 }}>{authorProfile.author}</div>
+                <div style={{ color: '#6c7086', fontSize: '0.65rem', marginBottom: 4 }}>
+                  {authorProfile.items.length} papers in library
                 </div>
-              )}
-              {authorProfile.items.map(item => (
-                <div key={item.key} style={{ background: '#313244', borderRadius: 4, padding: '4px 8px', marginBottom: 4 }}>
-                  <div style={{ color: '#cdd6f4', fontSize: '0.75rem', marginBottom: 2 }}>{item.title}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ color: '#6c7086', fontSize: '0.65rem', flex: 1 }}>{item.date}</span>
-                    <button
-                      onClick={() => window.parent.dispatchEvent(new CustomEvent('zotero-ai-command', {
-                        detail: { command: 'openSingleDocChat', keys: [item.key] },
-                      }))}
-                      style={{ background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 3,
-                               padding: '1px 6px', fontSize: '0.6rem', color: '#1e1e2e', cursor: 'pointer' }}
-                    >
-                      Chat
-                    </button>
+                {authorProfile.coauthors.length > 0 && (
+                  <div style={{ color: '#6c7086', fontSize: '0.65rem', marginBottom: 6 }}>
+                    Co-authors: {authorProfile.coauthors.slice(0, 5).join(', ')}
                   </div>
+                )}
+                <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+                  {(['year', 'title'] as const).map(s => (
+                    <button key={s} onClick={() => setAuthorSort(s)} style={{
+                      background: authorSort === s ? '#313244' : 'transparent',
+                      border: authorSort === s ? '1px solid var(--accent, #89b4fa)' : '1px solid #444',
+                      color: authorSort === s ? 'var(--accent, #89b4fa)' : '#6c7086',
+                      borderRadius: 4, padding: '1px 7px', fontSize: '0.6rem', cursor: 'pointer',
+                    }}>{s === 'year' ? 'Year' : 'Title'}</button>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+                {sortedItems.map(item => {
+                  const year = (item.date || '').slice(0, 4) || null;
+                  const expanded = expandedAbstracts.has(item.key);
+                  const hasAbstract = !!(item.abstract?.trim());
+                  return (
+                    <div key={item.key} style={{ background: '#313244', borderRadius: 4, padding: '6px 8px', marginBottom: 4 }}>
+                      <div style={{ color: '#cdd6f4', fontSize: '0.75rem', marginBottom: 3 }}>
+                        {item.title}{year ? <span style={{ color: '#6c7086', fontWeight: 400 }}> ({year})</span> : null}
+                      </div>
+                      {hasAbstract && (
+                        <div style={{ marginBottom: 3 }}>
+                          {expanded && (
+                            <div style={{ color: '#a6adc8', fontSize: '0.65rem', marginBottom: 3, lineHeight: 1.4 }}>
+                              {item.abstract}
+                            </div>
+                          )}
+                          <button onClick={() => setExpandedAbstracts(prev => {
+                            const next = new Set(prev);
+                            expanded ? next.delete(item.key) : next.add(item.key);
+                            return next;
+                          })} style={{
+                            background: 'transparent', border: 'none', color: '#6c7086',
+                            fontSize: '0.6rem', cursor: 'pointer', padding: 0,
+                          }}>{expanded ? '▲ hide abstract' : '▼ show abstract'}</button>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={() => window.parent.dispatchEvent(new CustomEvent('zotero-ai-command', {
+                            detail: { command: 'openSingleDocChat', keys: [item.key] },
+                          }))}
+                          style={{ background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 3,
+                                   padding: '1px 6px', fontSize: '0.6rem', color: '#1e1e2e', cursor: 'pointer' }}
+                        >
+                          Chat
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
