@@ -13,6 +13,12 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
   try {
     registerEventHooks();
   } catch(e) { console.error('[AI Companion] registerEventHooks failed:', e); }
+
+  // Initialize any already-open windows (plugin loaded after Zotero started)
+  for (const win of (Zotero as any).getMainWindows()) {
+    console.log('[AI Companion] init existing window');
+    initWindow(win);
+  }
   console.log('[AI Companion] startup complete');
 
   try {
