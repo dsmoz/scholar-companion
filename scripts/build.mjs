@@ -19,7 +19,7 @@ await build({
   entryPoints: [join(root, 'src/bootstrap.ts')],
   bundle: true,
   outfile: join(dist, 'content/bootstrap.js'),
-  format: 'cjs',
+  format: 'iife',
   target: 'firefox102',
   external: ['zotero', 'components/'],
   define: { 'process.env.NODE_ENV': '"production"' },
@@ -35,9 +35,8 @@ copyFileSync(join(root, 'addon/manifest.json'), join(dist, 'manifest.json'));
 // 3. Write Zotero 7 bootstrap shim using the official registerChrome pattern.
 // loadSubScript runs the CJS bundle in `ctx`; the bundle writes to ctx.exports,
 // so startup/shutdown are available as ctx.exports.startup etc.
-writeFileSync(join(dist, 'bootstrap.js'), `/* Zotero 7 bootstrap shim — auto-generated */
+writeFileSync(join(dist, 'bootstrap.js'), `/* Zotero 7 bootstrap shim — auto-generated, based on zotero-plugin-template */
 var chromeHandle;
-var _startup, _shutdown;
 
 function install(data, reason) {}
 function uninstall(data, reason) {}
@@ -51,22 +50,15 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     ["content", "zotero-ai-companion", rootURI + "content/"],
   ]);
 
-  var ctx = { rootURI, exports: {} };
-  ctx.module = { exports: ctx.exports };
+  var ctx = { rootURI };
+  ctx._globalThis = ctx;
   Services.scriptloader.loadSubScript(rootURI + "content/bootstrap.js", ctx);
-  _startup = ctx.exports.startup || ctx.module.exports.startup;
-  _shutdown = ctx.exports.shutdown || ctx.module.exports.shutdown;
-  if (typeof _startup === "function") {
-    await _startup({ id, version, resourceURI, rootURI }, reason);
-  }
+  await ctx.startup({ id, version, resourceURI, rootURI }, reason);
 }
 
 async function shutdown({ id, version, resourceURI, rootURI }, reason) {
   if (reason === APP_SHUTDOWN) return;
-  if (typeof _shutdown === "function") {
-    await _shutdown({ id, version, resourceURI, rootURI }, reason);
-  }
-  _startup = _shutdown = undefined;
+  await _globalThis.shutdown({ id, version, resourceURI, rootURI }, reason);
   if (chromeHandle) {
     chromeHandle.destruct();
     chromeHandle = null;

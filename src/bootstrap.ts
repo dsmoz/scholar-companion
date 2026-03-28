@@ -8,7 +8,7 @@ import { apiFetch } from './api/client';
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 const windowListeners = new Map<Window, EventListener>();
 
-export async function startup({ rootURI }: { id: string; version: string; rootURI: string }) {
+async function startup({ rootURI }: { id: string; version: string; rootURI: string }) {
   registerEventHooks();
 
   for (const win of (Zotero as any).getMainWindows()) {
@@ -66,7 +66,7 @@ export async function startup({ rootURI }: { id: string; version: string; rootUR
   });
 }
 
-export function shutdown() {
+function shutdown() {
   unregisterEventHooks();
   if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
   for (const [win, handler] of windowListeners) {
@@ -226,3 +226,8 @@ async function handleCommand(command: string, win: Window) {
     }
   }
 }
+
+// Expose lifecycle hooks to the bootstrap shim via _globalThis (sandbox context)
+declare const _globalThis: any;
+_globalThis.startup = startup;
+_globalThis.shutdown = shutdown;

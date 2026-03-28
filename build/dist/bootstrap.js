@@ -1,6 +1,5 @@
-/* Zotero 7 bootstrap shim — auto-generated */
+/* Zotero 7 bootstrap shim — auto-generated, based on zotero-plugin-template */
 var chromeHandle;
-var _startup, _shutdown;
 
 function install(data, reason) {}
 function uninstall(data, reason) {}
@@ -14,22 +13,15 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     ["content", "zotero-ai-companion", rootURI + "content/"],
   ]);
 
-  var ctx = { rootURI, exports: {} };
-  ctx.module = { exports: ctx.exports };
+  var ctx = { rootURI };
+  ctx._globalThis = ctx;
   Services.scriptloader.loadSubScript(rootURI + "content/bootstrap.js", ctx);
-  _startup = ctx.exports.startup || ctx.module.exports.startup;
-  _shutdown = ctx.exports.shutdown || ctx.module.exports.shutdown;
-  if (typeof _startup === "function") {
-    await _startup({ id, version, resourceURI, rootURI }, reason);
-  }
+  await ctx.startup({ id, version, resourceURI, rootURI }, reason);
 }
 
 async function shutdown({ id, version, resourceURI, rootURI }, reason) {
   if (reason === APP_SHUTDOWN) return;
-  if (typeof _shutdown === "function") {
-    await _shutdown({ id, version, resourceURI, rootURI }, reason);
-  }
-  _startup = _shutdown = undefined;
+  await _globalThis.shutdown({ id, version, resourceURI, rootURI }, reason);
   if (chromeHandle) {
     chromeHandle.destruct();
     chromeHandle = null;
