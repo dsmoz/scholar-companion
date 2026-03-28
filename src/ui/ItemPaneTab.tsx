@@ -78,8 +78,14 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
 
   async function loadAuthor(name: string) {
     setSelectedAuthor(name);
-    const profile = await fetchAuthorProfile(name);
-    setAuthorProfile(profile);
+    setAuthorProfile(null);
+    try {
+      const profile = await fetchAuthorProfile(name);
+      setAuthorProfile(profile);
+    } catch (err) {
+      console.error('[AI Companion] fetchAuthorProfile failed:', err);
+      setAuthorProfile({ author: name, items: [], coauthors: [] });
+    }
   }
 
   function sendMessage() {
@@ -221,7 +227,9 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                 );
               })}
             </div>
-          ) : authorProfile ? (
+          ) : !authorProfile ? (
+            <div style={{ color: '#6c7086', textAlign: 'center', marginTop: '2rem', fontSize: '0.7rem' }}>Loading...</div>
+          ) : (
             <div>
               <button onClick={() => { setSelectedAuthor(null); setAuthorProfile(null); }} style={{
                 background: 'transparent', border: 'none', color: 'var(--accent, #89b4fa)',
@@ -254,7 +262,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                 </div>
               ))}
             </div>
-          ) : null}
+          )}
         </div>
       )}
     </div>
