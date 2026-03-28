@@ -9,57 +9,60 @@ let syncTimer: ReturnType<typeof setInterval> | null = null;
 const windowListeners = new Map<Window, EventListener>();
 
 async function startup({ rootURI }: { id: string; version: string; rootURI: string }) {
-  registerEventHooks();
+  console.log('[AI Companion] startup called, rootURI:', rootURI);
+  try {
+    registerEventHooks();
+  } catch(e) { console.error('[AI Companion] registerEventHooks failed:', e); }
+  console.log('[AI Companion] startup complete');
 
-  if (getSyncOnStartup()) {
-    try { await triggerSync(); } catch (e) { console.warn('[AI Companion] Startup sync failed:', e); }
-  }
-
-  scheduleSync();
+  try {
+    if (getSyncOnStartup()) {
+      try { await triggerSync(); } catch (e) { console.warn('[AI Companion] Startup sync failed:', e); }
+    }
+    scheduleSync();
+  } catch(e) { console.error('[AI Companion] sync setup failed:', e); }
 
   // Register the AI tab in the Zotero item pane
-  (Zotero as any).ItemPaneManager.registerSection({
-    paneID: 'zotero-ai-companion',
-    pluginID: 'zotero-ai-companion@dsmoz',
-    header: {
-      l10nID: 'ai-companion-header',
-      icon: `${rootURI}content/icons/icon16.png`,
-    },
-    sidenav: {
-      l10nID: 'ai-companion-sidenav',
-      icon: `${rootURI}content/icons/icon20.png`,
-    },
-    onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { createRoot } = require('react-dom/client') as typeof import('react-dom/client');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { createElement } = require('react') as typeof import('react');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { ItemPaneTab } = require('./ui/ItemPaneTab') as typeof import('./ui/ItemPaneTab');
+  try {
+    (Zotero as any).ItemPaneManager.registerSection({
+      paneID: 'zotero-ai-companion',
+      pluginID: 'zotero-ai-companion@dsmoz',
+      header: {
+        l10nID: 'ai-companion-header',
+        icon: `${rootURI}content/icons/icon16.png`,
+      },
+      sidenav: {
+        l10nID: 'ai-companion-sidenav',
+        icon: `${rootURI}content/icons/icon20.png`,
+      },
+      onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
+        const { createRoot } = require('react-dom/client') as typeof import('react-dom/client');
+        const { createElement } = require('react') as typeof import('react');
+        const { ItemPaneTab } = require('./ui/ItemPaneTab') as typeof import('./ui/ItemPaneTab');
 
-      const authors: Array<{ firstName: string; lastName: string }> = item
-        .getCreators()
-        .map((c: any) => ({ firstName: c.firstName || '', lastName: c.lastName || '' }));
+        const authors: Array<{ firstName: string; lastName: string }> = item
+          .getCreators()
+          .map((c: any) => ({ firstName: c.firstName || '', lastName: c.lastName || '' }));
 
-      // Reuse existing root if present, create otherwise
-      let root = (body as any)._aiRoot;
-      if (!root) {
-        root = createRoot(body);
-        (body as any)._aiRoot = root;
-      }
+        let root = (body as any)._aiRoot;
+        if (!root) {
+          root = createRoot(body);
+          (body as any)._aiRoot = root;
+        }
 
-      root.render(createElement(ItemPaneTab, {
-        zoteroKey: item.key,
-        title: item.getField('title'),
-        authors,
-      }));
+        root.render(createElement(ItemPaneTab, {
+          zoteroKey: item.key,
+          title: item.getField('title'),
+          authors,
+        }));
 
-      return () => {
-        root.unmount();
-        delete (body as any)._aiRoot;
-      };
-    },
-  });
+        return () => {
+          root.unmount();
+          delete (body as any)._aiRoot;
+        };
+      },
+    });
+  } catch(e) { console.error('[AI Companion] ItemPaneManager.registerSection failed:', e); }
 }
 
 function shutdown() {
