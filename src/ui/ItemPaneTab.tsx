@@ -1,11 +1,12 @@
 // src/ui/ItemPaneTab.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { PaperPlaneTilt, MagnifyingGlass, User, Chat } from '@phosphor-icons/react';
-import { streamChat, fetchItemMetadata } from '../api/chat';
+import { streamChat, fetchItemMetadata, loadChatSession } from '../api/chat';
 import type { Source } from '../api/chat';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { similarItems, SearchResult } from '../api/search';
+import { getChatRelatedMax } from '../prefs';
 import { fetchAuthorProfile, AuthorProfile } from '../api/author';
 import { ScoreChip } from './components/ScoreChip';
 
@@ -51,12 +52,27 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
     }
   }, [zoteroKey]);
 
+  // Restore previous chat session when item changes
+  useEffect(() => {
+    let cancelled = false;
+    setMessages([]);
+    loadChatSession(zoteroKey).then(session => {
+      if (cancelled || !session?.messages?.length) return;
+      setMessages(session.messages.map(m => ({
+        role: m.role as 'user' | 'assistant',
+        text: m.content,
+        sources: m.sources,
+      })));
+    });
+    return () => { cancelled = true; };
+  }, [zoteroKey]);
+
   useEffect(() => {
     if (tab === 'similar') loadSimilar();
   }, [tab, zoteroKey]);
 
   async function loadSimilar() {
-    const results = await similarItems(zoteroKey);
+    const results = await similarItems(zoteroKey, getChatRelatedMax());
     setSimilar(results);
   }
 
@@ -173,9 +189,15 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                   {item.creators?.[0]?.lastName ?? ''}{item.date ? ` · ${item.date}` : ''}
                 </span>
                 <ScoreChip score={item.score} />
-                <span style={{ marginLeft: 'auto', color: 'var(--accent, #89b4fa)', fontSize: '0.65rem', cursor: 'pointer' }}>
-                  open
-                </span>
+                <button
+                  onClick={() => window.parent.dispatchEvent(new CustomEvent('zotero-ai-command', {
+                    detail: { command: 'openSingleDocChat', keys: [item.zotero_key] },
+                  }))}
+                  style={{ marginLeft: 'auto', background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 3,
+                           padding: '1px 6px', fontSize: '0.6rem', color: '#1e1e2e', cursor: 'pointer' }}
+                >
+                  Chat
+                </button>
               </div>
             </div>
           ))}
@@ -216,8 +238,19 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
               )}
               {authorProfile.items.map(item => (
                 <div key={item.key} style={{ background: '#313244', borderRadius: 4, padding: '4px 8px', marginBottom: 4 }}>
-                  <div style={{ color: '#cdd6f4', fontSize: '0.75rem' }}>{item.title}</div>
-                  <div style={{ color: '#6c7086', fontSize: '0.65rem' }}>{item.date}</div>
+                  <div style={{ color: '#cdd6f4', fontSize: '0.75rem', marginBottom: 2 }}>{item.title}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ color: '#6c7086', fontSize: '0.65rem', flex: 1 }}>{item.date}</span>
+                    <button
+                      onClick={() => window.parent.dispatchEvent(new CustomEvent('zotero-ai-command', {
+                        detail: { command: 'openSingleDocChat', keys: [item.key] },
+                      }))}
+                      style={{ background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 3,
+                               padding: '1px 6px', fontSize: '0.6rem', color: '#1e1e2e', cursor: 'pointer' }}
+                    >
+                      Chat
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
