@@ -266,7 +266,9 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                   ))}
                 </div>
                 {sortedItems.map(item => {
-                  const year = (item.date || '').slice(0, 4) || null;
+                  const yearStr = (item.date || '').slice(0, 4);
+                  const yearNum = parseInt(yearStr, 10);
+                  const year = (yearNum >= 1900 && yearNum <= new Date().getFullYear()) ? yearStr : null;
                   const expanded = expandedAbstracts.has(item.key);
                   const hasAbstract = !!(item.abstract?.trim());
                   return (
