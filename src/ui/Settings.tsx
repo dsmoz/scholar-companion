@@ -10,7 +10,7 @@ import { triggerSync } from '../api/sync';
 import {
   getApiUrl, setApiUrl, getSyncInterval, setSyncInterval,
   getTheme, setTheme, getAutoSync, getChatModel, getChatMaxChunks,
-  getSyncOnStartup, getDiscoverySources, setPref,
+  getSyncOnStartup, getDiscoverySources, getHealthPageSize, setPref,
 } from '../prefs';
 
 type ConnectionStatus = 'connected' | 'degraded' | 'offline';
@@ -26,6 +26,7 @@ export function Settings() {
   const [chatModel, setChatModelState] = useState(getChatModel());
   const [chatMaxChunks, setChatMaxChunksState] = useState(getChatMaxChunks());
   const [sources, setSourcesState] = useState(getDiscoverySources());
+  const [healthPageSize, setHealthPageSizeState] = useState(getHealthPageSize());
   const [confirmAction, setConfirmAction] = useState<null | 'reindex' | 'clear'>(null);
   const [syncing, setSyncing] = useState(false);
 
@@ -125,6 +126,13 @@ export function Settings() {
             }} />
           )
         ))}
+      </section>
+
+      <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+        <SectionHeader>LIBRARY HEALTH</SectionHeader>
+        {row('Issues per page', segmented(['5', '10', '20', '50'], String(healthPageSize), v => {
+          const n = parseInt(v); setHealthPageSizeState(n); setPref('healthPageSize', n as any);
+        }))}
       </section>
 
       <section>

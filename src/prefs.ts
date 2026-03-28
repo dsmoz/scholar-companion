@@ -16,6 +16,7 @@ const DEFAULTS = {
   discoverySemanticScholar: true,
   discoveryOpenAlex: false,
   autoCascadeDelete: false,
+  healthPageSize: 10,
 } as const;
 
 type PrefKey = keyof typeof DEFAULTS;
@@ -44,6 +45,7 @@ export const getChatStream = () => get('chatStream') as boolean;
 export const getSyncOnStartup = () => get('syncOnStartup') as boolean;
 export const getAutoSync = () => get('autoSync') as boolean;
 export const getAutoCascadeDelete = () => get('autoCascadeDelete') as boolean;
+export const getHealthPageSize = () => get('healthPageSize') as number;
 export const getDiscoverySources = () => ({
   pubmed: get('discoveryPubmed') as boolean,
   semantic_scholar: get('discoverySemanticScholar') as boolean,

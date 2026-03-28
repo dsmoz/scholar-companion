@@ -1,7 +1,8 @@
 // src/ui/HealthPanel.tsx
 import React, { useState, useEffect } from 'react';
 import { SectionHeader } from './components/SectionHeader';
-import { fetchLibraryHealth, indexAllPending, fixOrphans, LibraryHealth } from '../api/health';
+import { fetchLibraryHealth, indexAllPending, fixOrphans, invalidateHealthCache, LibraryHealth } from '../api/health';
+import { getHealthPageSize } from '../prefs';
 
 const ISSUE_COLORS: Record<string, string> = {
   failed_sync: '#f38ba8',
@@ -25,11 +26,12 @@ export function HealthPanel() {
   const [health, setHealth] = useState<LibraryHealth | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
 
   useEffect(() => { load(); }, []);
 
-  async function load() {
-    const h = await fetchLibraryHealth();
+  async function load(force = false) {
+    const h = await fetchLibraryHealth(force);
     setHealth(h);
   }
 
@@ -37,7 +39,8 @@ export function HealthPanel() {
     setBusy('index');
     try {
       const r = await indexAllPending();
-      await load();
+      invalidateHealthCache();
+      await load(true);
       window.alert(`Queued ${r.queued} item(s) for indexing.`);
     } catch (e: any) {
       window.alert(`Failed: ${e.message}`);
@@ -51,7 +54,8 @@ export function HealthPanel() {
     setBusy('orphans');
     try {
       const r = await fixOrphans();
-      await load();
+      invalidateHealthCache();
+      await load(true);
       window.alert(`Removed ${r.removed} orphan(s).`);
     } catch (e: any) {
       window.alert(`Failed: ${e.message}`);
@@ -61,9 +65,12 @@ export function HealthPanel() {
   }
 
   const filtered = health?.issues.filter(i => !filter || i.issue_type === filter) ?? [];
+  const pageSize = getHealthPageSize();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated = filtered.slice(page * pageSize, (page + 1) * pageSize);
 
   const card = (label: string, value: number, type: string | null, color: string) => (
-    <button onClick={() => setFilter(filter === type ? null : type)} style={{
+    <button onClick={() => { setFilter(filter === type ? null : type); setPage(0); }} style={{
       background: '#313244',
       border: filter === type ? `2px solid ${color}` : '1px solid transparent',
       borderRadius: 6, padding: '0.5rem', textAlign: 'center', cursor: 'pointer', flex: 1,
@@ -94,11 +101,11 @@ export function HealthPanel() {
             {card('No PDF', health.missing_pdf, 'missing_pdf', '#f9e2af')}
           </div>
           <SectionHeader>Issues</SectionHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: '0.5rem' }}>
             {filtered.length === 0 && (
               <div style={{ color: '#6c7086', textAlign: 'center', padding: '1rem' }}>No issues</div>
             )}
-            {filtered.map(issue => (
+            {paginated.map(issue => (
               <div key={issue.zotero_key} style={{
                 background: '#1e1e2e',
                 borderLeft: `3px solid ${ISSUE_COLORS[issue.issue_type]}`,
@@ -118,6 +125,21 @@ export function HealthPanel() {
               </div>
             ))}
           </div>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', fontSize: '0.7rem', color: '#6c7086' }}>
+              <button
+                disabled={page === 0}
+                onClick={() => setPage(p => p - 1)}
+                style={{ background: 'none', border: '1px solid #444', borderRadius: 4, color: page === 0 ? '#444' : '#cdd6f4', padding: '2px 8px', cursor: page === 0 ? 'default' : 'pointer' }}
+              >← Prev</button>
+              <span>{page + 1} / {totalPages} ({filtered.length} items)</span>
+              <button
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage(p => p + 1)}
+                style={{ background: 'none', border: '1px solid #444', borderRadius: 4, color: page >= totalPages - 1 ? '#444' : '#cdd6f4', padding: '2px 8px', cursor: page >= totalPages - 1 ? 'default' : 'pointer' }}
+              >Next →</button>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <button
               disabled={busy !== null}

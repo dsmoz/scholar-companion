@@ -20,8 +20,20 @@ export interface LibraryHealth {
   issues: HealthIssue[];
 }
 
-export async function fetchLibraryHealth(): Promise<LibraryHealth> {
-  return apiFetch<LibraryHealth>('/health/library');
+const CACHE_TTL_MS = 60_000;
+let healthCache: { data: LibraryHealth; at: number } | null = null;
+
+export async function fetchLibraryHealth(force = false): Promise<LibraryHealth> {
+  if (!force && healthCache && Date.now() - healthCache.at < CACHE_TTL_MS) {
+    return healthCache.data;
+  }
+  const data = await apiFetch<LibraryHealth>('/health/library');
+  healthCache = { data, at: Date.now() };
+  return data;
+}
+
+export function invalidateHealthCache() {
+  healthCache = null;
 }
 
 export async function indexAllPending(): Promise<{ queued: number }> {
