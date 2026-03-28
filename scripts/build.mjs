@@ -11,6 +11,7 @@ const dist = join(root, 'build/dist');
 // Clean and recreate dist staging directory
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(join(dist, 'content/graph'), { recursive: true });
+mkdirSync(join(dist, 'content/icons'), { recursive: true });
 
 // 1. Bundle TypeScript → content/bootstrap.js as CommonJS
 // CJS format means startup/shutdown become exports.startup / exports.shutdown,
@@ -31,6 +32,7 @@ await build({
 // 2. Copy static assets
 copyFileSync(join(root, 'src/graph/network.html'), join(dist, 'content/graph/network.html'));
 copyFileSync(join(root, 'addon/manifest.json'), join(dist, 'manifest.json'));
+copyFileSync(join(root, 'addon/content/icons/favicon.png'), join(dist, 'content/icons/favicon.png'));
 
 // 3. Write Zotero 7 bootstrap shim using the official registerChrome pattern.
 // loadSubScript runs the CJS bundle in `ctx`; the bundle writes to ctx.exports,
