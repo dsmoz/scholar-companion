@@ -117,39 +117,25 @@ async function handleCommand(command: string, win: Window) {
     case 'openHealth':
     case 'openQueue':
     case 'openSettings': {
-      const tabDefs: Record<string, { title: string; panel: string }> = {
-        openGraph:     { title: 'Similarity Graph', panel: 'graph'     },
-        openDiscovery: { title: 'Discovery',         panel: 'discovery' },
-        openHealth:    { title: 'Library Health',    panel: 'health'    },
-        openQueue:     { title: 'Index Queue',       panel: 'queue'     },
-        openSettings:  { title: 'AI Settings',       panel: 'settings'  },
+      const panelDefs: Record<string, { title: string; panel: string; width: number; height: number }> = {
+        openGraph:     { title: 'Similarity Graph', panel: 'graph',     width: 900, height: 650 },
+        openDiscovery: { title: 'Discovery',         panel: 'discovery', width: 780, height: 620 },
+        openHealth:    { title: 'Library Health',    panel: 'health',    width: 680, height: 520 },
+        openQueue:     { title: 'Index Queue',       panel: 'queue',     width: 680, height: 500 },
+        openSettings:  { title: 'AI Settings',       panel: 'settings',  width: 560, height: 580 },
       };
-      const def = tabDefs[command];
-      const tabId = `zotero-ai-${command}`;
-      const ZTabs = (win as any).Zotero_Tabs;
+      const def = panelDefs[command];
+      const winId = `zotero-ai-${command}`;
 
-      // If tab already open, just select it
-      const existing = ZTabs?._tabs?.find((t: any) => t.id === tabId);
-      if (existing) { ZTabs.select(tabId); break; }
+      // If window already open, focus it
+      const existing = (Services as any).wm.getWindowByName(winId, null);
+      if (existing) { existing.focus(); break; }
 
-      const { id, container } = ZTabs.add({
-        id: tabId,
-        type: 'zotero-ai-companion',
-        title: def.title,
-        data: {},
-        select: true,
-      });
-
-      // Use a XUL browser element to host the HTML panel
-      const browser = (win.document as any).createXULElement('browser');
-      browser.setAttribute('flex', '1');
-      browser.setAttribute('type', 'chrome');
-      browser.setAttribute('src', `chrome://zotero-ai-companion/content/panel.html?panel=${def.panel}`);
-      container.style.display = 'flex';
-      container.style.flexDirection = 'column';
-      container.style.height = '100%';
-      browser.style.flex = '1';
-      container.appendChild(browser);
+      win.openDialog(
+        `chrome://zotero-ai-companion/content/panel.html?panel=${def.panel}`,
+        winId,
+        `chrome,dialog=no,resizable,width=${def.width},height=${def.height},name=${winId}`,
+      );
       break;
     }
     case 'cascadeDelete': {
