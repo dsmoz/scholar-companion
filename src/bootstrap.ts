@@ -9,24 +9,17 @@ let syncTimer: ReturnType<typeof setInterval> | null = null;
 const windowListeners = new Map<Window, EventListener>();
 
 async function startup({ rootURI }: { id: string; version: string; rootURI: string }) {
-  console.log('[AI Companion] startup called, rootURI:', rootURI);
-  try {
-    registerEventHooks();
-  } catch(e) { console.error('[AI Companion] registerEventHooks failed:', e); }
+  registerEventHooks();
 
   // Initialize any already-open windows (plugin loaded after Zotero started)
   for (const win of (Zotero as any).getMainWindows()) {
-    console.log('[AI Companion] init existing window');
     initWindow(win);
   }
-  console.log('[AI Companion] startup complete');
 
-  try {
-    if (getSyncOnStartup()) {
-      try { await triggerSync(); } catch (e) { console.warn('[AI Companion] Startup sync failed:', e); }
-    }
-    scheduleSync();
-  } catch(e) { console.error('[AI Companion] sync setup failed:', e); }
+  if (getSyncOnStartup()) {
+    try { await triggerSync(); } catch (e) { /* server may not be running */ }
+  }
+  scheduleSync();
 
   // Register the AI tab in the Zotero item pane
   try {
@@ -68,7 +61,7 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
         };
       },
     });
-  } catch(e) { console.error('[AI Companion] ItemPaneManager.registerSection failed:', e); }
+  } catch(e) { /* ItemPaneManager may not be available */ }
 }
 
 function shutdown() {
@@ -98,8 +91,6 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
 }
 
 function initWindow(win: Window) {
-  const doc = win.document;
-  console.log('[AI Companion] initWindow, toolsPopup:', !!doc.getElementById('menu_ToolsPopup'), 'itemmenu:', !!doc.getElementById('zotero-itemmenu'));
   registerMenus(win);
   registerContextMenu(win);
   const handler: EventListener = (e: Event) =>
