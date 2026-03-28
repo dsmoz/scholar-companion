@@ -125,9 +125,38 @@ async function handleCommand(command: string, win: Window) {
     case 'openDiscovery':
     case 'openHealth':
     case 'openQueue':
-    case 'openSettings':
-      win.alert(`[AI Companion] Command received: ${command}\n\nTab UI not yet implemented.`);
+    case 'openSettings': {
+      const tabDefs: Record<string, { title: string; component: string }> = {
+        openGraph:      { title: 'Similarity Graph',  component: 'GraphTab'       },
+        openDiscovery:  { title: 'Discovery',          component: 'DiscoveryPanel' },
+        openHealth:     { title: 'Library Health',     component: 'HealthPanel'    },
+        openQueue:      { title: 'Index Queue',        component: 'IndexQueue'     },
+        openSettings:   { title: 'AI Settings',        component: 'Settings'       },
+      };
+      const def = tabDefs[command];
+      const tabId = `zotero-ai-${command}`;
+
+      // If tab already open, just select it
+      const ZTabs = (win as any).Zotero_Tabs;
+      const existing = ZTabs?._tabs?.find((t: any) => t.id === tabId);
+      if (existing) { ZTabs.select(tabId); break; }
+
+      const { id, container } = ZTabs.add({
+        id: tabId,
+        type: 'zotero-ai-companion',
+        title: def.title,
+        data: {},
+        select: true,
+      });
+
+      const { createRoot } = require('react-dom/client') as typeof import('react-dom/client');
+      const { createElement } = require('react') as typeof import('react');
+      const mod = require(`./ui/${def.component}`) as any;
+      const Component = mod[def.component] ?? mod.default;
+      const root = createRoot(container);
+      root.render(createElement(Component, {}));
       break;
+    }
     case 'cascadeDelete': {
       const selectedItems = (Zotero as any).getActiveZoteroPane()?.getSelectedItems() ?? [];
       for (const item of selectedItems) {
