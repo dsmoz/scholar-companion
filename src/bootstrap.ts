@@ -73,6 +73,10 @@ export function shutdown() {
     win.removeEventListener('zotero-ai-command', handler);
     win.document.getElementById('zotero-ai-menu')?.remove();
     win.document.getElementById('zotero-ai-cascade-delete')?.remove();
+    win.document.getElementById('zotero-ai-context-sep')?.remove();
+    win.document.getElementById('zotero-ai-color-sync')?.remove();
+    win.document.getElementById('zotero-ai-update-metadata')?.remove();
+    win.document.getElementById('zotero-ai-index-selected')?.remove();
   }
   windowListeners.clear();
 }
@@ -121,6 +125,102 @@ async function handleCommand(command: string, win: Window) {
             console.error('[AI Companion] Cascade delete failed:', e);
           }
         }
+      }
+      break;
+    }
+
+    case 'colorSyncStatus': {
+      const selectedItems = (Zotero as any).getActiveZoteroPane()?.getSelectedItems() ?? [];
+      const regularItems = selectedItems.filter(
+        (it: any) => it.isRegularItem() && !it.parentKey
+      );
+      if (regularItems.length === 0) {
+        win.alert('Please select regular library items (not attachments or notes).');
+        break;
+      }
+      try {
+        const { fetchSyncStatus } = await import('./api/sync-status');
+        const { items: statusItems } = await fetchSyncStatus();
+        const statusMap = new Map(statusItems.map((s) => [s.zotero_key, s.sync_status]));
+
+        const TAG_MAP: Record<string, { tag: string; color: string }> = {
+          synced:  { tag: '🟢 Synced',  color: '#a6e3a1' },
+          pending: { tag: '🟡 Pending', color: '#f9e2af' },
+          error:   { tag: '🔴 Error',   color: '#f38ba8' },
+        };
+        const ALL_TAGS = Object.values(TAG_MAP).map((t) => t.tag);
+
+        for (const it of regularItems) {
+          // Remove old sync tags
+          for (const t of ALL_TAGS) it.removeTag(t);
+          await it.saveTx();
+
+          const rawStatus = statusMap.get(it.key) ?? 'pending';
+          const info = TAG_MAP[rawStatus] ?? TAG_MAP.pending;
+          it.addTag(info.tag);
+          await it.saveTx();
+          await (Zotero as any).Tags.setColor(it.libraryID, info.tag, info.color);
+        }
+        win.alert(`Colored ${regularItems.length} item(s) by sync status.`);
+      } catch (e) {
+        console.error('[AI Companion] colorSyncStatus failed:', e);
+        win.alert('Failed to fetch sync status. Is the Flask server running?');
+      }
+      break;
+    }
+
+    case 'updateMetadata': {
+      const selectedItems = (Zotero as any).getActiveZoteroPane()?.getSelectedItems() ?? [];
+      const regularItems = selectedItems.filter(
+        (it: any) => it.isRegularItem() && !it.parentKey
+      );
+      if (regularItems.length === 0) {
+        win.alert('Please select regular library items (not attachments or notes).');
+        break;
+      }
+      const confirmed = win.confirm(
+        `Update metadata with AI for ${regularItems.length} item(s)?\n\n` +
+        'Items must have PDF or HTML attachments. Processing happens in background.'
+      );
+      if (!confirmed) break;
+      try {
+        const { updateItemMetadata } = await import('./api/sync-status');
+        let queued = 0;
+        for (const it of regularItems) {
+          try {
+            await updateItemMetadata(it.key);
+            queued++;
+          } catch (e) {
+            console.warn('[AI Companion] metadata update failed for', it.key, e);
+          }
+        }
+        win.alert(`Queued ${queued} of ${regularItems.length} item(s) for metadata update.`);
+      } catch (e) {
+        console.error('[AI Companion] updateMetadata failed:', e);
+        win.alert('Failed to queue metadata update. Is the Flask server running?');
+      }
+      break;
+    }
+
+    case 'indexSelected': {
+      const selectedItems = (Zotero as any).getActiveZoteroPane()?.getSelectedItems() ?? [];
+      const regularItems = selectedItems.filter(
+        (it: any) => it.isRegularItem() && !it.parentKey
+      );
+      if (regularItems.length === 0) {
+        win.alert('Please select regular library items (not attachments or notes).');
+        break;
+      }
+      const confirmed = win.confirm(
+        `Queue ${regularItems.length} item(s) for Qdrant indexing?\n\nProcessing happens in background.`
+      );
+      if (!confirmed) break;
+      try {
+        await triggerSync();
+        win.alert('Indexing queued. Monitor progress in the Index Queue panel.');
+      } catch (e) {
+        console.error('[AI Companion] indexSelected failed:', e);
+        win.alert('Failed to queue indexing. Is the Flask server running?');
       }
       break;
     }

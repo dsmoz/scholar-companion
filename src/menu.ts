@@ -45,4 +45,25 @@ export function registerContextMenu(win: Window) {
     win.dispatchEvent(new CustomEvent('zotero-ai-command', { detail: { command: 'cascadeDelete' } }))
   );
   itemContextMenu.appendChild(deleteItem);
+
+  // Separator
+  const sep = (doc as any).createXULElement('menuseparator');
+  sep.setAttribute('id', 'zotero-ai-context-sep');
+  itemContextMenu.appendChild(sep);
+
+  const contextItems: Array<{ id: string; label: string; command: string }> = [
+    { id: 'zotero-ai-color-sync', label: 'Color by sync status', command: 'colorSyncStatus' },
+    { id: 'zotero-ai-update-metadata', label: 'Update metadata (AI)', command: 'updateMetadata' },
+    { id: 'zotero-ai-index-selected', label: 'Index to Qdrant', command: 'indexSelected' },
+  ];
+
+  for (const ci of contextItems) {
+    const menuitem = (doc as any).createXULElement('menuitem');
+    menuitem.setAttribute('id', ci.id);
+    menuitem.setAttribute('label', ci.label);
+    menuitem.addEventListener('command', () =>
+      win.dispatchEvent(new CustomEvent('zotero-ai-command', { detail: { command: ci.command } }))
+    );
+    itemContextMenu.appendChild(menuitem);
+  }
 }
