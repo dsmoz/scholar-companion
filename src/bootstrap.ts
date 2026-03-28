@@ -37,30 +37,31 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
         l10nID: 'ai-companion-sidenav',
         icon: `${rootURI}content/icons/icon20.png`,
       },
+      onInit: ({ body }: { body: HTMLElement }) => {
+        body.style.cssText = 'height:100%;min-height:300px;overflow:hidden;';
+      },
       onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
         const authors: Array<{ firstName: string; lastName: string }> = item
           .getCreators()
           .map((c: any) => ({ firstName: c.firstName || '', lastName: c.lastName || '' }));
 
-        let root = (body as any)._aiRoot;
-        if (!root) {
-          root = createRoot(body);
-          (body as any)._aiRoot = root;
+        if (!(body as any)._aiRoot) {
+          (body as any)._aiRoot = createRoot(body);
         }
-
-        root.render(createElement(ItemPaneTab, {
+        (body as any)._aiRoot.render(createElement(ItemPaneTab, {
           zoteroKey: item.key,
           title: item.getField('title'),
           authors,
         }));
-
-        return () => {
-          root.unmount();
+      },
+      onDestroy: ({ body }: { body: HTMLElement }) => {
+        if ((body as any)._aiRoot) {
+          (body as any)._aiRoot.unmount();
           delete (body as any)._aiRoot;
-        };
+        }
       },
     });
-  } catch(e) { /* ItemPaneManager may not be available */ }
+  } catch(e) { Zotero.logError(e as Error); }
 }
 
 function shutdown() {
