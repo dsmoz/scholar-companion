@@ -1,7 +1,7 @@
 {
   "name": "zotero-ai-companion",
   "version": "0.2.1",
-  "description": "AI research companion for Zotero 7 \u2014 chat, semantic search, similarity graph, discovery",
+  "description": "AI research companion for Zotero 7 — chat, semantic search, similarity graph, discovery",
   "private": true,
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -10,9 +10,9 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.0.0",
-    "@types/dompurify": "^3.0.5",
     "@testing-library/react": "^14.0.0",
     "@types/d3": "^7.0.0",
+    "@types/dompurify": "^3.0.5",
     "@types/jest": "^30.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",

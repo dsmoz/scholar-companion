@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zotero AI Companion",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "AI research companion \u2014 chat, semantic search, similarity graph, discovery",
   "author": "dsmoz",
   "icons": {
