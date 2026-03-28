@@ -1,6 +1,6 @@
 // src/bootstrap.ts
 import { registerEventHooks, unregisterEventHooks } from './events';
-import { registerMenus, registerContextMenu, registerToolbarButton } from './menu';
+import { registerMenus, registerContextMenu } from './menu';
 import { getSyncOnStartup, getAutoSync, getSyncInterval } from './prefs';
 import { triggerSync } from './api/sync';
 import { apiFetch } from './api/client';
@@ -89,14 +89,11 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
   win.document.getElementById('zotero-ai-update-metadata')?.remove();
   win.document.getElementById('zotero-ai-index-selected')?.remove();
   win.document.getElementById('zotero-ai-chat-docs')?.remove();
-  win.document.getElementById('zotero-ai-toolbar-btn')?.remove();
-  win.document.getElementById('zotero-ai-toolbar-btn-style')?.remove();
 }
 
 function initWindow(win: Window) {
   registerMenus(win);
   registerContextMenu(win);
-  registerToolbarButton(win);
   const handler: EventListener = (e: Event) =>
     handleCommand((e as CustomEvent).detail.command, win, e as CustomEvent).catch((err: unknown) =>
       console.error('[AI Companion] Command error:', err)

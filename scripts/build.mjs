@@ -53,6 +53,8 @@ for (const f of readdirSync(join(root, 'src/styles'))) {
 copyFileSync(join(root, 'addon/content/panel.xhtml'), join(dist, 'content/panel.xhtml'));
 copyFileSync(join(root, 'addon/manifest.json'), join(dist, 'manifest.json'));
 copyFileSync(join(root, 'addon/content/icons/favicon.png'), join(dist, 'content/icons/favicon.png'));
+copyFileSync(join(root, 'addon/content/icons/icon16.png'), join(dist, 'content/icons/icon16.png'));
+copyFileSync(join(root, 'addon/content/icons/icon20.png'), join(dist, 'content/icons/icon20.png'));
 
 // 3. Write Zotero 7 bootstrap shim using the official registerChrome pattern.
 // loadSubScript runs the CJS bundle in `ctx`; the bundle writes to ctx.exports,

@@ -58,54 +58,6 @@ export function registerMenus(win: Window) {
   toolsMenu.appendChild(menu);
 }
 
-export function registerToolbarButton(win: Window) {
-  const doc = win.document;
-  const toolbar = doc.getElementById('zotero-items-toolbar');
-  if (!toolbar) return;
-  if (doc.getElementById('zotero-ai-toolbar-btn')) return;
-
-  // Inject CSS so the toolbar button icon works via list-style-image (Zotero 7 pattern)
-  const style = doc.createElement('style');
-  style.setAttribute('id', 'zotero-ai-toolbar-btn-style');
-  style.textContent = `#zotero-ai-toolbar-btn { list-style-image: url("${svgIcon(ICONS.sparkle)}"); }`;
-  doc.head?.appendChild(style);
-
-  const btn = (doc as any).createXULElement('toolbarbutton');
-  btn.setAttribute('id', 'zotero-ai-toolbar-btn');
-  btn.setAttribute('class', 'zotero-tb-button');
-  btn.setAttribute('tabindex', '-1');
-  btn.setAttribute('tooltiptext', 'AI Companion');
-  btn.setAttribute('type', 'menu');
-  btn.setAttribute('wantdropmarker', 'true');
-
-  const popup = (doc as any).createXULElement('menupopup');
-  const dropItems: Array<{ label: string; command: string; icon: keyof typeof ICONS }> = [
-    { label: 'Library Chat',     command: 'openLibraryChat', icon: 'chat'      },
-    { label: 'Similarity Graph', command: 'openGraph',       icon: 'graph'     },
-    { label: 'Discovery',        command: 'openDiscovery',   icon: 'compass'   },
-    { label: 'Library Health',   command: 'openHealth',      icon: 'heartbeat' },
-    { label: 'Index Queue',      command: 'openQueue',       icon: 'stack'     },
-    { label: 'AI Settings',      command: 'openSettings',    icon: 'gearSix'   },
-  ];
-  for (const item of dropItems) {
-    const mi = (doc as any).createXULElement('menuitem');
-    mi.setAttribute('label', item.label);
-    mi.setAttribute('image', svgIcon(ICONS[item.icon]));
-    mi.setAttribute('class', 'menuitem-iconic');
-    mi.setAttribute('oncommand',
-      `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'${item.command}'},bubbles:true}))`);
-    popup.appendChild(mi);
-  }
-  btn.appendChild(popup);
-
-  const spacer = toolbar.querySelector('spacer[flex="1"]');
-  if (spacer) {
-    toolbar.insertBefore(btn, spacer);
-  } else {
-    toolbar.appendChild(btn);
-  }
-}
-
 export function registerContextMenu(win: Window) {
   const doc = win.document;
   const itemContextMenu = doc.getElementById('zotero-itemmenu');
