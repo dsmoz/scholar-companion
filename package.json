@@ -8,11 +8,12 @@
     "test": "jest --passWithNoTests"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^14.0.0",
+    "@types/d3": "^7.0.0",
+    "@types/jest": "^30.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
-    "@types/d3": "^7.0.0",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/jest-dom": "^6.0.0",
     "esbuild": "^0.20.0",
     "jest": "^29.0.0",
     "jest-environment-jsdom": "^29.0.0",
@@ -28,10 +29,18 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": ["@testing-library/jest-dom"],
+    "setupFiles": ["<rootDir>/tests/__mocks__/zotero.ts"],
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-dom"
+    ],
     "moduleNameMapper": {
       "^zotero$": "<rootDir>/tests/__mocks__/zotero.ts"
     },
-    "testMatch": ["**/tests/**/*.test.(ts|tsx)"]
+    "testMatch": [
+      "**/tests/**/*.test.(ts|tsx)"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": ["ts-jest", { "tsconfig": "tsconfig.test.json" }]
+    }
   }
 }
