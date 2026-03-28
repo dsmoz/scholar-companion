@@ -125,3 +125,14 @@ await new Promise((resolve, reject) => {
 });
 
 console.log(`XPI built: build/zotero-ai-companion.xpi (${(archive.pointer() / 1024).toFixed(1)} KB)`);
+
+// 5. Auto-deploy to Zotero profile if found
+import { existsSync } from 'fs';
+const profileExt = join(
+  process.env.HOME,
+  'Library/Application Support/Zotero/Profiles/wpfg6cdt.default/extensions/zotero-ai-companion@dsmoz.xpi'
+);
+if (existsSync(join(process.env.HOME, 'Library/Application Support/Zotero/Profiles/wpfg6cdt.default/extensions'))) {
+  copyFileSync(xpiPath, profileExt);
+  console.log('Deployed to Zotero profile.');
+}
