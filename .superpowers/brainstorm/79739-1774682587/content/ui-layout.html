@@ -1,0 +1,115 @@
+<h2>UI Layout — Item Pane Tab</h2>
+<p class="subtitle">The "AI" tab appears alongside Info / Notes / Tags when an item is selected. Phosphor icons throughout.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Zotero — Item selected: "HIV Prevention Among MSM"</div>
+    <div class="mockup-body" style="display:flex;height:420px;font-size:0.8rem">
+
+      <!-- Zotero left panel simulation -->
+      <div style="width:220px;border-right:1px solid #444;padding:0.5rem;flex-shrink:0">
+        <div style="color:#89b4fa;font-weight:bold;margin-bottom:0.5rem;font-size:0.75rem">MY LIBRARY</div>
+        <div style="padding:0.25rem 0.5rem;background:#313244;border-radius:4px;margin-bottom:2px">HIV Prevention Among MSM ✓</div>
+        <div style="padding:0.25rem 0.5rem;color:#6c7086">PrEP Uptake Mozambique</div>
+        <div style="padding:0.25rem 0.5rem;color:#6c7086">SRHR Policy Review 2023</div>
+        <div style="padding:0.25rem 0.5rem;color:#6c7086">Key Populations Framework</div>
+      </div>
+
+      <!-- Right panel: tabs -->
+      <div style="flex:1;display:flex;flex-direction:column">
+        <!-- Tab bar -->
+        <div style="display:flex;border-bottom:1px solid #444;padding:0 0.5rem">
+          <div style="padding:0.4rem 0.75rem;color:#6c7086;font-size:0.75rem">Info</div>
+          <div style="padding:0.4rem 0.75rem;color:#6c7086;font-size:0.75rem">Notes</div>
+          <div style="padding:0.4rem 0.75rem;color:#6c7086;font-size:0.75rem">Tags</div>
+          <div style="padding:0.4rem 0.75rem;color:#89b4fa;font-size:0.75rem;border-bottom:2px solid #89b4fa;font-weight:bold">AI</div>
+        </div>
+
+        <!-- Sub-tabs inside AI panel -->
+        <div style="display:flex;border-bottom:1px solid #313244;padding:0.25rem 0.5rem;gap:0.5rem">
+          <div style="padding:0.2rem 0.5rem;background:#313244;border-radius:4px;font-size:0.7rem;color:#cdd6f4">
+            <span style="color:#89b4fa">⬡</span> Chat
+          </div>
+          <div style="padding:0.2rem 0.5rem;font-size:0.7rem;color:#6c7086">
+            <span>⬡</span> Similar
+          </div>
+          <div style="padding:0.2rem 0.5rem;font-size:0.7rem;color:#6c7086">
+            <span>⬡</span> Author
+          </div>
+        </div>
+
+        <!-- Chat area -->
+        <div style="flex:1;overflow-y:auto;padding:0.75rem;display:flex;flex-direction:column;gap:0.5rem">
+          <div style="background:#1e1e2e;border-radius:6px;padding:0.5rem;font-size:0.75rem;color:#6c7086;text-align:center">
+            Chatting with: HIV Prevention Among MSM.pdf
+          </div>
+          <div style="background:#313244;border-radius:6px;padding:0.5rem;font-size:0.75rem;max-width:85%;align-self:flex-end;color:#cdd6f4">
+            What are the main barriers to PrEP uptake identified?
+          </div>
+          <div style="background:#1e1e2e;border:1px solid #444;border-radius:6px;padding:0.5rem;font-size:0.75rem;max-width:92%;color:#cdd6f4">
+            The study identifies three primary barriers: (1) stigma associated with MSM identity at health facilities, (2) limited provider knowledge of PrEP eligibility criteria, and (3) cost of follow-up testing...
+            <div style="color:#6c7086;font-size:0.65rem;margin-top:0.25rem">p.4, p.7, p.12 · 3 chunks</div>
+          </div>
+        </div>
+
+        <!-- Input bar -->
+        <div style="padding:0.5rem;border-top:1px solid #313244;display:flex;gap:0.5rem;align-items:center">
+          <div class="mock-input" style="flex:1;font-size:0.75rem;padding:0.4rem">Ask about this paper...</div>
+          <div style="background:#89b4fa;color:#1e1e2e;border-radius:4px;padding:0.3rem 0.6rem;font-size:0.75rem;cursor:pointer">↑</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">AI Tab — "Similar" sub-tab</div>
+    <div class="mockup-body" style="display:flex;flex-direction:column;height:420px;font-size:0.8rem">
+      <div style="display:flex;border-bottom:1px solid #313244;padding:0.25rem 0.5rem;gap:0.5rem">
+        <div style="padding:0.2rem 0.5rem;font-size:0.7rem;color:#6c7086"><span>⬡</span> Chat</div>
+        <div style="padding:0.2rem 0.5rem;background:#313244;border-radius:4px;font-size:0.7rem;color:#cdd6f4"><span style="color:#89b4fa">⬡</span> Similar</div>
+        <div style="padding:0.2rem 0.5rem;font-size:0.7rem;color:#6c7086"><span>⬡</span> Author</div>
+      </div>
+
+      <div style="padding:0.5rem;border-bottom:1px solid #313244;font-size:0.7rem;color:#6c7086">
+        Top 6 semantically similar items · hybrid score
+      </div>
+
+      <div style="flex:1;overflow-y:auto;padding:0.5rem;display:flex;flex-direction:column;gap:0.4rem">
+        <div style="background:#313244;border-radius:6px;padding:0.5rem">
+          <div style="font-size:0.75rem;color:#cdd6f4;margin-bottom:0.2rem">PrEP Uptake Among Key Populations in Sub-Saharan Africa</div>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <div style="font-size:0.65rem;color:#6c7086">Bekker et al., 2021</div>
+            <div style="background:#a6e3a1;color:#1e1e2e;border-radius:3px;padding:0.1rem 0.3rem;font-size:0.65rem">0.94</div>
+            <div style="font-size:0.65rem;color:#89b4fa;margin-left:auto;cursor:pointer">→ open</div>
+          </div>
+        </div>
+
+        <div style="background:#313244;border-radius:6px;padding:0.5rem">
+          <div style="font-size:0.75rem;color:#cdd6f4;margin-bottom:0.2rem">Stigma and HIV Testing in MSM Populations</div>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <div style="font-size:0.65rem;color:#6c7086">Rojas et al., 2020</div>
+            <div style="background:#a6e3a1;color:#1e1e2e;border-radius:3px;padding:0.1rem 0.3rem;font-size:0.65rem">0.91</div>
+            <div style="font-size:0.65rem;color:#89b4fa;margin-left:auto;cursor:pointer">→ open</div>
+          </div>
+        </div>
+
+        <div style="background:#313244;border-radius:6px;padding:0.5rem">
+          <div style="font-size:0.75rem;color:#cdd6f4;margin-bottom:0.2rem">Community Health Worker PrEP Delivery Models</div>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <div style="font-size:0.65rem;color:#6c7086">Mugo et al., 2022</div>
+            <div style="background:#f9e2af;color:#1e1e2e;border-radius:3px;padding:0.1rem 0.3rem;font-size:0.65rem">0.87</div>
+            <div style="font-size:0.65rem;color:#89b4fa;margin-left:auto;cursor:pointer">→ open</div>
+          </div>
+        </div>
+
+        <div style="background:#1e1e2e;border:1px dashed #444;border-radius:6px;padding:0.5rem;text-align:center">
+          <div style="font-size:0.7rem;color:#6c7086">3 more · not in library</div>
+          <div style="font-size:0.7rem;color:#89b4fa;cursor:pointer;margin-top:0.2rem">Search externally →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:1rem">Icons shown as ⬡ placeholders = Phosphor icons (Chat, MagnifyingGlass, User). Does this layout feel right?</p>

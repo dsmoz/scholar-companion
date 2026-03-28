@@ -1,0 +1,70 @@
+<h2>System Architecture</h2>
+<p class="subtitle">Zotero 7 Plugin — TypeScript + React + D3/Cytoscape, communicating with your existing MCP backend</p>
+
+<div class="section">
+  <h3>Layer diagram</h3>
+  <div class="mockup">
+    <div class="mockup-header">Plugin Architecture</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:0.85rem;line-height:2">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+        <div style="background:var(--card-bg,#1e1e2e);border:1px solid #444;border-radius:8px;padding:1rem">
+          <div style="color:#89b4fa;font-weight:bold;margin-bottom:0.5rem">🔌 Plugin Core (XUL/TS)</div>
+          <div style="font-size:0.75rem;color:#cdd6f4">
+            bootstrap.ts — lifecycle<br>
+            events.ts — Zotero hooks<br>
+            menu.ts — toolbar &amp; menus<br>
+            prefs.ts — settings
+          </div>
+        </div>
+        <div style="background:var(--card-bg,#1e1e2e);border:1px solid #444;border-radius:8px;padding:1rem">
+          <div style="color:#a6e3a1;font-weight:bold;margin-bottom:0.5rem">🎨 UI Panels (React)</div>
+          <div style="font-size:0.75rem;color:#cdd6f4">
+            ItemPane tab — Chat + Search<br>
+            AuthorPanel — network profile<br>
+            HealthDashboard — bulk ops<br>
+            DiscoveryPanel — PubMed/SS<br>
+            IndexQueue — job monitor
+          </div>
+        </div>
+        <div style="background:var(--card-bg,#1e1e2e);border:1px solid #444;border-radius:8px;padding:1rem">
+          <div style="color:#f9e2af;font-weight:bold;margin-bottom:0.5rem">🕸️ Graph Tab (Cytoscape)</div>
+          <div style="font-size:0.75rem;color:#cdd6f4">
+            Full Zotero tab<br>
+            &lt;browser&gt; element<br>
+            Cytoscape.js network<br>
+            Filter sidebar<br>
+            Click → select in Zotero
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin:1rem 0;color:#6c7086">↕ REST + SSE ↕</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div style="background:var(--card-bg,#1e1e2e);border:1px solid #f38ba8;border-radius:8px;padding:1rem">
+          <div style="color:#f38ba8;font-weight:bold;margin-bottom:0.5rem">🐍 Flask API (:6500)</div>
+          <div style="font-size:0.75rem;color:#cdd6f4">
+            /api/chat/stream (SSE)<br>
+            /api/search<br>
+            /api/graph/nodes<br>
+            /api/discovery/search<br>
+            /api/health<br>
+            /api/jobs
+          </div>
+        </div>
+        <div style="background:var(--card-bg,#1e1e2e);border:1px solid #cba6f7;border-radius:8px;padding:1rem">
+          <div style="color:#cba6f7;font-weight:bold;margin-bottom:0.5rem">🗄️ Data Layer</div>
+          <div style="font-size:0.75rem;color:#cdd6f4">
+            Qdrant — semantic vectors<br>
+            PostgreSQL — sync tracker<br>
+            Neo4j — knowledge graph<br>
+            Zotero local API<br>
+            Better BibTeX RPC
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle">Does this layer breakdown look right? Reply in terminal.</p>

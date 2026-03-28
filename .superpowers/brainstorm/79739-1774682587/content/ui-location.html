@@ -1,0 +1,40 @@
+<h2>Where should the plugin UI live?</h2>
+<p class="subtitle">Each approach has different integration depth and development complexity</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Right Panel (Item Pane)</h3>
+      <p>A new tab alongside "Info", "Notes", "Tags" — visible when you select an item. Shows AI chat, similar docs, metadata actions for the selected paper.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Context-aware to selected item</li><li>Standard Zotero 7 pattern</li><li>Low friction — always visible</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Limited vertical space</li><li>Graph view would feel cramped</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Floating / Detachable Panel</h3>
+      <p>A dedicated window that can be docked or floated — houses the full companion: chat, graph, discovery, library health. Opened via toolbar button or menu.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Full space for graph viz</li><li>Multi-panel layout possible</li><li>Doesn't crowd main UI</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Extra step to open</li><li>Context switch from reading</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hybrid: Item Pane tab + Full Window</h3>
+      <p>Quick actions (chat, similar items) in the item pane tab. Heavy features (graph, discovery, bulk ops) open in a dedicated full window.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Right tool for each job</li><li>Low friction for common tasks</li><li>Graph/discovery get full space</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>More UI surface to design</li><li>Higher dev complexity</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

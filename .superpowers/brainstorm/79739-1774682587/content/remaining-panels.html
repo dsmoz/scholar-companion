@@ -1,0 +1,230 @@
+<h2>Health Dashboard · Discovery · Index Queue</h2>
+<p class="subtitle">The three remaining panels — accessible from the toolbar menu</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+
+  <!-- HEALTH DASHBOARD -->
+  <div class="mockup">
+    <div class="mockup-header">Library Health</div>
+    <div class="mockup-body" style="font-size:0.75rem;height:400px;overflow-y:auto">
+
+      <!-- Summary cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;padding:0.5rem">
+        <div style="background:#313244;border-radius:6px;padding:0.5rem;text-align:center">
+          <div style="font-size:1.2rem;font-weight:bold;color:#a6e3a1">1,204</div>
+          <div style="font-size:0.65rem;color:#6c7086">Indexed</div>
+        </div>
+        <div style="background:#313244;border-radius:6px;padding:0.5rem;text-align:center">
+          <div style="font-size:1.2rem;font-weight:bold;color:#f38ba8">43</div>
+          <div style="font-size:0.65rem;color:#6c7086">Unindexed</div>
+        </div>
+        <div style="background:#313244;border-radius:6px;padding:0.5rem;text-align:center">
+          <div style="font-size:1.2rem;font-weight:bold;color:#f9e2af">12</div>
+          <div style="font-size:0.65rem;color:#6c7086">Failed sync</div>
+        </div>
+        <div style="background:#313244;border-radius:6px;padding:0.5rem;text-align:center">
+          <div style="font-size:1.2rem;font-weight:bold;color:#f9e2af">27</div>
+          <div style="font-size:0.65rem;color:#6c7086">Missing PDF</div>
+        </div>
+      </div>
+
+      <!-- Issue list -->
+      <div style="padding:0 0.5rem">
+        <div style="color:#6c7086;font-size:0.65rem;letter-spacing:0.08em;margin-bottom:0.4rem">ISSUES</div>
+
+        <div style="background:#1e1e2e;border-left:3px solid #f38ba8;border-radius:4px;padding:0.4rem 0.5rem;margin-bottom:0.4rem">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="color:#cdd6f4;font-size:0.7rem">SRHR Policy Review 2023</div>
+              <div style="color:#f38ba8;font-size:0.65rem">Sync failed · embedding error</div>
+            </div>
+            <div style="color:#89b4fa;font-size:0.65rem;cursor:pointer">Retry</div>
+          </div>
+        </div>
+
+        <div style="background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:4px;padding:0.4rem 0.5rem;margin-bottom:0.4rem">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="color:#cdd6f4;font-size:0.7rem">Key Populations Framework</div>
+              <div style="color:#f9e2af;font-size:0.65rem">No PDF attached</div>
+            </div>
+            <div style="color:#89b4fa;font-size:0.65rem;cursor:pointer">Find PDF</div>
+          </div>
+        </div>
+
+        <div style="background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:4px;padding:0.4rem 0.5rem;margin-bottom:0.4rem">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="color:#cdd6f4;font-size:0.7rem">Community Health Workers</div>
+              <div style="color:#f9e2af;font-size:0.65rem">Not yet indexed</div>
+            </div>
+            <div style="color:#89b4fa;font-size:0.65rem;cursor:pointer">Index</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bulk actions -->
+      <div style="padding:0.5rem;border-top:1px solid #313244;margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.4rem">
+        <div class="mock-button" style="font-size:0.65rem;padding:0.2rem 0.5rem">Retry all failed</div>
+        <div class="mock-button" style="font-size:0.65rem;padding:0.2rem 0.5rem">Index all pending</div>
+        <div style="border:1px solid #f38ba8;color:#f38ba8;border-radius:4px;padding:0.2rem 0.5rem;font-size:0.65rem;cursor:pointer">Fix orphans</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCOVERY PANEL -->
+  <div class="mockup">
+    <div class="mockup-header">Discovery — Find &amp; Import</div>
+    <div class="mockup-body" style="font-size:0.75rem;height:400px;display:flex;flex-direction:column">
+
+      <!-- Source tabs -->
+      <div style="display:flex;border-bottom:1px solid #313244;padding:0 0.5rem">
+        <div style="padding:0.3rem 0.5rem;color:#89b4fa;border-bottom:2px solid #89b4fa;font-size:0.7rem">PubMed</div>
+        <div style="padding:0.3rem 0.5rem;color:#6c7086;font-size:0.7rem">Semantic Scholar</div>
+        <div style="padding:0.3rem 0.5rem;color:#6c7086;font-size:0.7rem">OpenAlex</div>
+      </div>
+
+      <!-- Search bar -->
+      <div style="padding:0.5rem;display:flex;gap:0.4rem">
+        <div class="mock-input" style="flex:1;font-size:0.7rem;padding:0.3rem">PrEP adherence sub-Saharan Africa MSM</div>
+        <div class="mock-button" style="font-size:0.7rem;padding:0.3rem 0.6rem">Search</div>
+      </div>
+
+      <!-- Seeded from selection -->
+      <div style="padding:0 0.5rem 0.4rem;font-size:0.65rem;color:#6c7086">
+        Seeded from: <span style="color:#89b4fa">HIV Prevention Among MSM</span> · or type your own query
+      </div>
+
+      <!-- Results -->
+      <div style="flex:1;overflow-y:auto;padding:0 0.5rem;display:flex;flex-direction:column;gap:0.4rem">
+
+        <div style="background:#313244;border-radius:6px;padding:0.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="flex:1;margin-right:0.5rem">
+              <div style="color:#cdd6f4;font-size:0.72rem;margin-bottom:0.2rem">Daily oral PrEP adherence among MSM in Cape Town</div>
+              <div style="color:#6c7086;font-size:0.65rem">Mandel et al. · Lancet HIV · 2023</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.2rem;align-items:flex-end">
+              <div style="background:#a6e3a1;color:#1e1e2e;border-radius:3px;padding:0.1rem 0.3rem;font-size:0.65rem">0.96</div>
+              <div style="background:#89b4fa;color:#1e1e2e;border-radius:3px;padding:0.1rem 0.3rem;font-size:0.65rem;cursor:pointer;white-space:nowrap">+ Add</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#313244;border-radius:6px;padding:0.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="flex:1;margin-right:0.5rem">
+              <div style="color:#cdd6f4;font-size:0.72rem;margin-bottom:0.2rem">Structural barriers to PrEP uptake in East Africa</div>
+              <div style="color:#6c7086;font-size:0.65rem">Mwangi et al. · AIDS · 2022</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.2rem;align-items:flex-end">
+              <div style="background:#a6e3a1;color:#1e1e2e;border-radius:3px;padding:0.1rem 0.3rem;font-size:0.65rem">0.91</div>
+              <div style="background:#89b4fa;color:#1e1e2e;border-radius:3px;padding:0.1rem 0.3rem;font-size:0.65rem;cursor:pointer;white-space:nowrap">+ Add</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#313244;border-radius:6px;padding:0.5rem;border:1px solid #a6e3a1">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="flex:1;margin-right:0.5rem">
+              <div style="color:#cdd6f4;font-size:0.72rem;margin-bottom:0.2rem">PrEP knowledge gaps among healthcare providers</div>
+              <div style="color:#6c7086;font-size:0.65rem">Santos et al. · PLoS ONE · 2023</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.2rem;align-items:flex-end">
+              <div style="background:#a6e3a1;color:#1e1e2e;border-radius:3px;padding:0.1rem 0.3rem;font-size:0.65rem">0.88</div>
+              <div style="color:#a6e3a1;font-size:0.65rem;white-space:nowrap">✓ In library</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Batch import bar -->
+      <div style="padding:0.5rem;border-top:1px solid #313244;display:flex;justify-content:space-between;align-items:center">
+        <span style="color:#6c7086;font-size:0.65rem">2 selected</span>
+        <div class="mock-button" style="font-size:0.7rem;padding:0.25rem 0.6rem">Import selected to Zotero</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INDEX QUEUE -->
+  <div class="mockup">
+    <div class="mockup-header">Indexing Queue</div>
+    <div class="mockup-body" style="font-size:0.75rem;height:400px;display:flex;flex-direction:column">
+
+      <!-- Status bar -->
+      <div style="padding:0.5rem;border-bottom:1px solid #313244">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
+          <span style="color:#cdd6f4;font-size:0.7rem">Processor</span>
+          <div style="display:flex;align-items:center;gap:0.4rem">
+            <div style="width:8px;height:8px;border-radius:50%;background:#a6e3a1"></div>
+            <span style="color:#a6e3a1;font-size:0.65rem">Running</span>
+            <div style="border:1px solid #444;border-radius:3px;padding:0.1rem 0.3rem;font-size:0.65rem;color:#6c7086;cursor:pointer">Pause</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;font-size:0.65rem">
+          <span style="color:#f9e2af">● 3 pending</span>
+          <span style="color:#89b4fa">● 1 processing</span>
+          <span style="color:#a6e3a1">● 1,204 done</span>
+          <span style="color:#f38ba8">● 12 failed</span>
+        </div>
+      </div>
+
+      <!-- Active job -->
+      <div style="padding:0.5rem;border-bottom:1px solid #313244">
+        <div style="color:#6c7086;font-size:0.65rem;letter-spacing:0.08em;margin-bottom:0.3rem">PROCESSING NOW</div>
+        <div style="background:#1e1e2e;border-radius:6px;padding:0.5rem">
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem">
+            <span style="color:#cdd6f4;font-size:0.7rem">Community Health Worker Models</span>
+            <span style="color:#89b4fa;font-size:0.65rem">add_to_qdrant</span>
+          </div>
+          <!-- Progress bar -->
+          <div style="background:#313244;border-radius:4px;height:4px;margin-bottom:0.2rem">
+            <div style="background:#89b4fa;height:4px;border-radius:4px;width:60%;transition:width 0.3s"></div>
+          </div>
+          <div style="color:#6c7086;font-size:0.65rem">Extracting text · page 18 of 34 · ~2 min left</div>
+        </div>
+      </div>
+
+      <!-- Queue -->
+      <div style="flex:1;overflow-y:auto;padding:0.5rem;display:flex;flex-direction:column;gap:0.3rem">
+        <div style="color:#6c7086;font-size:0.65rem;letter-spacing:0.08em;margin-bottom:0.2rem">PENDING</div>
+
+        <div style="background:#313244;border-radius:5px;padding:0.4rem 0.5rem;display:flex;justify-content:space-between">
+          <span style="color:#cdd6f4;font-size:0.7rem">SRHR Policy Review 2023</span>
+          <span style="color:#6c7086;font-size:0.65rem">add_to_qdrant</span>
+        </div>
+        <div style="background:#313244;border-radius:5px;padding:0.4rem 0.5rem;display:flex;justify-content:space-between">
+          <span style="color:#cdd6f4;font-size:0.7rem">Stigma Healthcare Facilities</span>
+          <span style="color:#6c7086;font-size:0.65rem">update_metadata</span>
+        </div>
+        <div style="background:#313244;border-radius:5px;padding:0.4rem 0.5rem;display:flex;justify-content:space-between">
+          <span style="color:#cdd6f4;font-size:0.7rem">PrEP Adherence Cape Town</span>
+          <span style="color:#6c7086;font-size:0.65rem">add_to_qdrant</span>
+        </div>
+
+        <div style="color:#6c7086;font-size:0.65rem;letter-spacing:0.08em;margin:0.4rem 0 0.2rem">FAILED</div>
+
+        <div style="background:#1e1e2e;border-left:3px solid #f38ba8;border-radius:4px;padding:0.4rem 0.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="color:#cdd6f4;font-size:0.7rem">Key Pop Framework v2</div>
+              <div style="color:#f38ba8;font-size:0.65rem">PDF corrupt · extraction failed</div>
+            </div>
+            <div style="color:#89b4fa;font-size:0.65rem;cursor:pointer">Retry</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="padding:0.5rem;border-top:1px solid #313244;display:flex;gap:0.4rem">
+        <div class="mock-button" style="font-size:0.65rem;padding:0.2rem 0.5rem">Retry all failed</div>
+        <div class="mock-button" style="font-size:0.65rem;padding:0.2rem 0.5rem">Clear completed</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:1rem">All panels shown. Phosphor icons replace all emoji in final implementation. Does this complete the UI design?</p>

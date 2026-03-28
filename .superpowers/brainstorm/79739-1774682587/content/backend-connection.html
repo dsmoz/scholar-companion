@@ -1,0 +1,42 @@
+<h2>How should the plugin talk to the MCP backend?</h2>
+<p class="subtitle">The existing MCP server runs as a separate process (Flask REST on :6500). The plugin needs to connect to it.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="rest" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>REST API only (port 6500)</h3>
+      <p>Plugin calls the existing Flask endpoints directly. No changes to the MCP server — just consume what's already there. Fast to build.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Zero backend changes</li><li>Standard HTTP, easy to debug</li><li>Works today</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Some features may need new endpoints</li><li>No streaming for chat (polling)</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="rest-sse" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>REST + Server-Sent Events for streaming</h3>
+      <p>REST for queries/mutations. SSE stream for chat responses — AI tokens stream into the plugin in real time, like Claude Code's output. Requires adding SSE endpoints to Flask.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Chat feels live and responsive</li><li>Natural fit for LLM streaming</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Small backend additions needed</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="websocket" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>WebSocket (persistent connection)</h3>
+      <p>Full-duplex channel between plugin and backend. Enables real-time indexing progress, live graph updates as new items are added, streaming chat.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Real-time everything</li><li>Push notifications (new item indexed)</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>More complex to implement</li><li>Backend needs Flask-SocketIO</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
