@@ -17,28 +17,11 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
   _rootURI = rootURI;
   registerEventHooks();
 
-  // Initialize any already-open windows (plugin loaded after Zotero started)
-  for (const win of (Zotero as any).getMainWindows()) {
-    initWindow(win);
-  }
-
-  if (getSyncOnStartup()) {
-    try { await triggerSync(); } catch (e) { /* server may not be running */ }
-  }
-  scheduleSync();
-}
-
-function shutdown() {
-  unregisterEventHooks();
-  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
-  windowListeners.clear();
-}
-
-async function onMainWindowLoad({ window: win }: { window: Window }) {
-  // Wait for Zotero UI to be fully ready before injecting menus
+  // Wait for the UI to be ready so the item pane notifier listener is registered
+  // before we call registerSection (otherwise the refresh notification is lost)
   await (Zotero as any).uiReadyPromise;
 
-  // Register the item pane section once, after the UI (and its notifier listeners) are ready
+  // Register the item pane section exactly once
   if (!_sectionRegistered) {
     _sectionRegistered = true;
     try {
@@ -78,6 +61,26 @@ async function onMainWindowLoad({ window: win }: { window: Window }) {
     } catch(e) { (Zotero as any).logError(e); }
   }
 
+  // Initialize any already-open windows (plugin loaded after Zotero started)
+  for (const win of (Zotero as any).getMainWindows()) {
+    initWindow(win);
+  }
+
+  if (getSyncOnStartup()) {
+    try { await triggerSync(); } catch (e) { /* server may not be running */ }
+  }
+  scheduleSync();
+}
+
+function shutdown() {
+  unregisterEventHooks();
+  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+  windowListeners.clear();
+}
+
+async function onMainWindowLoad({ window: win }: { window: Window }) {
+  // Wait for Zotero UI to be fully ready before injecting menus
+  await (Zotero as any).uiReadyPromise;
   initWindow(win);
 }
 
