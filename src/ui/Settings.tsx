@@ -11,7 +11,8 @@ import {
   getApiUrl, setApiUrl, getSyncInterval, setSyncInterval,
   getTheme, setTheme, getAutoSync, getChatModel, getChatMaxChunks,
   getSyncOnStartup, getDiscoverySources, setDiscoverySources,
-  getHealthPageSize, getDiscoveryLimit, getDiscoveryPageSize, setPref, DiscoverySource,
+  getHealthPageSize, getDiscoveryLimit, getDiscoveryPageSize,
+  getDiscoveryHistoryTTL, getDiscoveryHistoryMax, setPref, DiscoverySource,
 } from '../prefs';
 
 type ConnectionStatus = 'connected' | 'degraded' | 'offline';
@@ -32,6 +33,8 @@ export function Settings() {
   const [healthPageSize, setHealthPageSizeState] = useState(getHealthPageSize());
   const [discoveryLimit, setDiscoveryLimitState] = useState(getDiscoveryLimit());
   const [discoveryPageSize, setDiscoveryPageSizeState] = useState(getDiscoveryPageSize());
+  const [discoveryHistoryTTL, setDiscoveryHistoryTTLState] = useState(getDiscoveryHistoryTTL());
+  const [discoveryHistoryMax, setDiscoveryHistoryMaxState] = useState(getDiscoveryHistoryMax());
   const [confirmAction, setConfirmAction] = useState<null | 'reindex' | 'clear'>(null);
   const [syncing, setSyncing] = useState(false);
 
@@ -125,6 +128,12 @@ export function Settings() {
         }))}
         {row('Results per page', segmented(['5', '10', '20'], String(discoveryPageSize), v => {
           const n = parseInt(v); setDiscoveryPageSizeState(n); setPref('discoveryPageSize', n as any);
+        }))}
+        {row('History TTL', segmented(['6h', '12h', '24h', '48h'], `${discoveryHistoryTTL}h`, v => {
+          const n = parseInt(v); setDiscoveryHistoryTTLState(n); setPref('discoveryHistoryTTL', n as any);
+        }))}
+        {row('History entries', segmented(['5', '10', '20'], String(discoveryHistoryMax), v => {
+          const n = parseInt(v); setDiscoveryHistoryMaxState(n); setPref('discoveryHistoryMax', n as any);
         }))}
       </section>
 

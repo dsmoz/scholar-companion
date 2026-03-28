@@ -1,8 +1,11 @@
 // src/ui/DiscoveryPanel.tsx
-import React, { useState, useMemo } from 'react';
-import { Plus, Check, CaretLeft, CaretRight } from '@phosphor-icons/react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Plus, Check, CaretLeft, CaretRight, ClockCounterClockwise } from '@phosphor-icons/react';
 import { StripedList } from './components/StripedList';
-import { discoverySearch, DiscoveryResult } from '../api/discovery';
+import {
+  discoverySearch, DiscoveryResult, addToHistory, getValidHistory,
+  cacheKey, getCached, SortKey, HistoryEntry,
+} from '../api/discovery';
 import { getDiscoverySources, getDiscoveryLimit, getDiscoveryPageSize } from '../prefs';
 
 interface Props { seedQuery?: string; seedAuthor?: string; }
@@ -22,13 +25,20 @@ function resultKey(r: DiscoveryResult): string {
   return `${r.source}:${r.doi || r.pmid || r.s2_id || r.url || r.title}`;
 }
 
-type SortKey = 'relevance' | 'year' | 'title' | 'source';
+function timeAgo(ts: number): string {
+  const mins = Math.round((Date.now() - ts) / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
+}
 
 export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
   const [query, setQuery] = useState(seedQuery || seedAuthor);
   const [results, setResults] = useState<DiscoveryResult[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [isStale, setIsStale] = useState(false);
   const [importing, setImporting] = useState(false);
   const [activeSource, setActiveSource] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>('relevance');
@@ -36,22 +46,63 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
   const [yearFrom, setYearFrom] = useState('');
   const [yearTo, setYearTo] = useState('');
   const [page, setPage] = useState(1);
+  const [showHistory, setShowHistory] = useState(false);
 
   const enabledSources = useMemo(() => getDiscoverySources().filter(s => s.enabled), []);
   const pageSize = getDiscoveryPageSize();
+  const searchBarRef = useRef<HTMLDivElement>(null);
 
-  async function search() {
-    if (!query.trim()) return;
+  const history = useMemo(() => getValidHistory(), [showHistory]);
+
+  async function search(overrideQuery?: string, overrideSources?: string[], overrideLimit?: number) {
+    const q = overrideQuery ?? query;
+    if (!q.trim()) return;
     setLoading(true);
+    setIsStale(false);
     setPage(1);
+    setShowHistory(false);
+    const sources = overrideSources ?? (activeSource ? [activeSource] : enabledSources.map(s => s.id));
+    const limit = overrideLimit ?? getDiscoveryLimit();
     try {
-      const sources = activeSource ? [activeSource] : enabledSources.map(s => s.id);
-      const limit = getDiscoveryLimit();
-      const r = await discoverySearch(query, sources, limit);
+      const r = await discoverySearch(q, sources, limit);
       setResults(r);
       setSelected(new Set());
+      addToHistory({ query: q, sources, limit, timestamp: Date.now(), resultCount: r.length, sortBy, filterHasDoi, yearFrom, yearTo });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadFromHistory(entry: HistoryEntry) {
+    setShowHistory(false);
+    setQuery(entry.query);
+    setSortBy(entry.sortBy);
+    setFilterHasDoi(entry.filterHasDoi);
+    setYearFrom(entry.yearFrom);
+    setYearTo(entry.yearTo);
+    setPage(1);
+    setSelected(new Set());
+
+    const key = cacheKey(entry.query, entry.sources, entry.limit);
+    const cached = getCached(key);
+    if (cached) {
+      setResults(cached);
+      setIsStale(false);
+      // Background refresh
+      setIsStale(true);
+      discoverySearch(entry.query, entry.sources, entry.limit)
+        .then(r => { setResults(r); setIsStale(false); })
+        .catch(() => setIsStale(false));
+    } else {
+      // No cache — full load
+      setLoading(true);
+      setIsStale(false);
+      try {
+        const r = await discoverySearch(entry.query, entry.sources, entry.limit);
+        setResults(r);
+      } finally {
+        setLoading(false);
+      }
     }
   }
 
@@ -147,27 +198,58 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
         )}
       </div>
 
-      {/* Search bar */}
-      <div style={{ padding: '6px 8px', display: 'flex', gap: 6, borderBottom: '1px solid var(--color-border, #313244)' }}>
+      {/* Search bar + history dropdown */}
+      <div ref={searchBarRef} style={{ position: 'relative', padding: '6px 8px', display: 'flex', gap: 6, borderBottom: '1px solid var(--color-border, #313244)' }}>
         <input
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={e => { setQuery(e.target.value); if (e.target.value) setShowHistory(false); }}
+          onFocus={() => { if (!query) setShowHistory(true); }}
+          onBlur={() => setTimeout(() => setShowHistory(false), 150)}
           onKeyDown={e => e.key === 'Enter' && search()}
           placeholder="Search papers, reports, websites..."
           style={{ flex: 1, fontSize: '0.75rem', padding: '4px 8px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4' }}
         />
         <button
-          onClick={search}
+          onClick={() => search()}
           disabled={loading || enabledSources.length === 0}
           style={{ background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer', color: '#1e1e2e', fontSize: '0.75rem', opacity: loading ? 0.6 : 1 }}
         >{loading ? '...' : 'Search'}</button>
+
+        {/* History dropdown */}
+        {showHistory && history.length > 0 && (
+          <div style={{
+            position: 'absolute', top: '100%', left: 8, right: 8, zIndex: 100,
+            background: '#1e1e2e', border: '1px solid #313244', borderRadius: 4,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.5)', maxHeight: 240, overflowY: 'auto',
+          }}>
+            <div style={{ padding: '4px 8px 2px', display: 'flex', alignItems: 'center', gap: 4, borderBottom: '1px solid #313244' }}>
+              <ClockCounterClockwise size={10} style={{ color: '#6c7086' }} />
+              <span style={{ fontSize: '0.6rem', color: '#6c7086' }}>Recent searches</span>
+            </div>
+            {history.map((h, i) => (
+              <div
+                key={i}
+                onMouseDown={() => loadFromHistory(h)}
+                style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: i < history.length - 1 ? '1px solid #181825' : 'none' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#313244')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <div style={{ color: '#cdd6f4', fontSize: '0.75rem', marginBottom: 2 }}>{h.query}</div>
+                <div style={{ color: '#6c7086', fontSize: '0.6rem' }}>
+                  {h.resultCount} result{h.resultCount !== 1 ? 's' : ''} · {h.sources.join(', ')} · {timeAgo(h.timestamp)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Filter + sort toolbar — only shown when there are results */}
+      {/* Filter + sort toolbar */}
       {results.length > 0 && (
         <div style={{ padding: '4px 8px', borderBottom: '1px solid var(--color-border, #313244)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ color: '#6c7086', fontSize: '0.6rem' }}>Sort:</span>
-          {seg(['Relevance', 'Year ↓', 'Title', 'Source'],
+          {seg(
+            ['Relevance', 'Year ↓', 'Title', 'Source'],
             sortBy === 'relevance' ? 'Relevance' : sortBy === 'year' ? 'Year ↓' : sortBy === 'title' ? 'Title' : 'Source',
             v => { setSortBy(v === 'Year ↓' ? 'year' : v.toLowerCase() as SortKey); setPage(1); }
           )}
@@ -184,7 +266,10 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
           <span style={{ color: '#6c7086', fontSize: '0.6rem' }}>–</span>
           <input value={yearTo} onChange={e => { setYearTo(e.target.value); setPage(1); }} placeholder="to"
             style={{ width: 42, fontSize: '0.6rem', padding: '1px 4px', background: '#313244', border: '1px solid #444', borderRadius: 3, color: '#cdd6f4' }} />
-          <span style={{ marginLeft: 'auto', color: '#6c7086', fontSize: '0.6rem' }}>{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
+          <span style={{ marginLeft: 'auto', color: '#6c7086', fontSize: '0.6rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+            {isStale && <span style={{ color: '#f9e2af' }}>Refreshing...</span>}
+            {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+          </span>
         </div>
       )}
 
@@ -240,9 +325,7 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
             style={{ background: 'transparent', border: 'none', color: page === 1 ? '#444' : '#cdd6f4', cursor: page === 1 ? 'default' : 'pointer', padding: 2 }}>
             <CaretLeft size={12} />
           </button>
-          <span style={{ fontSize: '0.65rem', color: '#6c7086' }}>
-            {page} / {totalPages}
-          </span>
+          <span style={{ fontSize: '0.65rem', color: '#6c7086' }}>{page} / {totalPages}</span>
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
             style={{ background: 'transparent', border: 'none', color: page === totalPages ? '#444' : '#cdd6f4', cursor: page === totalPages ? 'default' : 'pointer', padding: 2 }}>
             <CaretRight size={12} />

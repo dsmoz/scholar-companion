@@ -16,6 +16,9 @@ const DEFAULTS = {
   healthPageSize: 10,
   discoveryLimit: 10,
   discoveryPageSize: 10,
+  discoveryHistoryTTL: 24,   // hours
+  discoveryHistoryMax: 10,   // max entries
+  discoveryHistory: '[]',    // JSON string of HistoryEntry[]
   // Discovery sources stored as JSON string: [{id, label, enabled}]
   discoverySources: JSON.stringify([
     { id: 'pubmed',           label: 'PubMed',           enabled: true  },
@@ -54,11 +57,27 @@ export const getAutoCascadeDelete = () => get('autoCascadeDelete') as boolean;
 export const getHealthPageSize = () => get('healthPageSize') as number;
 export const getDiscoveryLimit = () => get('discoveryLimit') as number;
 export const getDiscoveryPageSize = () => get('discoveryPageSize') as number;
+export const getDiscoveryHistoryTTL = () => get('discoveryHistoryTTL') as number;
+export const getDiscoveryHistoryMax = () => get('discoveryHistoryMax') as number;
 
 export interface DiscoverySource {
   id: string;
   label: string;
   enabled: boolean;
+}
+
+export type SortKey = 'relevance' | 'year' | 'title' | 'source';
+
+export interface HistoryEntry {
+  query: string;
+  sources: string[];
+  limit: number;
+  timestamp: number;
+  resultCount: number;
+  sortBy: SortKey;
+  filterHasDoi: boolean;
+  yearFrom: string;
+  yearTo: string;
 }
 
 export function getDiscoverySources(): DiscoverySource[] {
@@ -76,6 +95,18 @@ export function getDiscoverySources(): DiscoverySource[] {
 
 export function setDiscoverySources(sources: DiscoverySource[]): void {
   set('discoverySources', JSON.stringify(sources) as any);
+}
+
+export function getDiscoveryHistory(): HistoryEntry[] {
+  try {
+    return JSON.parse(get('discoveryHistory') as string) as HistoryEntry[];
+  } catch {
+    return [];
+  }
+}
+
+export function setDiscoveryHistory(entries: HistoryEntry[]): void {
+  set('discoveryHistory', JSON.stringify(entries) as any);
 }
 
 export { set as setPref, get as getPref };

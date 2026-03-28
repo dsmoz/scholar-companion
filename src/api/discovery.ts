@@ -1,6 +1,13 @@
 // src/api/discovery.ts
 import { apiFetch } from './client';
-import { getDiscoverySources } from '../prefs';
+import {
+  getDiscoverySources, getDiscoveryHistoryTTL, getDiscoveryHistoryMax,
+  getDiscoveryHistory, setDiscoveryHistory,
+  HistoryEntry, SortKey,
+} from '../prefs';
+
+export type { SortKey };
+export type { HistoryEntry };
 
 export interface DiscoveryResult {
   title: string;
@@ -19,8 +26,14 @@ export interface DiscoveryResult {
 const _cache = new Map<string, { results: DiscoveryResult[]; at: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-function cacheKey(query: string, sources: string[], limit: number): string {
+export function cacheKey(query: string, sources: string[], limit: number): string {
   return `${query.trim().toLowerCase()}|${[...sources].sort().join(',')}|${limit}`;
+}
+
+export function getCached(key: string): DiscoveryResult[] | null {
+  const entry = _cache.get(key);
+  if (entry && Date.now() - entry.at < CACHE_TTL) return entry.results;
+  return null;
 }
 
 export function invalidateDiscoveryCache(): void {
@@ -39,8 +52,8 @@ export async function discoverySearch(
 
   const effectiveLimit = limit ?? 10;
   const key = cacheKey(query, activeSources, effectiveLimit);
-  const cached = _cache.get(key);
-  if (cached && Date.now() - cached.at < CACHE_TTL) return cached.results;
+  const cached = getCached(key);
+  if (cached) return cached;
 
   const params = new URLSearchParams({
     q: query,
@@ -50,4 +63,24 @@ export async function discoverySearch(
   const data = await apiFetch<{ results: DiscoveryResult[] }>(`/discovery/search?${params}`);
   _cache.set(key, { results: data.results, at: Date.now() });
   return data.results;
+}
+
+// --- History ---
+
+export function getValidHistory(): HistoryEntry[] {
+  const ttlMs = getDiscoveryHistoryTTL() * 3600 * 1000;
+  const now = Date.now();
+  return getDiscoveryHistory().filter(h => now - h.timestamp < ttlMs);
+}
+
+export function addToHistory(entry: HistoryEntry): void {
+  const ttlMs = getDiscoveryHistoryTTL() * 3600 * 1000;
+  const max = getDiscoveryHistoryMax();
+  const now = Date.now();
+  let history = getDiscoveryHistory()
+    .filter(h => now - h.timestamp < ttlMs)        // drop expired
+    .filter(h => h.query !== entry.query);          // dedup by query
+  history.unshift(entry);                           // newest first
+  if (history.length > max) history = history.slice(0, max);
+  setDiscoveryHistory(history);
 }
