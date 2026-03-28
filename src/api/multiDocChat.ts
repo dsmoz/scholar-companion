@@ -22,6 +22,22 @@ export async function fetchDocMetadata(keys: string[]): Promise<DocMeta[]> {
   }
 }
 
+export interface MultiDocSession {
+  id: string;
+  title: string;
+  zotero_keys: string[];
+  messages: Array<{ role: 'user' | 'assistant'; content: string; sources?: import('./chat').Source[] }>;
+}
+
+export async function loadMultiDocSession(sessionId: string): Promise<MultiDocSession | null> {
+  try {
+    const session = await apiFetch<MultiDocSession>(`/chat/multi/sessions/${sessionId}`);
+    return session && session.id ? session : null;
+  } catch {
+    return null;
+  }
+}
+
 export function streamMultiDocChat(
   zoteroKeys: string[],
   question: string,

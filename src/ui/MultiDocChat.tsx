@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper } from '@phosphor-icons/react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { streamMultiDocChat, fetchDocMetadata } from '../api/multiDocChat';
+import { streamMultiDocChat, fetchDocMetadata, loadMultiDocSession } from '../api/multiDocChat';
 import type { DocMeta } from '../api/multiDocChat';
 import type { Source } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
@@ -54,6 +54,16 @@ export function MultiDocChat({ zoteroKeys }: Props) {
 
   useEffect(() => {
     fetchDocMetadata(zoteroKeys).then(setDocs);
+    // Restore previous session messages if this session was already started
+    loadMultiDocSession(sessionId.current).then(session => {
+      if (session && session.messages.length > 0) {
+        setMessages(session.messages.map(m => ({
+          role: m.role,
+          text: m.content,
+          sources: m.sources,
+        })));
+      }
+    });
   }, []);
 
   function sendMessage() {
