@@ -1,7 +1,7 @@
 import { build } from 'esbuild';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { createWriteStream, rmSync, mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'fs';
+import { createWriteStream, rmSync, mkdirSync, copyFileSync, writeFileSync } from 'fs';
 import archiver from 'archiver';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -12,12 +12,14 @@ const dist = join(root, 'build/dist');
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(join(dist, 'content/graph'), { recursive: true });
 
-// 1. Bundle TypeScript → content/bootstrap.js
+// 1. Bundle TypeScript → content/bootstrap.js as CommonJS
+// CJS format means startup/shutdown become exports.startup / exports.shutdown,
+// which the bootstrap shim reads via the sandbox's `exports` object.
 await build({
   entryPoints: [join(root, 'src/bootstrap.ts')],
   bundle: true,
   outfile: join(dist, 'content/bootstrap.js'),
-  format: 'iife',
+  format: 'cjs',
   target: 'firefox102',
   external: ['zotero', 'components/'],
   define: { 'process.env.NODE_ENV': '"production"' },
@@ -26,19 +28,16 @@ await build({
   minify: true,
 });
 
-// Expose startup/shutdown from the IIFE to the bootstrap shim
-const bundle = readFileSync(join(dist, 'content/bootstrap.js'), 'utf8');
-writeFileSync(join(dist, 'content/bootstrap.js'), bundle + '\nglobalThis._aiCompanionPlugin={startup,shutdown};');
-
 // 2. Copy static assets
 copyFileSync(join(root, 'src/graph/network.html'), join(dist, 'content/graph/network.html'));
 copyFileSync(join(root, 'addon/manifest.json'), join(dist, 'manifest.json'));
 
-// 3. Write Zotero 7 bootstrap shim using the official registerChrome pattern
-// (matches the pattern used by Actions & Tags, Zotero Make-It-Red, etc.)
+// 3. Write Zotero 7 bootstrap shim using the official registerChrome pattern.
+// loadSubScript runs the CJS bundle in `ctx`; the bundle writes to ctx.exports,
+// so startup/shutdown are available as ctx.exports.startup etc.
 writeFileSync(join(dist, 'bootstrap.js'), `/* Zotero 7 bootstrap shim — auto-generated */
 var chromeHandle;
-var _plugin;
+var _startup, _shutdown;
 
 function install(data, reason) {}
 function uninstall(data, reason) {}
@@ -52,21 +51,22 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     ["content", "zotero-ai-companion", rootURI + "content/"],
   ]);
 
-  var ctx = { rootURI };
-  ctx._globalThis = ctx;
+  var ctx = { rootURI, exports: {} };
+  ctx.module = { exports: ctx.exports };
   Services.scriptloader.loadSubScript(rootURI + "content/bootstrap.js", ctx);
-  _plugin = ctx._aiCompanionPlugin || {};
-  if (typeof _plugin.startup === "function") {
-    await _plugin.startup({ id, version, resourceURI, rootURI }, reason);
+  _startup = ctx.exports.startup || ctx.module.exports.startup;
+  _shutdown = ctx.exports.shutdown || ctx.module.exports.shutdown;
+  if (typeof _startup === "function") {
+    await _startup({ id, version, resourceURI, rootURI }, reason);
   }
 }
 
 async function shutdown({ id, version, resourceURI, rootURI }, reason) {
   if (reason === APP_SHUTDOWN) return;
-  if (typeof _plugin?.shutdown === "function") {
-    await _plugin.shutdown({ id, version, resourceURI, rootURI }, reason);
+  if (typeof _shutdown === "function") {
+    await _shutdown({ id, version, resourceURI, rootURI }, reason);
   }
-  _plugin = undefined;
+  _startup = _shutdown = undefined;
   if (chromeHandle) {
     chromeHandle.destruct();
     chromeHandle = null;
