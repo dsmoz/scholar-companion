@@ -140,12 +140,15 @@ async function handleCommand(command: string, win: Window) {
         select: true,
       });
 
-      // Use a XUL browser element (like ReaderTab) to host the HTML panel
+      // Use a XUL browser element to host the HTML panel
       const browser = (win.document as any).createXULElement('browser');
       browser.setAttribute('flex', '1');
-      browser.setAttribute('type', 'content');
-      browser.setAttribute('transparent', 'true');
+      browser.setAttribute('type', 'chrome');
       browser.setAttribute('src', `chrome://zotero-ai-companion/content/panel.html?panel=${def.panel}`);
+      container.style.display = 'flex';
+      container.style.flexDirection = 'column';
+      container.style.height = '100%';
+      browser.style.flex = '1';
       container.appendChild(browser);
       break;
     }
