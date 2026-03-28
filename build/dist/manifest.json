@@ -1,0 +1,13 @@
+{
+  "manifest_version": 2,
+  "name": "Zotero AI Companion",
+  "version": "0.1.0",
+  "description": "AI research companion — chat, semantic search, similarity graph, discovery",
+  "applications": {
+    "zotero": {
+      "id": "zotero-ai-companion@dsmoz",
+      "strict_min_version": "7.0"
+    }
+  },
+  "chrome_url_overrides": {}
+}
