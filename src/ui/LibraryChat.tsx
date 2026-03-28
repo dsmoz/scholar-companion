@@ -52,7 +52,6 @@ export function LibraryChat() {
 
   async function selectSession(id: string) {
     setActiveSessionId(id);
-    setLastQuery('');
     const session = await loadLibrarySession(id);
     if (session && session.messages.length > 0) {
       setMessages(session.messages.map(m => ({
@@ -60,8 +59,12 @@ export function LibraryChat() {
         text: m.content,
         sources: m.sources,
       })));
+      // Seed related docs from the last user message in the session
+      const lastUserMsg = [...session.messages].reverse().find(m => m.role === 'user');
+      setLastQuery(lastUserMsg?.content ?? '');
     } else {
       setMessages([]);
+      setLastQuery('');
     }
   }
 
