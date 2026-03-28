@@ -10,8 +10,11 @@ import { ItemPaneTab } from './ui/ItemPaneTab';
 
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 const windowListeners = new Map<Window, EventListener>();
+let _rootURI = '';
+let _sectionRegistered = false;
 
 async function startup({ rootURI }: { id: string; version: string; rootURI: string }) {
+  _rootURI = rootURI;
   registerEventHooks();
 
   // Initialize any already-open windows (plugin loaded after Zotero started)
@@ -23,45 +26,6 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
     try { await triggerSync(); } catch (e) { /* server may not be running */ }
   }
   scheduleSync();
-
-  // Register the AI tab in the Zotero item pane
-  try {
-    (Zotero as any).ItemPaneManager.registerSection({
-      paneID: 'zotero-ai-companion',
-      pluginID: 'zotero-ai-companion@dsmoz',
-      header: {
-        l10nID: 'ai-companion-header',
-        icon: `${rootURI}content/icons/icon16.png`,
-      },
-      sidenav: {
-        l10nID: 'ai-companion-sidenav',
-        icon: `${rootURI}content/icons/icon20.png`,
-      },
-      onInit: ({ body }: { body: HTMLElement }) => {
-        body.style.cssText = 'height:100%;min-height:300px;overflow:hidden;';
-      },
-      onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
-        const authors: Array<{ firstName: string; lastName: string }> = item
-          .getCreators()
-          .map((c: any) => ({ firstName: c.firstName || '', lastName: c.lastName || '' }));
-
-        if (!(body as any)._aiRoot) {
-          (body as any)._aiRoot = createRoot(body);
-        }
-        (body as any)._aiRoot.render(createElement(ItemPaneTab, {
-          zoteroKey: item.key,
-          title: item.getField('title'),
-          authors,
-        }));
-      },
-      onDestroy: ({ body }: { body: HTMLElement }) => {
-        if ((body as any)._aiRoot) {
-          (body as any)._aiRoot.unmount();
-          delete (body as any)._aiRoot;
-        }
-      },
-    });
-  } catch(e) { Zotero.logError(e as Error); }
 }
 
 function shutdown() {
@@ -73,6 +37,47 @@ function shutdown() {
 async function onMainWindowLoad({ window: win }: { window: Window }) {
   // Wait for Zotero UI to be fully ready before injecting menus
   await (Zotero as any).uiReadyPromise;
+
+  // Register the item pane section once, after the UI (and its notifier listeners) are ready
+  if (!_sectionRegistered) {
+    _sectionRegistered = true;
+    try {
+      (Zotero as any).ItemPaneManager.registerSection({
+        paneID: 'zotero-ai-companion',
+        pluginID: 'zotero-ai-companion@dsmoz',
+        header: {
+          l10nID: 'ai-companion-header',
+          icon: `${_rootURI}content/icons/icon16.png`,
+        },
+        sidenav: {
+          l10nID: 'ai-companion-sidenav',
+          icon: `${_rootURI}content/icons/icon20.png`,
+        },
+        onInit: ({ body }: { body: HTMLElement }) => {
+          body.style.cssText = 'height:100%;min-height:300px;overflow:hidden;';
+        },
+        onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
+          const authors = item.getCreators()
+            .map((c: any) => ({ firstName: c.firstName || '', lastName: c.lastName || '' }));
+          if (!(body as any)._aiRoot) {
+            (body as any)._aiRoot = createRoot(body);
+          }
+          (body as any)._aiRoot.render(createElement(ItemPaneTab, {
+            zoteroKey: item.key,
+            title: item.getField('title'),
+            authors,
+          }));
+        },
+        onDestroy: ({ body }: { body: HTMLElement }) => {
+          if ((body as any)._aiRoot) {
+            (body as any)._aiRoot.unmount();
+            delete (body as any)._aiRoot;
+          }
+        },
+      });
+    } catch(e) { (Zotero as any).logError(e); }
+  }
+
   initWindow(win);
 }
 
