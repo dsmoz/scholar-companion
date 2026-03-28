@@ -4,6 +4,9 @@ import { registerMenus, registerContextMenu } from './menu';
 import { getSyncOnStartup, getAutoSync, getSyncInterval } from './prefs';
 import { triggerSync } from './api/sync';
 import { apiFetch } from './api/client';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import { ItemPaneTab } from './ui/ItemPaneTab';
 
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 const windowListeners = new Map<Window, EventListener>();
@@ -35,10 +38,6 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
         icon: `${rootURI}content/icons/icon20.png`,
       },
       onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
-        const { createRoot } = require('react-dom/client') as typeof import('react-dom/client');
-        const { createElement } = require('react') as typeof import('react');
-        const { ItemPaneTab } = require('./ui/ItemPaneTab') as typeof import('./ui/ItemPaneTab');
-
         const authors: Array<{ firstName: string; lastName: string }> = item
           .getCreators()
           .map((c: any) => ({ firstName: c.firstName || '', lastName: c.lastName || '' }));
