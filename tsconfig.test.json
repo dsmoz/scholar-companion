@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
-    "types": ["jest", "@testing-library/jest-dom"]
+    "types": ["jest", "@testing-library/jest-dom", "node"]
   },
   "files": ["tests/globals.d.ts"],
   "include": ["src/**/*", "tests/**/*"]
