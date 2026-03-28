@@ -13,6 +13,10 @@ export interface LibraryHealth {
   unindexed: number;
   failed: number;
   missing_pdf: number;
+  total: number;
+  sync_percentage: string;
+  last_sync: string;
+  status: string;
   issues: HealthIssue[];
 }
 

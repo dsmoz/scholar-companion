@@ -50,6 +50,15 @@ export function HealthPanel() {
       <SectionHeader>Library Health</SectionHeader>
       {health && (
         <>
+          <div style={{ marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#6c7086', marginBottom: 4 }}>
+              <span>{health.indexed} / {health.total} indexed</span>
+              <span style={{ color: health.status === 'healthy' ? '#a6e3a1' : '#f9e2af' }}>{health.sync_percentage}%</span>
+            </div>
+            <div style={{ background: '#313244', borderRadius: 4, height: 6 }}>
+              <div style={{ background: '#a6e3a1', height: 6, borderRadius: 4, width: `${health.sync_percentage}%`, transition: 'width 0.5s' }} />
+            </div>
+          </div>
           <div style={{ display: 'flex', gap: 6, marginBottom: '0.75rem' }}>
             {card('Indexed', health.indexed, null, '#a6e3a1')}
             {card('Unindexed', health.unindexed, 'not_indexed', '#89b4fa')}
