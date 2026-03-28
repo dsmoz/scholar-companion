@@ -126,18 +126,18 @@ async function handleCommand(command: string, win: Window) {
     case 'openHealth':
     case 'openQueue':
     case 'openSettings': {
-      const tabDefs: Record<string, { title: string; component: string }> = {
-        openGraph:      { title: 'Similarity Graph',  component: 'GraphTab'       },
-        openDiscovery:  { title: 'Discovery',          component: 'DiscoveryPanel' },
-        openHealth:     { title: 'Library Health',     component: 'HealthPanel'    },
-        openQueue:      { title: 'Index Queue',        component: 'IndexQueue'     },
-        openSettings:   { title: 'AI Settings',        component: 'Settings'       },
+      const tabDefs: Record<string, { title: string; panel: string }> = {
+        openGraph:     { title: 'Similarity Graph', panel: 'graph'     },
+        openDiscovery: { title: 'Discovery',         panel: 'discovery' },
+        openHealth:    { title: 'Library Health',    panel: 'health'    },
+        openQueue:     { title: 'Index Queue',       panel: 'queue'     },
+        openSettings:  { title: 'AI Settings',       panel: 'settings'  },
       };
       const def = tabDefs[command];
       const tabId = `zotero-ai-${command}`;
+      const ZTabs = (win as any).Zotero_Tabs;
 
       // If tab already open, just select it
-      const ZTabs = (win as any).Zotero_Tabs;
       const existing = ZTabs?._tabs?.find((t: any) => t.id === tabId);
       if (existing) { ZTabs.select(tabId); break; }
 
@@ -149,12 +149,13 @@ async function handleCommand(command: string, win: Window) {
         select: true,
       });
 
-      const { createRoot } = require('react-dom/client') as typeof import('react-dom/client');
-      const { createElement } = require('react') as typeof import('react');
-      const mod = require(`./ui/${def.component}`) as any;
-      const Component = mod[def.component] ?? mod.default;
-      const root = createRoot(container);
-      root.render(createElement(Component, {}));
+      // Use a XUL browser element (like ReaderTab) to host the HTML panel
+      const browser = (win.document as any).createXULElement('browser');
+      browser.setAttribute('flex', '1');
+      browser.setAttribute('type', 'content');
+      browser.setAttribute('transparent', 'true');
+      browser.setAttribute('src', `chrome://zotero-ai-companion/content/panel.html?panel=${def.panel}`);
+      container.appendChild(browser);
       break;
     }
     case 'cascadeDelete': {
