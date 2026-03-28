@@ -1,7 +1,7 @@
 import { build } from 'esbuild';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { createWriteStream, rmSync, mkdirSync, copyFileSync, writeFileSync } from 'fs';
+import { createWriteStream, rmSync, mkdirSync, copyFileSync, writeFileSync, readdirSync } from 'fs';
 import archiver from 'archiver';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -12,6 +12,7 @@ const dist = join(root, 'build/dist');
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(join(dist, 'content/graph'), { recursive: true });
 mkdirSync(join(dist, 'content/icons'), { recursive: true });
+mkdirSync(join(dist, 'content/styles'), { recursive: true });
 
 // 1a. Bundle panel.tsx → content/panel.js (IIFE for browser context)
 await build({
@@ -46,6 +47,9 @@ await build({
 // 2. Copy static assets
 copyFileSync(join(root, 'src/graph/network.html'), join(dist, 'content/graph/network.html'));
 copyFileSync(join(root, 'src/panel.html'), join(dist, 'content/panel.html'));
+for (const f of readdirSync(join(root, 'src/styles'))) {
+  copyFileSync(join(root, 'src/styles', f), join(dist, 'content/styles', f));
+}
 copyFileSync(join(root, 'addon/content/panel.xhtml'), join(dist, 'content/panel.xhtml'));
 copyFileSync(join(root, 'addon/manifest.json'), join(dist, 'manifest.json'));
 copyFileSync(join(root, 'addon/content/icons/favicon.png'), join(dist, 'content/icons/favicon.png'));
