@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Plus, Check } from '@phosphor-icons/react';
 import { SectionHeader } from './components/SectionHeader';
+import { StripedList } from './components/StripedList';
 import { discoverySearch, DiscoveryResult } from '../api/discovery';
 
 interface Props { seedQuery?: string; seedAuthor?: string; }
@@ -57,27 +58,31 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
           padding: '4px 8px', cursor: 'pointer', color: '#1e1e2e', fontSize: '0.75rem',
         }}>Search</button>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
         {loading && <div style={{ color: '#6c7086', textAlign: 'center', padding: '1rem' }}>Searching...</div>}
-        {results.map((r, i) => (
-          <div key={i} onClick={() => toggleSelect(i)} style={{
-            background: '#313244', borderRadius: 6, padding: '6px 8px', cursor: 'pointer',
-            border: selected.has(i) ? '1px solid var(--accent, #89b4fa)' : '1px solid transparent',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ flex: 1, marginRight: 8 }}>
-                <div style={{ color: '#cdd6f4', marginBottom: 2 }}>{r.title}</div>
-                <div style={{ color: '#6c7086', fontSize: '0.65rem' }}>
-                  {r.authors.slice(0, 3).join(', ')}{r.authors.length > 3 ? ' et al.' : ''} · {r.journal} · {r.year}
+        {!loading && (
+          <StripedList emptyMessage={results.length === 0 && !loading ? 'No results' : ''}>
+            {results.map((r, i) => (
+              <div key={i} onClick={() => toggleSelect(i)} style={{
+                padding: '6px 8px', cursor: 'pointer',
+                borderLeft: selected.has(i) ? '3px solid var(--accent, #89b4fa)' : '3px solid transparent',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1, marginRight: 8 }}>
+                    <div style={{ color: '#cdd6f4', marginBottom: 2 }}>{r.title}</div>
+                    <div style={{ color: '#6c7086', fontSize: '0.65rem' }}>
+                      {r.authors.slice(0, 3).join(', ')}{r.authors.length > 3 ? ' et al.' : ''} · {r.journal} · {r.year}
+                    </div>
+                  </div>
+                  {selected.has(i)
+                    ? <Check size={14} style={{ color: 'var(--accent, #89b4fa)', flexShrink: 0 }} weight="bold" />
+                    : <Plus size={14} style={{ color: '#6c7086', flexShrink: 0 }} />
+                  }
                 </div>
               </div>
-              {selected.has(i)
-                ? <Check size={14} style={{ color: 'var(--accent, #89b4fa)', flexShrink: 0 }} weight="bold" />
-                : <Plus size={14} style={{ color: '#6c7086', flexShrink: 0 }} />
-              }
-            </div>
-          </div>
-        ))}
+            ))}
+          </StripedList>
+        )}
       </div>
       {selected.size > 0 && (
         <div style={{ padding: '6px 8px', borderTop: '1px solid #313244', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

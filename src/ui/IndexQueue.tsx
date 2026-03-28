@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause } from '@phosphor-icons/react';
 import { SectionHeader } from './components/SectionHeader';
+import { StripedList } from './components/StripedList';
 import { StatusDot } from './components/StatusDot';
 import { fetchJobs, retryJob, JobsStatus } from '../api/jobs';
 
@@ -65,31 +66,35 @@ export function IndexQueue() {
         {status?.pending && status.pending.length > 0 && (
           <>
             <SectionHeader>Pending</SectionHeader>
-            {status.pending.map(job => (
-              <div key={job.id} style={{ background: '#313244', borderRadius: 5, padding: '6px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ color: '#cdd6f4', fontSize: '0.75rem' }}>{job.title}</div>
-                  <div style={{ color: '#6c7086', fontSize: '0.65rem' }}>{job.type}</div>
+            <StripedList>
+              {status.pending.map(job => (
+                <div key={job.id} style={{ padding: '6px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ color: '#cdd6f4', fontSize: '0.75rem' }}>{job.title}</div>
+                    <div style={{ color: '#6c7086', fontSize: '0.65rem' }}>{job.type}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </StripedList>
           </>
         )}
 
         {status?.failed && status.failed.length > 0 && (
           <>
             <SectionHeader>Failed</SectionHeader>
-            {status.failed.map(job => (
-              <div key={job.id} style={{ background: '#1e1e2e', borderLeft: '3px solid #f38ba8', borderRadius: 4, padding: '6px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ color: '#cdd6f4', fontSize: '0.75rem' }}>{job.title}</div>
-                  <div style={{ color: '#f38ba8', fontSize: '0.65rem' }}>{job.error}</div>
+            <StripedList>
+              {status.failed.map(job => (
+                <div key={job.id} style={{ borderLeft: '3px solid #f38ba8', padding: '6px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ color: '#cdd6f4', fontSize: '0.75rem' }}>{job.title}</div>
+                    <div style={{ color: '#f38ba8', fontSize: '0.65rem' }}>{job.error}</div>
+                  </div>
+                  <button onClick={() => handleRetry(job.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent, #89b4fa)', fontSize: '0.7rem', cursor: 'pointer' }}>
+                    Retry
+                  </button>
                 </div>
-                <button onClick={() => handleRetry(job.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent, #89b4fa)', fontSize: '0.7rem', cursor: 'pointer' }}>
-                  Retry
-                </button>
-              </div>
-            ))}
+              ))}
+            </StripedList>
           </>
         )}
       </div>

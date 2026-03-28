@@ -5,6 +5,7 @@ import { streamChat } from '../api/chat';
 import { similarItems, SearchResult } from '../api/search';
 import { fetchAuthorProfile, AuthorProfile } from '../api/author';
 import { ScoreChip } from './components/ScoreChip';
+import { StripedList } from './components/StripedList';
 
 type SubTab = 'chat' | 'similar' | 'author';
 interface Message { role: 'user' | 'assistant'; text: string; sources?: Array<{ page: number }> }
@@ -130,22 +131,26 @@ export function ItemPaneTab({ zoteroKey, title, authors }: Props) {
       )}
 
       {tab === 'similar' && (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {similar.length === 0 && <div style={{ color: '#6c7086', textAlign: 'center', marginTop: '2rem' }}>Loading...</div>}
-          {similar.map(item => (
-            <div key={item.zotero_key} style={{ background: '#313244', borderRadius: 6, padding: '6px 8px' }}>
-              <div style={{ color: '#cdd6f4', marginBottom: 2 }}>{item.title}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#6c7086', fontSize: '0.65rem' }}>
-                  {item.creators?.[0]?.lastName ?? ''}{item.date ? ` · ${item.date}` : ''}
-                </span>
-                <ScoreChip score={item.score} />
-                <span style={{ marginLeft: 'auto', color: 'var(--accent, #89b4fa)', fontSize: '0.65rem', cursor: 'pointer' }}>
-                  open
-                </span>
-              </div>
-            </div>
-          ))}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
+          {similar.length === 0
+            ? <div style={{ color: '#6c7086', textAlign: 'center', marginTop: '2rem' }}>Loading...</div>
+            : <StripedList>
+                {similar.map(item => (
+                  <div key={item.zotero_key} style={{ padding: '6px 8px' }}>
+                    <div style={{ color: '#cdd6f4', marginBottom: 2 }}>{item.title}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ color: '#6c7086', fontSize: '0.65rem' }}>
+                        {item.creators?.[0]?.lastName ?? ''}{item.date ? ` · ${item.date}` : ''}
+                      </span>
+                      <ScoreChip score={item.score} />
+                      <span style={{ marginLeft: 'auto', color: 'var(--accent, #89b4fa)', fontSize: '0.65rem', cursor: 'pointer' }}>
+                        open
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </StripedList>
+          }
         </div>
       )}
 
@@ -181,12 +186,14 @@ export function ItemPaneTab({ zoteroKey, title, authors }: Props) {
                   Co-authors: {authorProfile.coauthors.slice(0, 5).join(', ')}
                 </div>
               )}
-              {authorProfile.items.map(item => (
-                <div key={item.key} style={{ background: '#313244', borderRadius: 4, padding: '4px 8px', marginBottom: 4 }}>
-                  <div style={{ color: '#cdd6f4', fontSize: '0.75rem' }}>{item.title}</div>
-                  <div style={{ color: '#6c7086', fontSize: '0.65rem' }}>{item.date}</div>
-                </div>
-              ))}
+              <StripedList>
+                {authorProfile.items.map(item => (
+                  <div key={item.key} style={{ padding: '4px 8px' }}>
+                    <div style={{ color: '#cdd6f4', fontSize: '0.75rem' }}>{item.title}</div>
+                    <div style={{ color: '#6c7086', fontSize: '0.65rem' }}>{item.date}</div>
+                  </div>
+                ))}
+              </StripedList>
             </div>
           ) : null}
         </div>

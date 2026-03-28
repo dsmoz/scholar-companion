@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText } from '@phosphor-icons/react';
 import { SectionHeader } from './components/SectionHeader';
+import { StripedList } from './components/StripedList';
 import { fetchLibraryHealth, indexAllPending, fixOrphans, invalidateHealthCache, LibraryHealth } from '../api/health';
 import { getHealthPageSize } from '../prefs';
 
@@ -102,37 +103,35 @@ export function HealthPanel() {
             {card('No PDF', health.missing_pdf, 'missing_pdf', '#f9e2af')}
           </div>
           <SectionHeader>Issues</SectionHeader>
-          <div style={{ borderRadius: 4, overflow: 'hidden', marginBottom: '0.5rem' }}>
-            {filtered.length === 0 && (
-              <div style={{ color: '#6c7086', textAlign: 'center', padding: '1rem' }}>No issues</div>
-            )}
-            {paginated.map((issue, idx) => (
-              <div key={issue.zotero_key} style={{
-                background: idx % 2 === 0 ? '#1e1e2e' : '#181825',
-                borderLeft: `3px solid ${ISSUE_COLORS[issue.issue_type]}`,
-                padding: '6px 8px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                  <FileText size={14} color="#6c7086" style={{ marginTop: 2, flexShrink: 0 }} />
-                <div>
-                  <div style={{ color: '#cdd6f4' }}>{issue.title}</div>
-                  <div style={{ color: ISSUE_COLORS[issue.issue_type], fontSize: '0.65rem' }}>
-                    {ISSUE_LABELS[issue.issue_type]}
-                    {issue.error_message ? ` · ${issue.error_message}` : ''}
-                  </div>
-                  {issue.updated_at && (
-                    <div style={{ color: '#6c7086', fontSize: '0.6rem', marginTop: 1 }}>
-                      {new Date(issue.updated_at).toLocaleDateString()}
+          <div style={{ marginBottom: '0.5rem' }}>
+            <StripedList emptyMessage="No issues">
+              {paginated.map(issue => (
+                <div key={issue.zotero_key} style={{
+                  borderLeft: `3px solid ${ISSUE_COLORS[issue.issue_type]}`,
+                  padding: '6px 8px',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                    <FileText size={14} color="#6c7086" style={{ marginTop: 2, flexShrink: 0 }} />
+                    <div>
+                      <div style={{ color: '#cdd6f4' }}>{issue.title}</div>
+                      <div style={{ color: ISSUE_COLORS[issue.issue_type], fontSize: '0.65rem' }}>
+                        {ISSUE_LABELS[issue.issue_type]}
+                        {issue.error_message ? ` · ${issue.error_message}` : ''}
+                      </div>
+                      {issue.updated_at && (
+                        <div style={{ color: '#6c7086', fontSize: '0.6rem', marginTop: 1 }}>
+                          {new Date(issue.updated_at).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                  <span style={{ color: 'var(--accent, #89b4fa)', fontSize: '0.7rem', cursor: 'pointer' }}>
+                    {ISSUE_ACTIONS[issue.issue_type]}
+                  </span>
                 </div>
-                </div>
-                <span style={{ color: 'var(--accent, #89b4fa)', fontSize: '0.7rem', cursor: 'pointer' }}>
-                  {ISSUE_ACTIONS[issue.issue_type]}
-                </span>
-              </div>
-            ))}
+              ))}
+            </StripedList>
           </div>
           {totalPages > 1 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', fontSize: '0.7rem', color: '#6c7086' }}>
