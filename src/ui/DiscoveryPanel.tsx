@@ -1,5 +1,5 @@
 // src/ui/DiscoveryPanel.tsx
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Plus, Check, CaretLeft, CaretRight, ClockCounterClockwise } from '@phosphor-icons/react';
 import { StripedList } from './components/StripedList';
 import {
@@ -47,8 +47,15 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
   const [yearTo, setYearTo] = useState('');
   const [page, setPage] = useState(1);
   const [showHistory, setShowHistory] = useState(false);
+  const [activeCollection, setActiveCollection] = useState<{ id: number; name: string } | null>(null);
 
   const enabledSources = useMemo(() => getDiscoverySources().filter(s => s.enabled), []);
+
+  useEffect(() => {
+    const pane = (globalThis as any).Zotero?.getActiveZoteroPane?.();
+    const col = pane?.getSelectedCollection?.();
+    if (col) setActiveCollection({ id: col.id, name: col.name });
+  }, []);
   const pageSize = getDiscoveryPageSize();
   const searchBarRef = useRef<HTMLDivElement>(null);
 
@@ -143,7 +150,7 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
     setImporting(true);
     try {
       const { importToZotero } = await import('../api/import');
-      const outcomes = await importToZotero(toImport);
+      const outcomes = await importToZotero(toImport, activeCollection?.id);
       const failed = outcomes.filter(o => !o.success);
       if (failed.length === 0) {
         window.alert(`Imported ${outcomes.length} item(s) to Zotero.`);
@@ -336,7 +343,10 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
       {/* Import footer */}
       {selected.size > 0 && (
         <div style={{ padding: '6px 8px', borderTop: '1px solid var(--color-border, #313244)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: '#6c7086', fontSize: '0.7rem' }}>{selected.size} selected</span>
+          <span style={{ color: '#6c7086', fontSize: '0.7rem' }}>
+            {selected.size} selected · Save to:{' '}
+            <span style={{ color: '#cdd6f4' }}>{activeCollection ? activeCollection.name : 'My Library'}</span>
+          </span>
           <button
             onClick={handleImport}
             disabled={importing}
