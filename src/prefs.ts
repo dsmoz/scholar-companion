@@ -12,6 +12,7 @@ const DEFAULTS = {
   chatModel: 'google/gemma-2-9b-it',
   chatMaxChunks: 8,
   chatRelatedMax: 5,
+  chatRelatedMinLabel: 'Good',
   chatStream: true,
   discoveryPubmed: true,
   discoverySemanticScholar: true,
@@ -30,6 +31,12 @@ function set<K extends PrefKey>(key: K, value: typeof DEFAULTS[K]): void {
   (globalThis as any).Zotero?.Prefs?.set(`${PREFIX}.${key}`, value);
 }
 
+export const SCORE_THRESHOLDS: Record<string, number> = {
+  Best: 0.75,
+  Good: 0.60,
+  Fair: 0.45,
+};
+
 export const getApiUrl = () => get('apiUrl') as string;
 export const setApiUrl = (v: string) => set('apiUrl', v as typeof DEFAULTS['apiUrl']);
 export const getSyncInterval = () => get('syncInterval') as number;
@@ -42,6 +49,9 @@ export const getGraphNodeSize = () => get('graphNodeSize') as string;
 export const getChatModel = () => get('chatModel') as string;
 export const getChatMaxChunks = () => get('chatMaxChunks') as number;
 export const getChatRelatedMax = () => get('chatRelatedMax') as number;
+export const getChatRelatedMinLabel = () => get('chatRelatedMinLabel') as string;
+export const setChatRelatedMinLabel = (v: string) => set('chatRelatedMinLabel', v as typeof DEFAULTS['chatRelatedMinLabel']);
+export const getRelatedMinScore = () => SCORE_THRESHOLDS[getChatRelatedMinLabel()] ?? 0.60;
 export const getChatStream = () => get('chatStream') as boolean;
 export const getSyncOnStartup = () => get('syncOnStartup') as boolean;
 export const getAutoSync = () => get('autoSync') as boolean;
