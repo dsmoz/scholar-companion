@@ -53,7 +53,12 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     ["content", "zotero-ai-companion", rootURI + "content/"],
   ]);
 
-  ctx = { rootURI };
+  await Zotero.initializationPromise;
+
+  ctx = {
+    rootURI,
+    document: Zotero.getMainWindow().document,
+  };
   ctx._globalThis = ctx;
   Services.scriptloader.loadSubScript(rootURI + "content/bootstrap.js", ctx);
   await ctx.startup({ id, version, resourceURI, rootURI }, reason);
