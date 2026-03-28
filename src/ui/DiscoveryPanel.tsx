@@ -22,6 +22,7 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
   const [results, setResults] = useState<DiscoveryResult[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
   // null = All, otherwise a single source id
   const [activeSource, setActiveSource] = useState<string | null>(null);
 
@@ -37,6 +38,29 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
       setSelected(new Set());
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleImport() {
+    const toImport = results.filter((_, i) => selected.has(i));
+    setImporting(true);
+    try {
+      const { importToZotero } = await import('../api/import');
+      const outcomes = await importToZotero(toImport);
+      const failed = outcomes.filter(o => !o.success);
+      if (failed.length === 0) {
+        window.alert(`Imported ${outcomes.length} item(s) to Zotero.`);
+      } else {
+        window.alert(
+          `Imported ${outcomes.length - failed.length} item(s).\n` +
+          `Failed: ${failed.map(f => f.title).join(', ')}`
+        );
+      }
+      setSelected(new Set());
+    } catch (e: any) {
+      window.alert(`Import failed: ${e.message}`);
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -134,8 +158,12 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
       {selected.size > 0 && (
         <div style={{ padding: '6px 8px', borderTop: '1px solid var(--color-border, #313244)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: '#6c7086', fontSize: '0.7rem' }}>{selected.size} selected</span>
-          <button style={{ background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: '0.75rem', cursor: 'pointer', color: '#1e1e2e' }}>
-            Import to Zotero
+          <button
+            onClick={handleImport}
+            disabled={importing}
+            style={{ background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: '0.75rem', cursor: 'pointer', color: '#1e1e2e', opacity: importing ? 0.6 : 1 }}
+          >
+            {importing ? 'Importing...' : `Import ${selected.size} to Zotero`}
           </button>
         </div>
       )}
