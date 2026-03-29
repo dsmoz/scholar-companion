@@ -1,6 +1,6 @@
 // src/ui/DiscoveryPanel.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Check, Funnel, X, CaretLeft, CaretRight, Clock, Trash } from '@phosphor-icons/react';
+import { Plus, Check, Funnel, X, CaretLeft, CaretRight, Clock, Trash, Article, FilePdf, Video, Globe } from '@phosphor-icons/react';
 import { SectionHeader } from './components/SectionHeader';
 import {
   discoverySearch,
@@ -56,37 +56,10 @@ function getItemDisplayType(r: DiscoveryResult): 'article' | 'pdf' | 'video' | '
 }
 
 function ItemTypeIcon({ type }: { type: 'article' | 'pdf' | 'video' | 'webpage' }) {
-  const style: React.CSSProperties = { flexShrink: 0, marginTop: 1 };
-  if (type === 'article') return (
-    <svg style={style} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6c7086" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/>
-      <line x1="16" y1="13" x2="8" y2="13"/>
-      <line x1="16" y1="17" x2="8" y2="17"/>
-      <polyline points="10 9 9 9 8 9"/>
-    </svg>
-  );
-  if (type === 'pdf') return (
-    <svg style={style} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f38ba8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/>
-      <text x="6" y="18" fontSize="6" fill="#f38ba8" stroke="none" fontWeight="bold">PDF</text>
-    </svg>
-  );
-  if (type === 'video') return (
-    <svg style={style} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#cba6f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="23 7 16 12 23 17 23 7"/>
-      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-    </svg>
-  );
-  // webpage
-  return (
-    <svg style={style} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#89dceb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="2" y1="12" x2="22" y2="12"/>
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-    </svg>
-  );
+  if (type === 'pdf')     return <FilePdf size={14} color="#f38ba8" style={{ flexShrink: 0, marginTop: 1 }} />;
+  if (type === 'video')   return <Video    size={14} color="#cba6f7" style={{ flexShrink: 0, marginTop: 1 }} />;
+  if (type === 'webpage') return <Globe    size={14} color="#89dceb" style={{ flexShrink: 0, marginTop: 1 }} />;
+  return                         <Article  size={14} color="#6c7086" style={{ flexShrink: 0, marginTop: 1 }} />;
 }
 
 function ScoreBadge({ score }: { score?: number }) {
