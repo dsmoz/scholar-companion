@@ -47,6 +47,48 @@ const PUBLICATION_TYPES = [
   { value: 'evidence_gap_map', label: 'Evidence gap map' },
 ];
 
+/** Derive a display type from the result for icon + tooltip purposes. */
+function getItemDisplayType(r: DiscoveryResult): 'article' | 'pdf' | 'video' | 'webpage' {
+  if (r.item_type === 'videoRecording') return 'video';
+  if (r.item_type === 'report') return 'pdf';
+  if (r.item_type === 'webpage') return 'webpage';
+  return 'article';
+}
+
+function ItemTypeIcon({ type }: { type: 'article' | 'pdf' | 'video' | 'webpage' }) {
+  const style: React.CSSProperties = { flexShrink: 0, marginTop: 1 };
+  if (type === 'article') return (
+    <svg style={style} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6c7086" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+  );
+  if (type === 'pdf') return (
+    <svg style={style} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f38ba8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <text x="6" y="18" fontSize="6" fill="#f38ba8" stroke="none" fontWeight="bold">PDF</text>
+    </svg>
+  );
+  if (type === 'video') return (
+    <svg style={style} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#cba6f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="23 7 16 12 23 17 23 7"/>
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+    </svg>
+  );
+  // webpage
+  return (
+    <svg style={style} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#89dceb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  );
+}
+
 function ScoreBadge({ score }: { score?: number }) {
   if (score == null) return null;
   const pct = Math.round(score * 100);
@@ -466,7 +508,10 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: 'var(--accent, #89b4fa)', marginBottom: 3, lineHeight: 1.35, fontSize: fontSize, fontWeight: 500 }}>{r.title}</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5, marginBottom: 3 }}>
+                    <ItemTypeIcon type={getItemDisplayType(r)} />
+                    <span style={{ color: 'var(--accent, #89b4fa)', lineHeight: 1.35, fontSize: fontSize, fontWeight: 500 }}>{r.title}</span>
+                  </div>
                   <div style={{ color: '#a6adc8', fontSize: fontSize * 0.84 }}>
                     {r.authors.slice(0, 3).join(', ')}{r.authors.length > 3 ? ' et al.' : ''}
                     {(r.journal || r.year) && ' · '}
