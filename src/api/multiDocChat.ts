@@ -22,27 +22,10 @@ export async function fetchDocMetadata(keys: string[]): Promise<DocMeta[]> {
   }
 }
 
-export interface MultiDocSession {
-  id: string;
-  title: string;
-  zotero_keys: string[];
-  messages: Array<{ role: 'user' | 'assistant'; content: string; sources?: import('./chat').Source[] }>;
-}
-
-export async function loadMultiDocSession(sessionId: string): Promise<MultiDocSession | null> {
-  try {
-    const session = await apiFetch<MultiDocSession>(`/chat/multi/sessions/${sessionId}`);
-    return session && session.id ? session : null;
-  } catch {
-    return null;
-  }
-}
-
 export function streamMultiDocChat(
   zoteroKeys: string[],
   question: string,
   sessionId: string,
-  initialAbstract: string,
   onToken: (token: string) => void,
   onDone: (sources: Source[]) => void,
   onError: (err: string) => void,
@@ -54,7 +37,7 @@ export function streamMultiDocChat(
   fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ zotero_keys: zoteroKeys, question, session_id: sessionId, abstract: initialAbstract }),
+    body: JSON.stringify({ zotero_keys: zoteroKeys, question, session_id: sessionId }),
     signal: controller.signal,
   }).then(async resp => {
     if (!resp.ok) { onError(`HTTP ${resp.status}`); return; }

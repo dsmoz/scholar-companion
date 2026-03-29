@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper } from '@phosphor-icons/react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { streamMultiDocChat, fetchDocMetadata, loadMultiDocSession } from '../api/multiDocChat';
+import { streamMultiDocChat, fetchDocMetadata } from '../api/multiDocChat';
 import type { DocMeta } from '../api/multiDocChat';
 import type { Source } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
@@ -12,21 +12,11 @@ interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[]
 
 interface Props {
   zoteroKeys: string[];
-  initialAbstract?: string;
 }
 
 // All assistant text is sanitized with DOMPurify before rendering
 function renderMarkdown(text: string): string {
-  const html = DOMPurify.sanitize(marked.parse(text) as string);
-  return html.replace(/\[(\d+)\]/g, '<sup class="citation-ref">[$1]</sup>');
-}
-
-function formatApaSource(s: Source, index: number): string {
-  const parts: string[] = [];
-  if (s.authors) parts.push(s.authors + '.');
-  if (s.year) parts.push(`(${s.year}).`);
-  if (s.title) parts.push(s.title + '.');
-  return `[${index + 1}] ${parts.join(' ')}`;
+  return DOMPurify.sanitize(marked.parse(text) as string);
 }
 
 function generateSessionId(keys: string[]): string {
@@ -44,7 +34,7 @@ function DocIcon({ itemType }: { itemType: string }) {
   return <FilePdf size={14} weight="duotone" style={style} />;
 }
 
-export function MultiDocChat({ zoteroKeys, initialAbstract = '' }: Props) {
+export function MultiDocChat({ zoteroKeys }: Props) {
   const [docs, setDocs] = useState<DocMeta[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -55,16 +45,6 @@ export function MultiDocChat({ zoteroKeys, initialAbstract = '' }: Props) {
 
   useEffect(() => {
     fetchDocMetadata(zoteroKeys).then(setDocs);
-    // Restore previous session messages if this session was already started
-    loadMultiDocSession(sessionId.current).then(session => {
-      if (session && session.messages.length > 0) {
-        setMessages(session.messages.map(m => ({
-          role: m.role,
-          text: m.content,
-          sources: m.sources,
-        })));
-      }
-    });
   }, []);
 
   function sendMessage() {
@@ -80,7 +60,6 @@ export function MultiDocChat({ zoteroKeys, initialAbstract = '' }: Props) {
       zoteroKeys,
       question,
       sessionId.current,
-      initialAbstract,
       (token) => {
         buffer += token;
         setMessages(prev => [...prev.slice(0, -1), { role: 'assistant', text: buffer }]);
@@ -148,10 +127,12 @@ export function MultiDocChat({ zoteroKeys, initialAbstract = '' }: Props) {
               <span>{m.text}</span>
             )}
             {m.sources && m.sources.length > 0 && (
-              <div className="sources-section">
-                <div className="sources-section-label">Sources</div>
+              <div style={{ color: '#6c7086', fontSize: '0.65rem', marginTop: 4 }}>
                 {m.sources.map((s, si) => (
-                  <div key={si} className="source-entry">{formatApaSource(s, si)}</div>
+                  <span key={si} style={{ marginRight: 6 }}>
+                    {s.title ? s.title.slice(0, 30) + (s.title.length > 30 ? '\u2026' : '') : ''}
+                    {s.page != null ? ` \u00b7 p.${s.page}` : ''}
+                  </span>
                 ))}
               </div>
             )}

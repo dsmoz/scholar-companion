@@ -12,16 +12,7 @@ interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[]
 
 // All assistant text is sanitized with DOMPurify before rendering
 function renderMarkdown(text: string): string {
-  const html = DOMPurify.sanitize(marked.parse(text) as string);
-  return html.replace(/\[(\d+)\]/g, '<sup class="citation-ref">[$1]</sup>');
-}
-
-function formatApaSource(s: Source, index: number): string {
-  const parts: string[] = [];
-  if (s.authors) parts.push(s.authors + '.');
-  if (s.year) parts.push(`(${s.year}).`);
-  if (s.title) parts.push(s.title + '.');
-  return `[${index + 1}] ${parts.join(' ')}`;
+  return DOMPurify.sanitize(marked.parse(text) as string);
 }
 
 function generateSessionId(): string {
@@ -52,6 +43,7 @@ export function LibraryChat() {
 
   async function selectSession(id: string) {
     setActiveSessionId(id);
+    setLastQuery('');
     const session = await loadLibrarySession(id);
     if (session && session.messages.length > 0) {
       setMessages(session.messages.map(m => ({
@@ -59,12 +51,8 @@ export function LibraryChat() {
         text: m.content,
         sources: m.sources,
       })));
-      // Seed related docs from the last user message in the session
-      const lastUserMsg = [...session.messages].reverse().find(m => m.role === 'user');
-      setLastQuery(lastUserMsg?.content ?? '');
     } else {
       setMessages([]);
-      setLastQuery('');
     }
   }
 
@@ -143,10 +131,9 @@ export function LibraryChat() {
           {messages.map((m, i) => (
             <div key={i} style={{
               alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-              marginLeft: m.role === 'assistant' ? '1.5rem' : 0,
               background: m.role === 'user' ? '#313244' : '#1e1e2e',
-              border: m.role === 'assistant' ? '1px solid #313244' : 'none',
-              borderRadius: 6, padding: '8px 12px', maxWidth: '85%', color: '#cdd6f4',
+              border: m.role === 'assistant' ? '1px solid #444' : 'none',
+              borderRadius: 6, padding: '6px 10px', maxWidth: '90%', color: '#cdd6f4',
             }}>
               {m.role === 'assistant' ? (
                 <AssistantMessage html={renderMarkdown(m.text)} />
@@ -154,10 +141,12 @@ export function LibraryChat() {
                 <span>{m.text}</span>
               )}
               {m.sources && m.sources.length > 0 && (
-                <div className="sources-section">
-                  <div className="sources-section-label">Sources</div>
+                <div style={{ color: '#6c7086', fontSize: '0.65rem', marginTop: 4 }}>
                   {m.sources.map((s, si) => (
-                    <div key={si} className="source-entry">{formatApaSource(s, si)}</div>
+                    <span key={si} style={{ marginRight: 6 }}>
+                      {s.title ? s.title.slice(0, 30) + (s.title.length > 30 ? '\u2026' : '') : ''}
+                      {s.page != null ? ` \u00b7 p.${s.page}` : ''}
+                    </span>
                   ))}
                 </div>
               )}
