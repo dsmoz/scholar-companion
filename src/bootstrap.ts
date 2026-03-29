@@ -347,17 +347,17 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         if (colID) item.setCollections([colID]);
         await item.saveTx();
 
-        // For direct PDF links, download and attach the file
-        if (zoteroType === 'report' && r.url?.toLowerCase().endsWith('.pdf')) {
+        // For web items, attach snapshot (webpage) or download PDF (report)
+        if ((zoteroType === 'webpage' || zoteroType === 'report') && r.url) {
           try {
             await (Zotero as any).Attachments.importFromURL({
               url: r.url,
               parentItemID: item.id,
               title: r.title ?? 'Attachment',
-              fileBaseName: r.title?.slice(0, 60).replace(/[^a-z0-9]/gi, '_') ?? 'attachment',
             });
-          } catch (pdfErr) {
-            console.warn('[AI Import] PDF download failed for', r.url, pdfErr);
+            console.log('[AI Import] snapshot/PDF attached for', r.url?.slice(0, 60));
+          } catch (snapErr) {
+            console.warn('[AI Import] snapshot failed for', r.url?.slice(0, 60), snapErr);
           }
         }
 
