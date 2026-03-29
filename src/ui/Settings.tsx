@@ -18,6 +18,7 @@ import {
   getDiscoveryMinScore, setDiscoveryMinScore,
   getDiscoveryTopK, setDiscoveryTopK,
   getListPageSize, setListPageSize,
+  getCacheTtlMinutes, setCacheTtlMinutes,
 } from '../prefs';
 import { fetchDiscoverySources, type SourceEntry } from '../api/discovery';
 
@@ -42,6 +43,7 @@ export function Settings() {
   const [minScore, setMinScoreState] = useState(getDiscoveryMinScore());
   const [topK, setTopKState] = useState(getDiscoveryTopK());
   const [listPageSize, setListPageSizeState] = useState(getListPageSize());
+  const [cacheTtlMinutes, setCacheTtlMinutesState] = useState(getCacheTtlMinutes());
   const [confirmAction, setConfirmAction] = useState<null | 'reindex' | 'clear'>(null);
   const [syncing, setSyncing] = useState(false);
 
@@ -137,6 +139,11 @@ export function Settings() {
         }))}
         {row('Item pane height', segmented(['300', '450', '600', '800'], String(itemPaneHeight), v => {
           const n = parseInt(v); setItemPaneHeightState(n); setItemPaneHeight(n);
+        }))}
+        {row('Cache duration', segmented(['10', '30', '60'], String(cacheTtlMinutes), v => {
+          const n = parseInt(v);
+          setCacheTtlMinutesState(n);
+          setCacheTtlMinutes(n);
         }))}
       </section>
 
