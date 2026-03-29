@@ -546,6 +546,19 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
                   </div>
                 );
               })()}
+              {r.tags && r.tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 5 }}>
+                  {r.tags.slice(0, 5).map(tag => (
+                    <span key={tag} style={{
+                      fontSize: fontSize * 0.72, padding: '1px 6px', borderRadius: 10,
+                      background: '#1e1e2e', border: '1px solid #45475a', color: '#6c7086',
+                    }}>{tag}</span>
+                  ))}
+                  {r.tags.length > 5 && (
+                    <span style={{ fontSize: fontSize * 0.72, color: '#45475a', alignSelf: 'center' }}>+{r.tags.length - 5}</span>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
