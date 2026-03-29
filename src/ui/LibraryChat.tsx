@@ -12,7 +12,16 @@ interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[]
 
 // All assistant text is sanitized with DOMPurify before rendering
 function renderMarkdown(text: string): string {
-  return DOMPurify.sanitize(marked.parse(text) as string);
+  const html = DOMPurify.sanitize(marked.parse(text) as string);
+  return html.replace(/\[(\d+)\]/g, '<sup class="citation-ref">[$1]</sup>');
+}
+
+function formatApaSource(s: Source, index: number): string {
+  const parts: string[] = [];
+  if (s.authors) parts.push(s.authors + '.');
+  if (s.year) parts.push(`(${s.year}).`);
+  if (s.title) parts.push(s.title + '.');
+  return `[${index + 1}] ${parts.join(' ')}`;
 }
 
 function generateSessionId(): string {
@@ -141,12 +150,10 @@ export function LibraryChat() {
                 <span>{m.text}</span>
               )}
               {m.sources && m.sources.length > 0 && (
-                <div style={{ color: '#6c7086', fontSize: '0.65rem', marginTop: 4 }}>
+                <div className="sources-section">
+                  <div className="sources-section-label">Sources</div>
                   {m.sources.map((s, si) => (
-                    <span key={si} style={{ marginRight: 6 }}>
-                      {s.title ? s.title.slice(0, 30) + (s.title.length > 30 ? '\u2026' : '') : ''}
-                      {s.page != null ? ` \u00b7 p.${s.page}` : ''}
-                    </span>
+                    <div key={si} className="source-entry">{formatApaSource(s, si)}</div>
                   ))}
                 </div>
               )}
