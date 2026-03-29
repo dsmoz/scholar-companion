@@ -109,10 +109,11 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
       const importResults = await importToZotero(toImport);
       const ok = importResults.filter(r => r.success).length;
       const dupes = importResults.filter(r => r.duplicate).length;
-      const failed = importResults.filter(r => !r.success).length;
+      const failed = importResults.filter(r => !r.success);
+      const firstErr = failed[0]?.error ?? '';
       let msg = `${ok} imported`;
       if (dupes) msg += ` (${dupes} already in library)`;
-      if (failed) msg += `, ${failed} failed`;
+      if (failed.length) msg += `, ${failed.length} failed${firstErr ? ': ' + firstErr : ''}`;
       setImportMsg(msg);
       setSelected(new Set());
     } catch (e: any) {

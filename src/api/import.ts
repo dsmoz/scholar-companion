@@ -112,6 +112,7 @@ export async function importToZotero(
 
       out.push({ title: r.title, success: true });
     } catch (e: any) {
+      console.error('[AI Import] failed for', r.title, '—', e);
       out.push({ title: r.title, success: false, error: e.message });
     }
   }
