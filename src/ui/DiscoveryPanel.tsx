@@ -70,16 +70,27 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
   const [fontSize, setFontSizeState] = useState(() => getDiscoveryFontSize());
   const [textColor, setTextColorState] = useState(() => getDiscoveryTextColor());
 
+  function broadcast(fs: number, tc: string) {
+    const xulWin = window.top ?? window;
+    const target = ((xulWin as any).opener ?? xulWin) as Window;
+    target.dispatchEvent(new CustomEvent('zotero-ai-command', {
+      detail: { command: 'applyReadingPrefs', fontSize: fs, textColor: tc },
+      bubbles: true,
+    }));
+  }
+
   function changeFontSize(v: number) {
     setFontSizeState(v);
     setDiscoveryFontSize(v);
     document.documentElement.style.setProperty('--reading-font-size', `${v}px`);
+    broadcast(v, textColor);
   }
 
   function changeTextColor(v: string) {
     setTextColorState(v);
     setDiscoveryTextColor(v);
     document.documentElement.style.setProperty('--reading-text-color', v);
+    broadcast(fontSize, v);
   }
 
   function toggleAbstract(e: React.MouseEvent, idx: number) {

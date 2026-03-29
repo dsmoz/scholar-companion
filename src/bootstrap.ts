@@ -308,6 +308,26 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
       }
       break;
     }
+
+    case 'applyReadingPrefs': {
+      const fontSize = String(event?.detail?.fontSize ?? 13) + 'px';
+      const textColor = String(event?.detail?.textColor ?? '#cdd6f4');
+      const enumerator = (Services as any).wm.getEnumerator('');
+      while (enumerator.hasMoreElements()) {
+        const w = enumerator.getNext() as any;
+        try {
+          const browser = w.document?.getElementById('zotero-ai-panel-browser');
+          if (browser) {
+            const contentDoc = browser.contentDocument;
+            if (contentDoc?.documentElement) {
+              contentDoc.documentElement.style.setProperty('--reading-font-size', fontSize);
+              contentDoc.documentElement.style.setProperty('--reading-text-color', textColor);
+            }
+          }
+        } catch { /* closed or cross-origin window — skip */ }
+      }
+      break;
+    }
   }
 }
 
