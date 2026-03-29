@@ -140,11 +140,6 @@ export function Settings() {
         {row('Item pane height', segmented(['300', '450', '600', '800'], String(itemPaneHeight), v => {
           const n = parseInt(v); setItemPaneHeightState(n); setItemPaneHeight(n);
         }))}
-        {row('Cache duration', segmented(['10', '30', '60'], String(cacheTtlMinutes), v => {
-          const n = parseInt(v);
-          setCacheTtlMinutesState(n);
-          setCacheTtlMinutes(n);
-        }))}
       </section>
 
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
@@ -200,6 +195,15 @@ export function Settings() {
         <div style={{ fontSize: '0.65rem', color: '#585b70', marginTop: '0.25rem' }}>
           keyword: fast, no API cost · semantic: accurate, uses embedding model
         </div>
+      </section>
+
+      <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+        <SectionHeader>PERFORMANCE</SectionHeader>
+        {row('Cache duration', segmented(['10', '30', '60'], String(cacheTtlMinutes), v => {
+          const n = parseInt(v);
+          setCacheTtlMinutesState(n);
+          setCacheTtlMinutes(n);
+        }))}
       </section>
 
       <section>

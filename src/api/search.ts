@@ -37,9 +37,7 @@ export async function similarToMany(keys: string[], limit = 5): Promise<SearchRe
   const cached = similarCache.get(cacheKey);
   if (cached) return cached;
   if (keys.length === 1) {
-    const result = await similarItems(keys[0], limit);
-    similarCache.set(cacheKey, result);
-    return result;
+    return similarItems(keys[0], limit);
   }
   const data = await apiFetch<{ results: SearchResult[] }>('/similar/multi', {
     method: 'POST',
