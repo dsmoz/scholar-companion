@@ -41,6 +41,7 @@ flowchart TD
 
 | Version | Date | Summary |
 |---------|------|---------|
+| 0.4.0 | 2026-03-29 | Author tab with abstracts/sort, Similar tab dedup, abstract context injection in chat |
 | 0.3.0 | 2026-03-28 | LLM chat (item/library/multi-doc), citations, context maintenance, related docs |
 | 0.2.1 | 2026-03-28 | Restore CSS design tokens lost in rebase |
 | 0.2.0 | 2026-03-28 | Fix window focus API (Services.wm.getEnumerator) |

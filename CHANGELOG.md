@@ -3,6 +3,24 @@
 All notable changes to Zotero AI Companion are documented here.
 Format: Keep a Changelog · Versioning: Semantic Versioning
 
+## [0.4.0] - 2026-03-29
+### Added
+- **Author tab**: New profile view in ItemPaneTab showing all items by an author fetched from Neo4j; each card displays title (yyyy), collapsible abstract, and item-type icon
+- **Abstract context injection**: When opening chat from an author item card, the item's abstract is passed through the event pipeline and prepended to the LLM context in `_stream_multi_doc_chat`, grounding responses before full document chunks load
+- **Author item sort**: Sort author items by title or year via toggle buttons
+- **Auto-deploy**: `build.mjs` now copies XPI directly to the active Zotero profile path on build
+
+### Changed
+- `openSingleDocChat` and `chatWithDocuments` command handlers now pass `{ keys, abstract }` JSON object instead of plain keys array, allowing abstract to travel with the chat session
+- `panel.tsx` parses the new `{ keys, abstract }` format from the `keys` URL param (backward-compatible with plain array)
+- `streamMultiDocChat` signature updated: `initialAbstract` added as 4th positional parameter (before callbacks)
+- `/chat/multi/stream` backend endpoint now accepts and forwards `abstract` field to the streaming generator
+
+### Fixed
+- **Similar tab**: Deduplicated results keyed by `zotero_key` (keeping highest score); was returning only the source document because 35 of 36 SemanticSearch results were chunks of the same item
+- **Author tab blank after click**: Added missing error handling and loading state reset in `loadAuthor`; profile was silently failing with no UI feedback
+- **Abstract enrichment**: Changed `setdefault` to direct assignment in `_enrich_items` so abstracts from synctracker overwrite the empty string set during item construction
+
 ## [0.3.0] - 2026-03-28
 ### Added
 - **Item Chat**: LLM-powered streaming chat per Zotero item; history persisted to `.data/chats/{key}.json`
