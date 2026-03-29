@@ -23,6 +23,11 @@ import {
   getDiscoveryTextColor,
   setDiscoveryTextColor,
 } from '../prefs';
+import { importToZotero } from '../api/import';
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
 
 interface Props { seedQuery?: string; seedAuthor?: string; }
 
@@ -69,6 +74,8 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<number>>(new Set());
   const [fontSize, setFontSizeState] = useState(() => getDiscoveryFontSize());
   const [textColor, setTextColorState] = useState(() => getDiscoveryTextColor());
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
 
   function broadcast(fs: number, tc: string) {
     const xulWin = window.top ?? window;
@@ -91,6 +98,28 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
     setDiscoveryTextColor(v);
     document.documentElement.style.setProperty('--reading-text-color', v);
     broadcast(fontSize, v);
+  }
+
+  async function handleImport() {
+    const toImport = results.filter((_, i) => selected.has(i));
+    if (toImport.length === 0) return;
+    setImporting(true);
+    setImportMsg(null);
+    try {
+      const importResults = await importToZotero(toImport);
+      const ok = importResults.filter(r => r.success).length;
+      const dupes = importResults.filter(r => r.duplicate).length;
+      const failed = importResults.filter(r => !r.success).length;
+      let msg = `${ok} imported`;
+      if (dupes) msg += ` (${dupes} already in library)`;
+      if (failed) msg += `, ${failed} failed`;
+      setImportMsg(msg);
+      setSelected(new Set());
+    } catch (e: any) {
+      setImportMsg(`Import failed: ${e.message}`);
+    } finally {
+      setImporting(false);
+    }
   }
 
   function toggleAbstract(e: React.MouseEvent, idx: number) {
@@ -462,8 +491,9 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
                 </div>
               </div>
               {r.abstract && (() => {
+                const abstract = stripHtml(r.abstract);
                 const expanded = expandedAbstracts.has(globalIdx);
-                const isLong = r.abstract.length > 200;
+                const isLong = abstract.length > 200;
                 return (
                   <div style={{ marginTop: 4 }}>
                     <div style={{ fontSize: fontSize * 0.84, color: textColor, opacity: 0.75, lineHeight: 1.55,
@@ -472,7 +502,7 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
                         WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
                       } : {}),
                     }}>
-                      {r.abstract}
+                      {abstract}
                     </div>
                     {isLong && (
                       <button onClick={e => toggleAbstract(e, globalIdx)} style={{
@@ -538,17 +568,20 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
           )}
 
           {/* Count + import row */}
-          <div style={{ padding: '4px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#585b70', fontSize: '0.65rem' }}>
-              {pageOffset + 1}–{Math.min(pageOffset + pageSize, results.length)} of {results.length}
-              {selected.size > 0 && ` · ${selected.size} selected`}
+          <div style={{ padding: '4px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: '#585b70', fontSize: '0.65rem', flex: 1 }}>
+              {importMsg
+                ? <span style={{ color: '#a6e3a1' }}>{importMsg}</span>
+                : <>{pageOffset + 1}–{Math.min(pageOffset + pageSize, results.length)} of {results.length}{selected.size > 0 && ` · ${selected.size} selected`}</>
+              }
             </span>
             {selected.size > 0 && (
-              <button style={{
+              <button onClick={handleImport} disabled={importing} style={{
                 background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 4,
-                padding: '4px 10px', fontSize: '0.75rem', cursor: 'pointer', color: '#1e1e2e',
+                padding: '4px 10px', fontSize: '0.75rem', cursor: importing ? 'wait' : 'pointer',
+                color: '#1e1e2e', opacity: importing ? 0.6 : 1, flexShrink: 0,
               }}>
-                Import to Zotero
+                {importing ? 'Importing…' : 'Import to Zotero'}
               </button>
             )}
           </div>
