@@ -18,6 +18,10 @@ import {
   getDiscoveryMinScore,
   getDiscoveryTopK,
   getListPageSize,
+  getDiscoveryFontSize,
+  setDiscoveryFontSize,
+  getDiscoveryTextColor,
+  setDiscoveryTextColor,
 } from '../prefs';
 
 interface Props { seedQuery?: string; seedAuthor?: string; }
@@ -63,6 +67,20 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
   const pageSize = getListPageSize();
   const resultsTopRef = useRef<HTMLDivElement>(null);
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<number>>(new Set());
+  const [fontSize, setFontSizeState] = useState(() => getDiscoveryFontSize());
+  const [textColor, setTextColorState] = useState(() => getDiscoveryTextColor());
+
+  function changeFontSize(v: number) {
+    setFontSizeState(v);
+    setDiscoveryFontSize(v);
+    document.documentElement.style.setProperty('--reading-font-size', `${v}px`);
+  }
+
+  function changeTextColor(v: string) {
+    setTextColorState(v);
+    setDiscoveryTextColor(v);
+    document.documentElement.style.setProperty('--reading-text-color', v);
+  }
 
   function toggleAbstract(e: React.MouseEvent, idx: number) {
     e.stopPropagation();
@@ -372,6 +390,26 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
         </div>
       )}
 
+      {/* Reading toolbar */}
+      <div style={{ padding: '4px 8px', borderBottom: '1px solid #313244', display: 'flex', alignItems: 'center', gap: 10, background: '#181825' }}>
+        <span style={{ fontSize: '0.65rem', color: '#6c7086', flexShrink: 0 }}>A</span>
+        <input type="range" min={11} max={18} step={1} value={fontSize}
+          onChange={e => changeFontSize(Number(e.target.value))}
+          style={{ flex: 1, accentColor: 'var(--accent, #89b4fa)', cursor: 'pointer', height: 3 }}
+          title={`Font size: ${fontSize}px`}
+        />
+        <span style={{ fontSize: '0.85rem', color: '#6c7086', flexShrink: 0 }}>A</span>
+        <div style={{ width: 1, height: 14, background: '#313244', flexShrink: 0 }} />
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+          {(['#cdd6f4', '#ffffff', '#e0d0b0', '#b8d4b8', '#c8d8e8'] as const).map(color => (
+            <button key={color} onClick={() => changeTextColor(color)} title={color} style={{
+              width: 14, height: 14, borderRadius: '50%', border: textColor === color ? '2px solid var(--accent, #89b4fa)' : '2px solid #45475a',
+              background: color, cursor: 'pointer', padding: 0, flexShrink: 0,
+            }} />
+          ))}
+        </div>
+      </div>
+
       {/* Results */}
       <div ref={resultsTopRef} style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 4 }}>
         {error && (
@@ -391,15 +429,15 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#cdd6f4', marginBottom: 3, lineHeight: 1.35, fontSize: '0.85rem', fontWeight: 500 }}>{r.title}</div>
-                  <div style={{ color: '#6c7086', fontSize: '0.72rem' }}>
+                  <div style={{ color: textColor, marginBottom: 3, lineHeight: 1.35, fontSize: fontSize, fontWeight: 500 }}>{r.title}</div>
+                  <div style={{ color: '#6c7086', fontSize: fontSize * 0.84 }}>
                     {r.authors.slice(0, 3).join(', ')}{r.authors.length > 3 ? ' et al.' : ''}
                     {(r.journal || r.year) && ' · '}
                     {r.journal}{r.journal && r.year && ' · '}{r.year}
                     {r.source && <span style={{ marginLeft: 4, color: '#45475a' }}>[{r.source}]</span>}
                   </div>
                   {r.doi && (
-                    <div style={{ fontSize: '0.68rem', color: '#585b70', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: fontSize * 0.78, color: '#585b70', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       <span style={{ color: '#6c7086' }}>DOI: </span>{r.doi}
                     </div>
                   )}
@@ -417,7 +455,7 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
                 const isLong = r.abstract.length > 200;
                 return (
                   <div style={{ marginTop: 4 }}>
-                    <div style={{ fontSize: '0.72rem', color: '#6c7086', lineHeight: 1.5,
+                    <div style={{ fontSize: fontSize * 0.84, color: textColor, opacity: 0.75, lineHeight: 1.55,
                       ...(!expanded && isLong ? {
                         overflow: 'hidden', display: '-webkit-box',
                         WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',

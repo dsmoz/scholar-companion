@@ -9,6 +9,14 @@ import { Settings } from './ui/Settings';
 import { LibraryChat } from './ui/LibraryChat';
 import { MultiDocChat } from './ui/MultiDocChat';
 import { ItemPaneTab } from './ui/ItemPaneTab';
+import { getDiscoveryFontSize, getDiscoveryTextColor } from './prefs';
+
+// Apply reading preferences as CSS variables so all panels inherit them
+(function applyReadingPrefs() {
+  const root = document.documentElement;
+  root.style.setProperty('--reading-font-size', `${getDiscoveryFontSize()}px`);
+  root.style.setProperty('--reading-text-color', getDiscoveryTextColor());
+})();
 
 const params = new URLSearchParams(window.location.search);
 const panel = params.get('panel') ?? 'graph';

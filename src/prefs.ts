@@ -25,6 +25,8 @@ const DEFAULTS = {
   discoveryTopK: 25,
   listPageSize: 10,
   cacheTtlMinutes: 30,
+  discoveryFontSize: 13,
+  discoveryTextColor: '#cdd6f4',
 } as const;
 
 type PrefKey = keyof typeof DEFAULTS;
@@ -76,6 +78,10 @@ export const setListPageSize = (v: number) => set('listPageSize', v as typeof DE
 export const getCacheTtlMinutes = () => get('cacheTtlMinutes') as number;
 export const setCacheTtlMinutes = (v: number) => set('cacheTtlMinutes', v as typeof DEFAULTS['cacheTtlMinutes']);
 export const getTtlMs = () => getCacheTtlMinutes() * 60 * 1000;
+export const getDiscoveryFontSize = () => get('discoveryFontSize') as number;
+export const setDiscoveryFontSize = (v: number) => set('discoveryFontSize', v as typeof DEFAULTS['discoveryFontSize']);
+export const getDiscoveryTextColor = () => get('discoveryTextColor') as string;
+export const setDiscoveryTextColor = (v: string) => set('discoveryTextColor', v as typeof DEFAULTS['discoveryTextColor']);
 // ── Dynamic discovery source preferences ─────────────────────────────────────
 // Source names are NOT hardcoded here. The available sources are fetched from
 // the server (GET /api/plugin/discovery/sources) and stored as a single JSON
