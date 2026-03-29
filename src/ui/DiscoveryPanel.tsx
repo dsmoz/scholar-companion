@@ -62,6 +62,16 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
   const [page, setPage] = useState(0);
   const pageSize = getListPageSize();
   const resultsTopRef = useRef<HTMLDivElement>(null);
+  const [expandedAbstracts, setExpandedAbstracts] = useState<Set<number>>(new Set());
+
+  function toggleAbstract(e: React.MouseEvent, idx: number) {
+    e.stopPropagation();
+    setExpandedAbstracts(prev => {
+      const next = new Set(prev);
+      next.has(idx) ? next.delete(idx) : next.add(idx);
+      return next;
+    });
+  }
 
   // History tab state
   const [history, setHistory] = useState<SearchHistoryEntry[]>([]);
@@ -178,6 +188,7 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
       );
       setResults(r);
       setSelected(new Set());
+      setExpandedAbstracts(new Set());
       setPage(0);
     } catch (e: any) {
       setError(e?.message ?? 'Search failed');
@@ -401,12 +412,30 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
                   }
                 </div>
               </div>
-              {r.abstract && (
-                <div style={{ fontSize: '0.65rem', color: '#585b70', marginTop: 4, lineHeight: 1.4,
-                  overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                  {r.abstract}
-                </div>
-              )}
+              {r.abstract && (() => {
+                const expanded = expandedAbstracts.has(globalIdx);
+                const isLong = r.abstract.length > 200;
+                return (
+                  <div style={{ marginTop: 4 }}>
+                    <div style={{ fontSize: '0.65rem', color: '#6c7086', lineHeight: 1.45,
+                      ...(!expanded && isLong ? {
+                        overflow: 'hidden', display: '-webkit-box',
+                        WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+                      } : {}),
+                    }}>
+                      {r.abstract}
+                    </div>
+                    {isLong && (
+                      <button onClick={e => toggleAbstract(e, globalIdx)} style={{
+                        marginTop: 2, fontSize: '0.6rem', color: 'var(--accent, #89b4fa)',
+                        background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+                      }}>
+                        {expanded ? 'Show less' : 'Show more'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           );
         })}
