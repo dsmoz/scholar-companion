@@ -6,8 +6,10 @@ import { getChatRelatedMax, getRelatedMinScore } from '../../prefs';
 import { ScoreChip } from './ScoreChip';
 
 function openDocChat(zoteroKey: string) {
-  // Dispatch to opener (Zotero main window) or self — bootstrap.ts handles it
-  const target: Window = (window.opener as Window) ?? window;
+  // The React app runs inside a <browser> XUL element, so window.opener is null.
+  // window.top is the XUL dialog window; its opener is the Zotero main window.
+  const xulWin = window.top ?? window;
+  const target: Window = (xulWin.opener as Window) ?? xulWin;
   target.dispatchEvent(new CustomEvent('zotero-ai-command', {
     detail: { command: 'openSingleDocChat', keys: [zoteroKey] },
     bubbles: true,
