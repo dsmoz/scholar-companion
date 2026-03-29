@@ -530,7 +530,7 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
                     <div style={{ fontSize: fontSize * 0.84, color: textColor, opacity: 0.75, lineHeight: 1.55,
                       ...(!expanded && isLong ? {
                         overflow: 'hidden', display: '-webkit-box',
-                        WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+                        WebkitLineClamp: 5, WebkitBoxOrient: 'vertical',
                       } : {}),
                     }}>
                       {abstract}
@@ -551,7 +551,7 @@ export function DiscoveryPanel({ seedQuery = '', seedAuthor = '' }: Props) {
                   {r.tags.slice(0, 5).map(tag => (
                     <span key={tag} style={{
                       fontSize: fontSize * 0.72, padding: '1px 6px', borderRadius: 10,
-                      background: '#1e1e2e', border: '1px solid #45475a', color: '#6c7086',
+                      background: '#313244', border: '1px solid #585b70', color: '#a6adc8',
                     }}>{tag}</span>
                   ))}
                   {r.tags.length > 5 && (
