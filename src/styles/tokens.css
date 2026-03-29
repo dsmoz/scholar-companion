@@ -46,11 +46,11 @@
   --font-family:   system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono:     'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 
-  --text-xs:   0.6rem;    /* 9.6px  — timestamps, badges */
-  --text-sm:   0.65rem;   /* 10.4px — secondary labels */
-  --text-base: 0.8rem;    /* 12.8px — body */
-  --text-md:   0.875rem;  /* 14px   — slightly larger body */
-  --text-lg:   1rem;      /* 16px   — section headings */
+  --text-xs:   0.68rem;   /* 10.9px — timestamps, badges */
+  --text-sm:   0.75rem;   /* 12px   — secondary labels */
+  --text-base: 0.875rem;  /* 14px   — body */
+  --text-md:   0.95rem;   /* 15.2px — slightly larger body */
+  --text-lg:   1.05rem;   /* 16.8px — section headings */
   --text-xl:   1.3rem;    /* 20.8px — stat numbers */
 
   --font-normal:  400;
