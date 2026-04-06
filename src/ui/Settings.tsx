@@ -9,7 +9,7 @@ import { triggerSync } from '../api/sync';
 import {
   getApiToken, getClientId, getDisplayName,
   getSyncInterval, setSyncInterval,
-  getTheme, setTheme, getAutoSync, getChatModel, getChatMaxChunks, getChatRelatedMax,
+  getTheme, setTheme, getAutoSync, getChatRelatedMax,
   getSyncOnStartup, setPref,
   getChatRelatedMinLabel, setChatRelatedMinLabel,
   getItemPaneHeight, setItemPaneHeight,
@@ -45,8 +45,6 @@ export function Settings() {
   const [autoSync, setAutoSyncState] = useState(getAutoSync());
   const [syncOnStartup, setSyncOnStartupState] = useState(getSyncOnStartup());
   const [theme, setThemeState] = useState(getTheme());
-  const [chatModel, setChatModelState] = useState(getChatModel());
-  const [chatMaxChunks, setChatMaxChunksState] = useState(getChatMaxChunks());
   const [chatRelatedMax, setChatRelatedMaxState] = useState(getChatRelatedMax());
   const [chatRelatedMinLabel, setChatRelatedMinLabelState] = useState(getChatRelatedMinLabel());
   const [itemPaneHeight, setItemPaneHeightState] = useState(getItemPaneHeight());
@@ -188,7 +186,7 @@ export function Settings() {
                 opacity: (loginLoading || !username || !password) ? 0.5 : 1 }}>
               <SignIn size={12} /> {loginLoading ? 'Connecting...' : 'Connect'}
             </button>
-            <div style={{ fontSize: '0.65rem', color: '#585b70', marginTop: '0.4rem' }}>
+            <div style={{ fontSize: '0.7rem', color: '#a6adc8', marginTop: '0.4rem' }}>
               Don't have an account? Register at mcp.dsmozconsultancy.com
             </div>
           </>
@@ -235,14 +233,6 @@ export function Settings() {
 
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
         <SectionHeader>CHAT</SectionHeader>
-        {row('LLM model',
-          <input value={chatModel} onChange={e => setChatModelState(e.target.value)}
-            onBlur={() => setPref('chatModel', chatModel as any)}
-            style={inputStyle} />
-        )}
-        {row('Max chunks', segmented(['4', '8', '12', '20'], String(chatMaxChunks), v => {
-          const n = parseInt(v); setChatMaxChunksState(n); setPref('chatMaxChunks', n as any);
-        }))}
         {row('Related docs', segmented(['3', '5', '8', '10'], String(chatRelatedMax), v => {
           const n = parseInt(v); setChatRelatedMaxState(n); setPref('chatRelatedMax', n as any);
         }))}
