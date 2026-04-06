@@ -34,26 +34,33 @@ const DEFAULTS = {
 
 type PrefKey = keyof typeof DEFAULTS;
 
-function _zoteroPrefs(): any {
-  // Try multiple contexts: globalThis (bootstrap), window (iframe), Components (XPCOM)
-  const Z = (globalThis as any).Zotero ?? (typeof window !== 'undefined' && (window as any).Zotero);
-  return Z?.Prefs ?? null;
+function _prefBranch(): any {
+  // Use Mozilla's native pref service — persists across sessions and works in all contexts
+  try {
+    return (globalThis as any).Services?.prefs?.getBranch('') ?? null;
+  } catch { return null; }
 }
 
 function get<K extends PrefKey>(key: K): typeof DEFAULTS[K] {
-  const prefs = _zoteroPrefs();
-  if (!prefs) return DEFAULTS[key];
-  const val = prefs.get(`${PREFIX}.${key}`);
-  return val !== undefined ? (val as typeof DEFAULTS[K]) : DEFAULTS[key];
+  const branch = _prefBranch();
+  if (!branch) return DEFAULTS[key];
+  const fullKey = `${PREFIX}.${key}`;
+  try {
+    const type = branch.getPrefType(fullKey);
+    if (type === branch.PREF_STRING) return branch.getStringPref(fullKey) as typeof DEFAULTS[K];
+    if (type === branch.PREF_INT) return branch.getIntPref(fullKey) as typeof DEFAULTS[K];
+    if (type === branch.PREF_BOOL) return branch.getBoolPref(fullKey) as typeof DEFAULTS[K];
+  } catch { /* pref doesn't exist */ }
+  return DEFAULTS[key];
 }
 
 function set<K extends PrefKey>(key: K, value: typeof DEFAULTS[K]): void {
-  const prefs = _zoteroPrefs();
-  if (prefs) {
-    prefs.set(`${PREFIX}.${key}`, value);
-  } else {
-    console.warn('[Scholar Companion] Zotero.Prefs not available, cannot persist:', key);
-  }
+  const branch = _prefBranch();
+  if (!branch) return;
+  const fullKey = `${PREFIX}.${key}`;
+  if (typeof value === 'string') branch.setStringPref(fullKey, value);
+  else if (typeof value === 'number') branch.setIntPref(fullKey, value);
+  else if (typeof value === 'boolean') branch.setBoolPref(fullKey, value);
 }
 
 export const SCORE_THRESHOLDS: Record<string, number> = {
