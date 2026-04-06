@@ -69,8 +69,17 @@ export function Settings() {
     try {
       await checkConnection();
       setOnline(true);
-    } catch {
+    } catch (err: any) {
       setOnline(false);
+      // Token expired or invalid — auto-disconnect
+      if (err?.status === 401) {
+        disconnect();
+        setIsLoggedIn(false);
+        setClientIdState('');
+        setDisplayNameState('');
+        setTokenState('');
+        setLoginError('Session expired. Please log in again.');
+      }
     }
   }
 
@@ -86,7 +95,13 @@ export function Settings() {
       setUsername('');
       setPassword('');
       // Test connection immediately after login (token is already persisted)
-      try { await checkConnection(); setOnline(true); } catch { setOnline(false); }
+      try {
+        await checkConnection();
+        setOnline(true);
+      } catch (connErr: any) {
+        console.error('[Scholar Companion] Post-login connection check failed:', connErr?.message, connErr?.status);
+        setOnline(false);
+      }
     } catch (err: any) {
       setLoginError(err.message || 'Login failed');
     } finally {
