@@ -1,6 +1,6 @@
 // src/ui/IndexQueue.tsx
 import React, { useState, useEffect } from 'react';
-import { Play, Pause } from '@phosphor-icons/react';
+import { Play, Pause, Clock, Spinner, CheckCircle, XCircle } from '@phosphor-icons/react';
 import { SectionHeader } from './components/SectionHeader';
 import { StatusDot } from './components/StatusDot';
 import { fetchJobs, retryJob, JobsStatus } from '../api/jobs';
@@ -37,10 +37,10 @@ export function IndexQueue() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, fontSize: '0.65rem' }}>
-          <span style={{ color: '#f9e2af' }}>● {status?.pending.length ?? 0} pending</span>
-          <span style={{ color: '#89b4fa' }}>● {status?.processing ? 1 : 0} processing</span>
-          <span style={{ color: '#a6e3a1' }}>● {status?.completed_count ?? 0} done</span>
-          <span style={{ color: '#f38ba8' }}>● {status?.failed.length ?? 0} failed</span>
+          <span style={{ color: '#f9e2af', display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={10} weight="bold" /> {status?.pending.length ?? 0} pending</span>
+          <span style={{ color: '#89b4fa', display: 'flex', alignItems: 'center', gap: 3 }}><Spinner size={10} weight="bold" /> {status?.processing ? 1 : 0} processing</span>
+          <span style={{ color: '#a6e3a1', display: 'flex', alignItems: 'center', gap: 3 }}><CheckCircle size={10} weight="bold" /> {status?.completed_count ?? 0} done</span>
+          <span style={{ color: '#f38ba8', display: 'flex', alignItems: 'center', gap: 3 }}><XCircle size={10} weight="bold" /> {status?.failed.length ?? 0} failed</span>
         </div>
       </div>
 

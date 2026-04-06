@@ -184,9 +184,9 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         const statusMap = new Map(statusItems.map((s) => [s.zotero_key, s.sync_status]));
 
         const TAG_MAP: Record<string, { tag: string; color: string }> = {
-          synced:  { tag: '🟢 Synced',  color: '#a6e3a1' },
-          pending: { tag: '🟡 Pending', color: '#f9e2af' },
-          error:   { tag: '🔴 Error',   color: '#f38ba8' },
+          synced:  { tag: 'SC: Synced',  color: '#a6e3a1' },
+          pending: { tag: 'SC: Pending', color: '#f9e2af' },
+          error:   { tag: 'SC: Error',   color: '#f38ba8' },
         };
         const ALL_TAGS = Object.values(TAG_MAP).map((t) => t.tag);
 
