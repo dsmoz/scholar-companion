@@ -69,12 +69,24 @@ export interface LoginResult {
 
 export async function login(username: string, password: string): Promise<LoginResult> {
   const base = getApiUrl();
-  const resp = await fetch(`${base}/portal/api/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-  });
-  const data = await resp.json();
+  const url = `${base}/portal/api/login`;
+  let resp: Response;
+  try {
+    resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+  } catch (err: any) {
+    console.error('[Scholar Companion] Login fetch failed:', url, err);
+    throw new ApiError(0, `Cannot reach server at ${base}. Check your connection.`);
+  }
+  let data: any;
+  try {
+    data = await resp.json();
+  } catch {
+    throw new ApiError(resp.status, `Server returned invalid response (HTTP ${resp.status})`);
+  }
   if (!resp.ok) {
     throw new ApiError(resp.status, data.error ?? data.message ?? `HTTP ${resp.status}`);
   }
