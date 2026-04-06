@@ -1,5 +1,5 @@
 // src/api/multiDocChat.ts
-import { apiFetch } from './client';
+import { apiFetch, getAuthHeaders } from './client';
 import { getApiUrl } from '../prefs';
 import type { Source, ChatToken } from './chat';
 
@@ -36,7 +36,7 @@ export function streamMultiDocChat(
 
   fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ zotero_keys: zoteroKeys, question, session_id: sessionId }),
     signal: controller.signal,
   }).then(async resp => {

@@ -2,7 +2,10 @@
 const PREFIX = 'extensions.zotero-ai';
 
 const DEFAULTS = {
-  apiUrl: 'http://localhost:6500',
+  apiUrl: 'https://mcp.dsmozconsultancy.com',
+  apiToken: '',
+  clientId: '',
+  displayName: '',
   syncInterval: 12,
   syncOnStartup: true,
   autoSync: true,
@@ -48,6 +51,12 @@ export const SCORE_THRESHOLDS: Record<string, number> = {
 
 export const getApiUrl = () => get('apiUrl') as string;
 export const setApiUrl = (v: string) => set('apiUrl', v as typeof DEFAULTS['apiUrl']);
+export const getApiToken = () => get('apiToken') as string;
+export const setApiToken = (v: string) => set('apiToken', v as typeof DEFAULTS['apiToken']);
+export const getClientId = () => get('clientId') as string;
+export const setClientId = (v: string) => set('clientId', v as typeof DEFAULTS['clientId']);
+export const getDisplayName = () => get('displayName') as string;
+export const setDisplayName = (v: string) => set('displayName', v as typeof DEFAULTS['displayName']);
 export const getSyncInterval = () => get('syncInterval') as number;
 export const setSyncInterval = (v: number) => set('syncInterval', v as typeof DEFAULTS['syncInterval']);
 export const getTheme = () => get('theme') as string;

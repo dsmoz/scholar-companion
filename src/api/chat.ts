@@ -1,5 +1,6 @@
 // src/api/chat.ts
 import { getApiUrl, getChatMaxChunks } from '../prefs';
+import { getAuthHeaders } from './client';
 
 export interface Source {
   page?: number;
@@ -56,7 +57,7 @@ export async function fetchItemMetadata(zoteroKey: string): Promise<ItemMetadata
   try {
     const resp = await fetch(`${base}/api/plugin/chat/multi/metadata`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ keys: [zoteroKey] }),
     });
     if (!resp.ok) return null;
@@ -89,7 +90,7 @@ export function streamChat(
 
   fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       zotero_key: zoteroKey,
       question,

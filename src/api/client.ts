@@ -1,5 +1,5 @@
 // src/api/client.ts
-import { getApiUrl } from '../prefs';
+import { getApiUrl, getApiToken, setApiToken, setClientId, setDisplayName } from '../prefs';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -22,6 +22,14 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   throw lastError;
 }
 
+/** Build headers with optional Bearer auth for SSE and direct fetch calls. */
+export function getAuthHeaders(): Record<string, string> {
+  const token = getApiToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+}
+
 export async function apiFetch<T = unknown>(
   path: string,
   options: RequestInit = {}
@@ -31,7 +39,7 @@ export async function apiFetch<T = unknown>(
   return withRetry(async () => {
     const resp = await fetch(url, {
       ...options,
-      headers: { 'Content-Type': 'application/json', ...(options.headers ?? {}) },
+      headers: { ...getAuthHeaders(), ...(options.headers as Record<string, string> ?? {}) },
     });
     if (!resp.ok) {
       let msg = `HTTP ${resp.status}`;
@@ -45,8 +53,40 @@ export async function apiFetch<T = unknown>(
   });
 }
 
-export async function checkConnection(): Promise<{ latency: number }> {
+export async function checkConnection(): Promise<{ latency: number; clientName?: string }> {
   const start = Date.now();
-  await apiFetch('/health');
-  return { latency: Date.now() - start };
+  const data = await apiFetch<{ status: string; client_name?: string }>('/health');
+  return { latency: Date.now() - start, clientName: data.client_name };
+}
+
+export interface LoginResult {
+  success: boolean;
+  client_id: string;
+  access_token: string;
+  expires_in: number;
+  display_name: string;
+}
+
+export async function login(username: string, password: string): Promise<LoginResult> {
+  const base = getApiUrl();
+  const resp = await fetch(`${base}/portal/api/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) {
+    throw new ApiError(resp.status, data.error ?? data.message ?? `HTTP ${resp.status}`);
+  }
+  // Persist credentials
+  setApiToken(data.access_token);
+  setClientId(data.client_id);
+  setDisplayName(data.display_name || '');
+  return data;
+}
+
+export function disconnect(): void {
+  setApiToken('');
+  setClientId('');
+  setDisplayName('');
 }

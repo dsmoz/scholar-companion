@@ -1,14 +1,14 @@
 // src/ui/Settings.tsx
 import React, { useState, useEffect } from 'react';
-import { ArrowsClockwise } from '@phosphor-icons/react';
+import { ArrowsClockwise, Eye, EyeSlash, CopySimple, SignIn, SignOut, WifiHigh, WifiSlash } from '@phosphor-icons/react';
 import { SectionHeader } from './components/SectionHeader';
-import { StatusDot } from './components/StatusDot';
 import { Toggle } from './components/Toggle';
 import { ConfirmDialog } from './components/ConfirmDialog';
-import { checkConnection } from '../api/client';
+import { checkConnection, login, disconnect } from '../api/client';
 import { triggerSync } from '../api/sync';
 import {
-  getApiUrl, setApiUrl, getSyncInterval, setSyncInterval,
+  getApiToken, getClientId, getDisplayName,
+  getSyncInterval, setSyncInterval,
   getTheme, setTheme, getAutoSync, getChatModel, getChatMaxChunks, getChatRelatedMax,
   getSyncOnStartup, setPref,
   getChatRelatedMinLabel, setChatRelatedMinLabel,
@@ -22,12 +22,25 @@ import {
 } from '../prefs';
 import { fetchDiscoverySources, type SourceEntry } from '../api/discovery';
 
-type ConnectionStatus = 'connected' | 'degraded' | 'offline';
-
 export function Settings() {
-  const [apiUrl, setApiUrlState] = useState(getApiUrl());
-  const [connStatus, setConnStatus] = useState<ConnectionStatus>('offline');
-  const [latency, setLatency] = useState<number | undefined>();
+  // Connection state
+  const [isLoggedIn, setIsLoggedIn] = useState(!!getApiToken());
+  const [online, setOnline] = useState(false);
+  const [clientId, setClientIdState] = useState(getClientId());
+  const [displayName, setDisplayNameState] = useState(getDisplayName());
+  const [token, setTokenState] = useState(getApiToken());
+
+  // Login form
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  // Token display
+  const [showToken, setShowToken] = useState(false);
+  const [tokenCopied, setTokenCopied] = useState(false);
+
+  // Other settings state
   const [syncInterval, setSyncIntervalState] = useState(getSyncInterval());
   const [autoSync, setAutoSyncState] = useState(getAutoSync());
   const [syncOnStartup, setSyncOnStartupState] = useState(getSyncOnStartup());
@@ -48,19 +61,46 @@ export function Settings() {
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    testConnection();
-    fetchDiscoverySources().then(setDiscoverySources).catch(() => {});
-  }, []);
+    if (isLoggedIn) {
+      testConnection();
+      fetchDiscoverySources().then(setDiscoverySources).catch(() => {});
+    }
+  }, [isLoggedIn]);
 
   async function testConnection() {
     try {
-      const result = await checkConnection();
-      setConnStatus('connected');
-      setLatency(result.latency);
+      await checkConnection();
+      setOnline(true);
     } catch {
-      setConnStatus('offline');
-      setLatency(undefined);
+      setOnline(false);
     }
+  }
+
+  async function handleLogin() {
+    setLoginError('');
+    setLoginLoading(true);
+    try {
+      const result = await login(username, password);
+      setIsLoggedIn(true);
+      setClientIdState(result.client_id);
+      setDisplayNameState(result.display_name);
+      setTokenState(result.access_token);
+      setUsername('');
+      setPassword('');
+    } catch (err: any) {
+      setLoginError(err.message || 'Login failed');
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  function handleDisconnect() {
+    disconnect();
+    setIsLoggedIn(false);
+    setOnline(false);
+    setClientIdState('');
+    setDisplayNameState('');
+    setTokenState('');
   }
 
   async function handleSyncNow() {
@@ -88,6 +128,20 @@ export function Settings() {
     </div>
   );
 
+  const inputStyle: React.CSSProperties = {
+    width: 180, fontSize: '0.75rem', padding: '3px 6px',
+    background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4',
+  };
+
+  const lockedInputStyle: React.CSSProperties = {
+    ...inputStyle, color: '#6c7086', cursor: 'default', opacity: 0.8,
+  };
+
+  const btnStyle: React.CSSProperties = {
+    fontSize: '0.7rem', padding: '3px 10px', background: '#313244',
+    border: '1px solid #444', borderRadius: 4, color: '#cdd6f4', cursor: 'pointer',
+  };
+
   return (
     <div style={{ padding: '0.75rem', maxHeight: '100%', overflowY: 'auto', fontSize: '0.8rem' }}>
 
@@ -97,16 +151,74 @@ export function Settings() {
       </section>
 
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
-        <SectionHeader>BACKEND CONNECTION</SectionHeader>
-        {row('Flask API URL',
-          <input value={apiUrl} onChange={e => setApiUrlState(e.target.value)}
-            onBlur={() => setApiUrl(apiUrl)}
-            style={{ width: 180, fontSize: '0.75rem', padding: '3px 6px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4' }} />
+        <SectionHeader>ACCOUNT</SectionHeader>
+
+        {/* Status indicator */}
+        {row('Status',
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.75rem' }}>
+            {isLoggedIn && online
+              ? <><WifiHigh size={14} weight="bold" style={{ color: '#a6e3a1' }} /> <span style={{ color: '#a6e3a1' }}>Online</span></>
+              : <><WifiSlash size={14} weight="bold" style={{ color: '#f38ba8' }} /> <span style={{ color: '#f38ba8' }}>Offline</span></>
+            }
+          </span>
         )}
-        {row('Status', <StatusDot status={connStatus} latency={latency} />)}
-        <button onClick={testConnection} style={{ fontSize: '0.7rem', padding: '3px 10px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4', cursor: 'pointer' }}>
-          Test connection
-        </button>
+
+        {!isLoggedIn ? (
+          /* ── Login form ─────────────────────────────────────────── */
+          <>
+            {row('Username',
+              <input value={username} onChange={e => setUsername(e.target.value)}
+                placeholder="Username or email"
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                style={inputStyle} />
+            )}
+            {row('Password',
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                placeholder="Password"
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                style={inputStyle} />
+            )}
+            {loginError && (
+              <div style={{ color: '#f38ba8', fontSize: '0.7rem', marginBottom: '0.5rem' }}>
+                {loginError}
+              </div>
+            )}
+            <button onClick={handleLogin} disabled={loginLoading || !username || !password}
+              style={{ ...btnStyle, display: 'flex', alignItems: 'center', gap: 4,
+                opacity: (loginLoading || !username || !password) ? 0.5 : 1 }}>
+              <SignIn size={12} /> {loginLoading ? 'Connecting...' : 'Connect'}
+            </button>
+            <div style={{ fontSize: '0.65rem', color: '#585b70', marginTop: '0.4rem' }}>
+              Don't have an account? Register at mcp.dsmozconsultancy.com
+            </div>
+          </>
+        ) : (
+          /* ── Connected state — locked credentials ────────────── */
+          <>
+            {displayName && row('Name', <span style={{ fontSize: '0.75rem', color: '#a6adc8' }}>{displayName}</span>)}
+            {row('Client ID',
+              <input readOnly value={clientId} style={lockedInputStyle} />
+            )}
+            {row('Token',
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input readOnly type={showToken ? 'text' : 'password'} value={token}
+                  style={{ ...lockedInputStyle, width: 140 }} />
+                <button onClick={() => setShowToken(!showToken)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#6c7086', padding: 2, display: 'flex' }}>
+                  {showToken ? <EyeSlash size={14} /> : <Eye size={14} />}
+                </button>
+                <button onClick={() => { navigator.clipboard.writeText(token); setTokenCopied(true); setTimeout(() => setTokenCopied(false), 1500); }}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: tokenCopied ? '#a6e3a1' : '#6c7086', padding: 2, display: 'flex' }}>
+                  <CopySimple size={14} />
+                </button>
+              </div>
+            )}
+            <button onClick={handleDisconnect}
+              style={{ ...btnStyle, borderColor: '#f38ba8', color: '#f38ba8', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <SignOut size={12} /> Disconnect
+            </button>
+          </>
+        )}
       </section>
 
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
@@ -116,7 +228,7 @@ export function Settings() {
           const n = parseInt(v); setSyncIntervalState(n); setSyncInterval(n);
         }))}
         {row('Sync on startup', <Toggle checked={syncOnStartup} onChange={v => { setSyncOnStartupState(v); setPref('syncOnStartup', v as any); }} />)}
-        <button onClick={handleSyncNow} disabled={syncing} style={{ fontSize: '0.7rem', padding: '3px 10px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <button onClick={handleSyncNow} disabled={syncing} style={{ ...btnStyle, display: 'flex', alignItems: 'center', gap: 4 }}>
           <ArrowsClockwise size={12} /> {syncing ? 'Syncing...' : 'Sync now'}
         </button>
       </section>
@@ -126,7 +238,7 @@ export function Settings() {
         {row('LLM model',
           <input value={chatModel} onChange={e => setChatModelState(e.target.value)}
             onBlur={() => setPref('chatModel', chatModel as any)}
-            style={{ width: 180, fontSize: '0.75rem', padding: '3px 6px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4' }} />
+            style={inputStyle} />
         )}
         {row('Max chunks', segmented(['4', '8', '12', '20'], String(chatMaxChunks), v => {
           const n = parseInt(v); setChatMaxChunksState(n); setPref('chatMaxChunks', n as any);
@@ -145,7 +257,7 @@ export function Settings() {
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
         <SectionHeader>DISCOVERY SOURCES</SectionHeader>
         {discoverySources.length === 0
-          ? <div style={{ color: '#6c7086', fontSize: '0.75rem' }}>Loading sources from server…</div>
+          ? <div style={{ color: '#6c7086', fontSize: '0.75rem' }}>{isLoggedIn ? 'Loading sources from server…' : 'Connect to load sources'}</div>
           : discoverySources.map(src => (
               <div key={src.key} style={{ marginBottom: '0.5rem' }}>
                 {row(

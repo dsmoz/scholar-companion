@@ -1,5 +1,5 @@
 // src/events.ts
-import { getApiUrl } from './prefs';
+import { apiFetch } from './api/client';
 
 let notifierID: string | null = null;
 
@@ -33,7 +33,7 @@ export function unregisterEventHooks() {
 
 async function queueSync() {
   try {
-    await fetch(`${getApiUrl()}/api/plugin/sync`, { method: 'POST' });
+    await apiFetch('/sync', { method: 'POST' });
   } catch (e) {
     console.warn('[AI Companion] Failed to queue sync:', e);
   }

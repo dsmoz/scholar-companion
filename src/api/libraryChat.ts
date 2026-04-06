@@ -1,5 +1,5 @@
 // src/api/libraryChat.ts
-import { apiFetch } from './client';
+import { apiFetch, getAuthHeaders } from './client';
 import { getApiUrl } from '../prefs';
 import type { Source, ChatSession, ChatToken } from './chat';
 
@@ -16,7 +16,7 @@ export function streamLibraryChat(
 
   fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ question, session_id: sessionId }),
     signal: controller.signal,
   }).then(async resp => {
