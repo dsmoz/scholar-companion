@@ -94,12 +94,20 @@ export function Settings() {
       setTokenState(result.access_token);
       setUsername('');
       setPassword('');
-      // Test connection immediately after login (token is already persisted)
+      // Test connection using the token we just received
       try {
-        await checkConnection();
-        setOnline(true);
+        const base = (await import('../prefs')).getApiUrl();
+        const healthResp = await fetch(`${base}/api/plugin/health`, {
+          headers: { 'Authorization': `Bearer ${result.access_token}`, 'Content-Type': 'application/json' },
+        });
+        console.log('[Scholar Companion] Health check:', healthResp.status, await healthResp.text());
+        if (healthResp.ok) {
+          setOnline(true);
+        } else {
+          setOnline(false);
+        }
       } catch (connErr: any) {
-        console.error('[Scholar Companion] Post-login connection check failed:', connErr?.message, connErr?.status);
+        console.error('[Scholar Companion] Post-login health check failed:', connErr);
         setOnline(false);
       }
     } catch (err: any) {
