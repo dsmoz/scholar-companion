@@ -60,10 +60,11 @@ export function Settings() {
 
   useEffect(() => {
     if (isLoggedIn) {
+      // On mount only: validate stored token
       testConnection();
       fetchDiscoverySources().then(setDiscoverySources).catch(() => {});
     }
-  }, [isLoggedIn]);
+  }, []);
 
   async function testConnection() {
     try {
@@ -94,22 +95,9 @@ export function Settings() {
       setTokenState(result.access_token);
       setUsername('');
       setPassword('');
-      // Test connection using the token we just received
-      try {
-        const base = (await import('../prefs')).getApiUrl();
-        const healthResp = await fetch(`${base}/api/plugin/health`, {
-          headers: { 'Authorization': `Bearer ${result.access_token}`, 'Content-Type': 'application/json' },
-        });
-        console.log('[Scholar Companion] Health check:', healthResp.status, await healthResp.text());
-        if (healthResp.ok) {
-          setOnline(true);
-        } else {
-          setOnline(false);
-        }
-      } catch (connErr: any) {
-        console.error('[Scholar Companion] Post-login health check failed:', connErr);
-        setOnline(false);
-      }
+      // Token is persisted — check connection
+      try { await checkConnection(); setOnline(true); } catch { setOnline(false); }
+      fetchDiscoverySources().then(setDiscoverySources).catch(() => {});
     } catch (err: any) {
       setLoginError(err.message || 'Login failed');
     } finally {
