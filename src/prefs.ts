@@ -34,13 +34,26 @@ const DEFAULTS = {
 
 type PrefKey = keyof typeof DEFAULTS;
 
+function _zoteroPrefs(): any {
+  // Try multiple contexts: globalThis (bootstrap), window (iframe), Components (XPCOM)
+  const Z = (globalThis as any).Zotero ?? (typeof window !== 'undefined' && (window as any).Zotero);
+  return Z?.Prefs ?? null;
+}
+
 function get<K extends PrefKey>(key: K): typeof DEFAULTS[K] {
-  const val = (globalThis as any).Zotero?.Prefs?.get(`${PREFIX}.${key}`);
+  const prefs = _zoteroPrefs();
+  if (!prefs) return DEFAULTS[key];
+  const val = prefs.get(`${PREFIX}.${key}`);
   return val !== undefined ? (val as typeof DEFAULTS[K]) : DEFAULTS[key];
 }
 
 function set<K extends PrefKey>(key: K, value: typeof DEFAULTS[K]): void {
-  (globalThis as any).Zotero?.Prefs?.set(`${PREFIX}.${key}`, value);
+  const prefs = _zoteroPrefs();
+  if (prefs) {
+    prefs.set(`${PREFIX}.${key}`, value);
+  } else {
+    console.warn('[Scholar Companion] Zotero.Prefs not available, cannot persist:', key);
+  }
 }
 
 export const SCORE_THRESHOLDS: Record<string, number> = {
