@@ -1,6 +1,6 @@
 // src/api/libraryChat.ts
 import { apiFetch, getAuthHeaders } from './client';
-import { getApiUrl } from '../prefs';
+import { getApiUrl, getChatMaxChunks, getChatModel } from '../prefs';
 import type { Source, ChatSession, ChatToken } from './chat';
 
 export function streamLibraryChat(
@@ -17,7 +17,7 @@ export function streamLibraryChat(
   fetch(url, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Accept': 'text/event-stream' },
-    body: JSON.stringify({ question, session_id: sessionId }),
+    body: JSON.stringify({ question, session_id: sessionId, max_chunks: getChatMaxChunks(), model: getChatModel() }),
     signal: controller.signal,
   }).then(async resp => {
     if (!resp.ok) { onError(`HTTP ${resp.status}`); return; }

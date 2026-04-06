@@ -1,6 +1,6 @@
 // src/api/multiDocChat.ts
 import { apiFetch, getAuthHeaders } from './client';
-import { getApiUrl } from '../prefs';
+import { getApiUrl, getChatMaxChunks, getChatModel } from '../prefs';
 import type { Source, ChatToken } from './chat';
 
 export interface DocMeta {
@@ -37,7 +37,7 @@ export function streamMultiDocChat(
   fetch(url, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Accept': 'text/event-stream' },
-    body: JSON.stringify({ zotero_keys: zoteroKeys, question, session_id: sessionId }),
+    body: JSON.stringify({ zotero_keys: zoteroKeys, question, session_id: sessionId, max_chunks: getChatMaxChunks(), model: getChatModel() }),
     signal: controller.signal,
   }).then(async resp => {
     if (!resp.ok) { onError(`HTTP ${resp.status}`); return; }

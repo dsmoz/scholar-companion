@@ -1,5 +1,5 @@
 // src/api/chat.ts
-import { getApiUrl, getChatMaxChunks } from '../prefs';
+import { getApiUrl, getChatMaxChunks, getChatModel } from '../prefs';
 import { getAuthHeaders } from './client';
 
 export interface Source {
@@ -23,6 +23,19 @@ export interface ChatSession {
   created_at: string;
   updated_at: string;
   messages: ChatMessage[];
+}
+
+export interface ChatModelEntry {
+  id: string;
+  name: string;
+  provider: string;
+  tier: string;
+}
+
+export async function fetchChatModels(): Promise<ChatModelEntry[]> {
+  try {
+    return await (await import('./client')).apiFetch<ChatModelEntry[]>('/chat/models');
+  } catch { return []; }
 }
 
 export async function loadChatSession(zoteroKey: string): Promise<ChatSession | null> {
@@ -95,6 +108,7 @@ export function streamChat(
       zotero_key: zoteroKey,
       question,
       max_chunks: maxChunks ?? getChatMaxChunks(),
+      model: getChatModel(),
     }),
     signal: controller.signal,
   }).then(async resp => {

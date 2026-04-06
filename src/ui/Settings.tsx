@@ -19,8 +19,10 @@ import {
   getDiscoveryTopK, setDiscoveryTopK,
   getListPageSize, setListPageSize,
   getCacheTtlMinutes, setCacheTtlMinutes,
+  getChatModel, getChatMaxChunks,
 } from '../prefs';
 import { fetchDiscoverySources, type SourceEntry } from '../api/discovery';
+import { fetchChatModels, type ChatModelEntry } from '../api/chat';
 
 export function Settings() {
   // Connection state
@@ -55,6 +57,9 @@ export function Settings() {
   const [topK, setTopKState] = useState(getDiscoveryTopK());
   const [listPageSize, setListPageSizeState] = useState(getListPageSize());
   const [cacheTtlMinutes, setCacheTtlMinutesState] = useState(getCacheTtlMinutes());
+  const [chatModel, setChatModelState] = useState(getChatModel());
+  const [chatMaxChunks, setChatMaxChunksState] = useState(getChatMaxChunks());
+  const [chatModels, setChatModels] = useState<ChatModelEntry[]>([]);
   const [confirmAction, setConfirmAction] = useState<null | 'reindex' | 'clear'>(null);
   const [syncing, setSyncing] = useState(false);
 
@@ -63,6 +68,7 @@ export function Settings() {
       // On mount only: validate stored token
       testConnection();
       fetchDiscoverySources().then(setDiscoverySources).catch(() => {});
+      fetchChatModels().then(setChatModels).catch(() => {});
     }
   }, []);
 
@@ -98,6 +104,7 @@ export function Settings() {
       // Token is persisted — check connection
       try { await checkConnection(); setOnline(true); } catch { setOnline(false); }
       fetchDiscoverySources().then(setDiscoverySources).catch(() => {});
+      fetchChatModels().then(setChatModels).catch(() => {});
     } catch (err: any) {
       setLoginError(err.message || 'Login failed');
     } finally {
@@ -246,6 +253,26 @@ export function Settings() {
 
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
         <SectionHeader>CHAT</SectionHeader>
+        {row('Model',
+          chatModels.length > 0 ? (
+            <select
+              value={chatModel}
+              onChange={e => { setChatModelState(e.target.value); setPref('chatModel', e.target.value as any); }}
+              style={{ ...inputStyle, width: 200, cursor: 'pointer' }}
+            >
+              {chatModels.map(m => (
+                <option key={m.id} value={m.id}>{m.name} ({m.tier})</option>
+              ))}
+            </select>
+          ) : (
+            <span style={{ fontSize: '0.7rem', color: '#6c7086' }}>{isLoggedIn ? 'Loading...' : 'Connect first'}</span>
+          )
+        )}
+        {row(<span>Context depth<div style={{ fontSize: '0.6rem', color: '#585b70', marginTop: 1 }}>More = better answers, slower</div></span>,
+          segmented(['4', '8', '15', '25'], String(chatMaxChunks), v => {
+            const n = parseInt(v); setChatMaxChunksState(n); setPref('chatMaxChunks', n as any);
+          })
+        )}
         {row('Related docs', segmented(['3', '5', '8', '10'], String(chatRelatedMax), v => {
           const n = parseInt(v); setChatRelatedMaxState(n); setPref('chatRelatedMax', n as any);
         }))}

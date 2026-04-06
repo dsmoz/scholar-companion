@@ -12,7 +12,7 @@ const DEFAULTS = {
   theme: 'auto',
   accentColor: 'blue',
   graphNodeSize: 'M',
-  chatModel: 'google/gemma-2-9b-it',
+  chatModel: 'google/gemini-2.5-flash',
   chatMaxChunks: 8,
   chatRelatedMax: 5,
   chatRelatedMinLabel: 'Good',
