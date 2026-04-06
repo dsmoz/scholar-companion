@@ -23,20 +23,20 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
     _sectionRegistered = true;
     try {
       (Zotero as any).ItemPaneManager.registerSection({
-        paneID: 'zotero-ai-companion',
-        pluginID: 'zotero-ai-companion@dsmoz',
+        paneID: 'scholar-companion',
+        pluginID: 'scholar-companion@dsmoz',
         header: {
-          l10nID: 'ai-companion-header',
+          l10nID: 'scholar-companion-header',
           icon: `${_rootURI}content/icons/icon16.png`,
         },
         sidenav: {
-          l10nID: 'ai-companion-sidenav',
+          l10nID: 'scholar-companion-sidenav',
           icon: `${_rootURI}content/icons/icon20.png`,
         },
         onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
           const key = item.key;
           const title = encodeURIComponent(item.getField('title') ?? '');
-          const src = `chrome://zotero-ai-companion/content/panel.html?panel=item-chat&key=${key}&title=${title}`;
+          const src = `chrome://scholar-companion/content/panel.html?panel=item-chat&key=${key}&title=${title}`;
           if ((body as any)._aiIframe?.src === src) return;
           const minH = getItemPaneHeight();
           body.style.cssText = `height:100%;min-height:${minH}px;overflow:hidden;padding:0;`;
@@ -99,7 +99,7 @@ function initWindow(win: Window) {
   registerContextMenu(win);
   const handler: EventListener = (e: Event) =>
     handleCommand((e as CustomEvent).detail.command, win, e as CustomEvent).catch((err: unknown) =>
-      console.error('[AI Companion] Command error:', err)
+      console.error('[Scholar Companion] Command error:', err)
     );
   win.addEventListener('zotero-ai-command', handler);
   windowListeners.set(win, handler);
@@ -110,7 +110,7 @@ function scheduleSync() {
   if (!getAutoSync()) return;
   const intervalMs = getSyncInterval() * 60 * 60 * 1000;
   syncTimer = setInterval(async () => {
-    try { await triggerSync(); } catch (e) { console.warn('[AI Companion] Scheduled sync failed:', e); }
+    try { await triggerSync(); } catch (e) { console.warn('[Scholar Companion] Scheduled sync failed:', e); }
   }, intervalMs);
 }
 
@@ -143,7 +143,7 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
       if (existing) { existing.focus(); break; }
 
       win.openDialog(
-        `chrome://zotero-ai-companion/content/panel.xhtml`,
+        `chrome://scholar-companion/content/panel.xhtml`,
         winId,
         `chrome,dialog=no,resizable,centerscreen,width=${def.width},height=${def.height}`,
         def.panel,
@@ -162,7 +162,7 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
             await apiFetch(`/items/${item.key}`, { method: 'DELETE' });
             await (Zotero as any).Items.trashTx([item.id]);
           } catch (e) {
-            console.error('[AI Companion] Cascade delete failed:', e);
+            console.error('[Scholar Companion] Cascade delete failed:', e);
           }
         }
       }
@@ -203,7 +203,7 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         }
         win.alert(`Colored ${regularItems.length} item(s) by sync status.`);
       } catch (e) {
-        console.error('[AI Companion] colorSyncStatus failed:', e);
+        console.error('[Scholar Companion] colorSyncStatus failed:', e);
         win.alert('Failed to fetch sync status. Is the Flask server running?');
       }
       break;
@@ -231,12 +231,12 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
             await updateItemMetadata(it.key);
             queued++;
           } catch (e) {
-            console.warn('[AI Companion] metadata update failed for', it.key, e);
+            console.warn('[Scholar Companion] metadata update failed for', it.key, e);
           }
         }
         win.alert(`Queued ${queued} of ${regularItems.length} item(s) for metadata update.`);
       } catch (e) {
-        console.error('[AI Companion] updateMetadata failed:', e);
+        console.error('[Scholar Companion] updateMetadata failed:', e);
         win.alert('Failed to queue metadata update. Is the Flask server running?');
       }
       break;
@@ -259,7 +259,7 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         await triggerSync();
         win.alert('Indexing queued. Monitor progress in the Index Queue panel.');
       } catch (e) {
-        console.error('[AI Companion] indexSelected failed:', e);
+        console.error('[Scholar Companion] indexSelected failed:', e);
         win.alert('Failed to queue indexing. Is the Flask server running?');
       }
       break;
@@ -273,14 +273,14 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
       const abstract: string = (event?.detail?.abstract as string) || '';
       try {
         win.openDialog(
-          `chrome://zotero-ai-companion/content/panel.xhtml`,
+          `chrome://scholar-companion/content/panel.xhtml`,
           `zotero-ai-chat-docs-${Date.now()}`,
           `chrome,dialog=no,resizable,centerscreen,width=720,height=600`,
           'multi-doc-chat',
           JSON.stringify({ keys, abstract }),
         );
       } catch(e) {
-        console.error('[AI Companion] openDialog failed:', e);
+        console.error('[Scholar Companion] openDialog failed:', e);
       }
       break;
     }
@@ -297,14 +297,14 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
       const keys = regularItems.map((it: any) => it.key);
       try {
         win.openDialog(
-          `chrome://zotero-ai-companion/content/panel.xhtml`,
+          `chrome://scholar-companion/content/panel.xhtml`,
           `zotero-ai-chat-docs-${Date.now()}`,
           `chrome,dialog=no,resizable,centerscreen,width=720,height=600`,
           'multi-doc-chat',
           JSON.stringify({ keys, abstract: '' }),
         );
       } catch(e) {
-        console.error('[AI Companion] openDialog failed:', e);
+        console.error('[Scholar Companion] openDialog failed:', e);
       }
       break;
     }

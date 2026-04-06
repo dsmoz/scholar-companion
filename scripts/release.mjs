@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Release script for Zotero AI Companion
+ * Release script for Scholar Companion
  *
  * Usage:
  *   npm run release          — bump patch (0.1.0 → 0.1.1)
@@ -56,9 +56,9 @@ const manifest = readJSON(join(root, 'addon/manifest.json'));
 const oldVersion = pkg.version;
 const newVersion = bumpVersion(oldVersion, bumpArg);
 const tag = `v${newVersion}`;
-const repo = 'dsmoz/zotero-ai-companion';
-const xpiPath = join(root, 'build/zotero-ai-companion.xpi');
-const releaseUrl = `https://github.com/${repo}/releases/download/${tag}/zotero-ai-companion.xpi`;
+const repo = 'dsmoz/scholar-companion';
+const xpiPath = join(root, 'build/scholar-companion.xpi');
+const releaseUrl = `https://github.com/${repo}/releases/download/${tag}/scholar-companion.xpi`;
 
 console.log(`\nReleasing ${oldVersion} → ${newVersion}\n`);
 
@@ -77,7 +77,7 @@ run('npm run build');
 console.log('\nUpdating update.json...');
 const updateJson = {
   addons: {
-    'zotero-ai-companion@dsmoz': {
+    'scholar-companion@dsmoz': {
       updates: [
         {
           version: newVersion,
@@ -102,7 +102,7 @@ run(`git push origin ${tag}`);
 
 // ── 7. Create GitHub release and upload XPI ───────────────────────────────────
 console.log('\nCreating GitHub release...');
-run(`gh release create ${tag} "${xpiPath}#zotero-ai-companion.xpi" --repo ${repo} --title "Zotero AI Companion ${tag}" --notes "Release ${tag}" --latest`);
+run(`gh release create ${tag} "${xpiPath}#scholar-companion.xpi" --repo ${repo} --title "Scholar Companion ${tag}" --notes "Release ${tag}" --latest`);
 
 console.log(`\n✓ Released ${tag}`);
 console.log(`  XPI: ${releaseUrl}`);

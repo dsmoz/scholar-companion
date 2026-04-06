@@ -14,7 +14,7 @@
   <html:script><![CDATA[
     function initPanel() {
       var panel = window.arguments && window.arguments[0] ? window.arguments[0] : 'graph';
-      var src = 'chrome://zotero-ai-companion/content/panel.html?panel=' + panel;
+      var src = 'chrome://scholar-companion/content/panel.html?panel=' + panel;
       if (window.arguments && window.arguments[1]) {
         src += '&keys=' + encodeURIComponent(window.arguments[1]);
       }

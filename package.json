@@ -1,5 +1,5 @@
 {
-  "name": "zotero-ai-companion",
+  "name": "scholar-companion",
   "version": "0.2.6",
   "description": "AI research companion for Zotero 7 — chat, semantic search, similarity graph, discovery",
   "private": true,

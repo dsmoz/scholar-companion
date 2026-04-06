@@ -72,7 +72,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   ].getService(Components.interfaces.amIAddonManagerStartup);
   var manifestURI = Services.io.newURI(rootURI + "manifest.json");
   chromeHandle = aomStartup.registerChrome(manifestURI, [
-    ["content", "zotero-ai-companion", rootURI + "content/"],
+    ["content", "scholar-companion", rootURI + "content/"],
   ]);
 
   await Zotero.initializationPromise;
@@ -112,7 +112,7 @@ async function shutdown({ id, version, resourceURI, rootURI }, reason) {
 `);
 
 // 4. Package into .xpi (zip)
-const xpiPath = join(root, 'build/zotero-ai-companion.xpi');
+const xpiPath = join(root, 'build/scholar-companion.xpi');
 const output = createWriteStream(xpiPath);
 const archive = archiver('zip', { zlib: { level: 9 } });
 
@@ -124,13 +124,13 @@ await new Promise((resolve, reject) => {
   archive.finalize();
 });
 
-console.log(`XPI built: build/zotero-ai-companion.xpi (${(archive.pointer() / 1024).toFixed(1)} KB)`);
+console.log(`XPI built: build/scholar-companion.xpi (${(archive.pointer() / 1024).toFixed(1)} KB)`);
 
 // 5. Auto-deploy to Zotero profile if found
 import { existsSync } from 'fs';
 const profileExt = join(
   process.env.HOME,
-  'Library/Application Support/Zotero/Profiles/wpfg6cdt.default/extensions/zotero-ai-companion@dsmoz.xpi'
+  'Library/Application Support/Zotero/Profiles/wpfg6cdt.default/extensions/scholar-companion@dsmoz.xpi'
 );
 if (existsSync(join(process.env.HOME, 'Library/Application Support/Zotero/Profiles/wpfg6cdt.default/extensions'))) {
   copyFileSync(xpiPath, profileExt);

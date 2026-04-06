@@ -35,6 +35,6 @@ async function queueSync() {
   try {
     await apiFetch('/sync', { method: 'POST' });
   } catch (e) {
-    console.warn('[AI Companion] Failed to queue sync:', e);
+    console.warn('[Scholar Companion] Failed to queue sync:', e);
   }
 }

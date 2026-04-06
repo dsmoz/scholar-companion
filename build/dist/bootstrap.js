@@ -11,7 +11,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   ].getService(Components.interfaces.amIAddonManagerStartup);
   var manifestURI = Services.io.newURI(rootURI + "manifest.json");
   chromeHandle = aomStartup.registerChrome(manifestURI, [
-    ["content", "zotero-ai-companion", rootURI + "content/"],
+    ["content", "scholar-companion", rootURI + "content/"],
   ]);
 
   await Zotero.initializationPromise;

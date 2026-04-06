@@ -30,7 +30,7 @@ export function registerMenus(win: Window) {
   if (!toolsMenu) return;
 
   const menu = (doc as any).createXULElement('menu');
-  menu.setAttribute('label', 'AI Companion');
+  menu.setAttribute('label', 'Scholar Companion');
   menu.setAttribute('id', 'zotero-ai-menu');
 
   const popup = (doc as any).createXULElement('menupopup');

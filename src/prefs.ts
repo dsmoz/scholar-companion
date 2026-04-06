@@ -1,5 +1,5 @@
 // src/prefs.ts
-const PREFIX = 'extensions.zotero-ai';
+const PREFIX = 'extensions.scholar-companion';
 
 const DEFAULTS = {
   apiUrl: 'https://mcp.dsmozconsultancy.com',
