@@ -85,6 +85,8 @@ export function Settings() {
       setTokenState(result.access_token);
       setUsername('');
       setPassword('');
+      // Test connection immediately after login (token is already persisted)
+      try { await checkConnection(); setOnline(true); } catch { setOnline(false); }
     } catch (err: any) {
       setLoginError(err.message || 'Login failed');
     } finally {
