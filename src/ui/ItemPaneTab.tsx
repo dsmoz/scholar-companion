@@ -1,6 +1,6 @@
 // src/ui/ItemPaneTab.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { PaperPlaneTilt, MagnifyingGlass, User, Chat } from '@phosphor-icons/react';
+import { PaperPlaneTilt, MagnifyingGlass, User, Chat, CaretUp, CaretDown } from '@phosphor-icons/react';
 import { streamChat, fetchItemMetadata, loadChatSession } from '../api/chat';
 import type { Source } from '../api/chat';
 import { marked } from 'marked';
@@ -290,7 +290,8 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                           })} style={{
                             background: 'transparent', border: 'none', color: '#6c7086',
                             fontSize: '0.6rem', cursor: 'pointer', padding: 0,
-                          }}>{expanded ? '▲ hide abstract' : '▼ show abstract'}</button>
+                            display: 'flex', alignItems: 'center', gap: 3,
+                          }}>{expanded ? <><CaretUp size={10} /> hide abstract</> : <><CaretDown size={10} /> show abstract</>}</button>
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
