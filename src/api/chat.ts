@@ -32,10 +32,18 @@ export interface ChatModelEntry {
   tier: string;
 }
 
+const FALLBACK_MODELS: ChatModelEntry[] = [
+  { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'OpenRouter', tier: 'fast' },
+  { id: 'google/gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', provider: 'OpenRouter', tier: 'fastest' },
+  { id: 'anthropic/claude-haiku-4.5', name: 'Claude Haiku 4.5', provider: 'OpenRouter', tier: 'fast' },
+  { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', provider: 'OpenRouter', tier: 'balanced' },
+];
+
 export async function fetchChatModels(): Promise<ChatModelEntry[]> {
   try {
-    return await (await import('./client')).apiFetch<ChatModelEntry[]>('/chat/models');
-  } catch { return []; }
+    const models = await (await import('./client')).apiFetch<ChatModelEntry[]>('/chat/models');
+    return models.length > 0 ? models : FALLBACK_MODELS;
+  } catch { return FALLBACK_MODELS; }
 }
 
 export async function loadChatSession(zoteroKey: string): Promise<ChatSession | null> {
