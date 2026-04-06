@@ -189,10 +189,12 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
           error:   { tag: 'SC: Error',   color: '#f38ba8' },
         };
         const ALL_TAGS = Object.values(TAG_MAP).map((t) => t.tag);
+        // Legacy emoji tags to clean up from previous versions
+        const LEGACY_TAGS = ['🟢 Synced', '🟡 Pending', '🔴 Error'];
 
         for (const it of regularItems) {
-          // Remove old sync tags
-          for (const t of ALL_TAGS) it.removeTag(t);
+          // Remove current and legacy sync tags
+          for (const t of [...ALL_TAGS, ...LEGACY_TAGS]) it.removeTag(t);
           await it.saveTx();
 
           const rawStatus = statusMap.get(it.key) ?? 'pending';
