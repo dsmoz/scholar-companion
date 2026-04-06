@@ -90,7 +90,7 @@ export function streamChat(
 
   fetch(url, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { ...getAuthHeaders(), 'Accept': 'text/event-stream' },
     body: JSON.stringify({
       zotero_key: zoteroKey,
       question,

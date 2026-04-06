@@ -36,7 +36,7 @@ export function streamMultiDocChat(
 
   fetch(url, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { ...getAuthHeaders(), 'Accept': 'text/event-stream' },
     body: JSON.stringify({ zotero_keys: zoteroKeys, question, session_id: sessionId }),
     signal: controller.signal,
   }).then(async resp => {
