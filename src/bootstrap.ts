@@ -195,18 +195,27 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         // Legacy emoji tags to clean up from previous versions
         const LEGACY_TAGS = ['🟢 Synced', '🟡 Pending', '🔴 Error'];
 
-        for (const it of regularItems) {
-          // Remove current and legacy sync tags
-          for (const t of [...ALL_TAGS, ...LEGACY_TAGS]) it.removeTag(t);
-          await it.saveTx();
-
-          const rawStatus = statusMap.get(it.key) ?? 'pending';
-          const info = TAG_MAP[rawStatus] ?? TAG_MAP.pending;
-          it.addTag(info.tag);
-          await it.saveTx();
-          await (Zotero as any).Tags.setColor(it.libraryID, info.tag, info.color);
+        // Set tag colours once (not per item)
+        const libID = regularItems[0].libraryID;
+        for (const entry of Object.values(TAG_MAP)) {
+          try { await (Zotero as any).Tags.setColor(libID, entry.tag, entry.color); } catch { /* ignore */ }
         }
-        win.alert(`Colored ${regularItems.length} item(s) by sync status.`);
+
+        let colored = 0;
+        for (const it of regularItems) {
+          try {
+            // Remove current and legacy sync tags, then add the correct one
+            for (const t of [...ALL_TAGS, ...LEGACY_TAGS]) it.removeTag(t);
+            const rawStatus = statusMap.get(it.key) ?? 'pending';
+            const info = TAG_MAP[rawStatus] ?? TAG_MAP.pending;
+            it.addTag(info.tag);
+            await it.saveTx();
+            colored++;
+          } catch (err) {
+            console.warn('[Scholar Companion] colorSyncStatus: failed for', it.key, err);
+          }
+        }
+        win.alert(`Colored ${colored} of ${regularItems.length} item(s) by sync status.`);
       } catch (e) {
         console.error('[Scholar Companion] colorSyncStatus failed:', e);
         win.alert('Failed to fetch sync status. Is the Flask server running?');
