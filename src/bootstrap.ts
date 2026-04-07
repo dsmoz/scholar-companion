@@ -179,9 +179,12 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         break;
       }
       try {
+        console.log('[Scholar Companion] colorSyncStatus: fetching status for', regularItems.length, 'items');
         const { fetchSyncStatus } = await import('./api/sync-status');
         const selectedKeys = regularItems.map((it: any) => it.key as string);
-        const { items: statusItems } = await fetchSyncStatus(selectedKeys);
+        const resp = await fetchSyncStatus(selectedKeys);
+        console.log('[Scholar Companion] colorSyncStatus: got response', JSON.stringify(resp).slice(0, 200));
+        const statusItems = resp?.items ?? [];
         const statusMap = new Map(statusItems.map((s) => [s.zotero_key, s.sync_status]));
 
         const TAG_MAP: Record<string, { tag: string; color: string }> = {
@@ -192,13 +195,16 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
           deleted:          { tag: 'SC: Error',   color: '#f38ba8' },
         };
         const ALL_TAGS = [...new Set(Object.values(TAG_MAP).map((t) => t.tag))];
-        // Legacy emoji tags to clean up from previous versions
         const LEGACY_TAGS = ['🟢 Synced', '🟡 Pending', '🔴 Error'];
 
         // Set tag colours once (not per item)
         const libID = regularItems[0].libraryID;
-        for (const entry of Object.values(TAG_MAP)) {
-          try { await (Zotero as any).Tags.setColor(libID, entry.tag, entry.color); } catch { /* ignore */ }
+        const uniqueEntries = new Map(Object.values(TAG_MAP).map(e => [e.tag, e]));
+        for (const entry of uniqueEntries.values()) {
+          console.log('[Scholar Companion] colorSyncStatus: setColor', entry.tag, entry.color);
+          try { await (Zotero as any).Tags.setColor(libID, entry.tag, entry.color); } catch (ce) {
+            console.warn('[Scholar Companion] setColor failed:', entry.tag, ce);
+          }
         }
 
         let colored = 0;
@@ -217,7 +223,8 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         win.alert(`Colored ${colored} of ${regularItems.length} item(s) by sync status.`);
       } catch (e) {
         console.error('[Scholar Companion] colorSyncStatus failed:', e);
-        win.alert(`Color sync failed: ${e instanceof Error ? e.message : String(e)}`);
+        const msg = e instanceof Error ? e.message : (typeof e === 'object' && e !== null ? JSON.stringify(e) : String(e));
+        win.alert(`Color sync failed: ${msg}`);
       }
       break;
     }
