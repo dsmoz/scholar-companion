@@ -64,9 +64,9 @@ function set<K extends PrefKey>(key: K, value: typeof DEFAULTS[K]): void {
 }
 
 export const SCORE_THRESHOLDS: Record<string, number> = {
-  Best: 0.75,
-  Good: 0.60,
-  Fair: 0.45,
+  Best: 0.40,
+  Good: 0.25,
+  Fair: 0.15,
 };
 
 export const getApiUrl = () => get('apiUrl') as string;
