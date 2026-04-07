@@ -1,6 +1,6 @@
 // src/ui/Settings.tsx
 import React, { useState, useEffect } from 'react';
-import { ArrowsClockwise, Eye, EyeSlash, CopySimple, SignIn, SignOut, WifiHigh, WifiSlash, CircleNotch } from '@phosphor-icons/react';
+import { ArrowsClockwise, Eye, EyeSlash, CopySimple, SignIn, SignOut, WifiHigh, WifiSlash, CircleNotch, FloppyDisk, Check } from '@phosphor-icons/react';
 import { SectionHeader } from './components/SectionHeader';
 import { Toggle } from './components/Toggle';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -24,7 +24,7 @@ import {
   getDiscoveryTextColor, setDiscoveryTextColor,
 } from '../prefs';
 import { fetchDiscoverySources, clearSourceCache, type SourceEntry } from '../api/discovery';
-import { syncPreferences, syncPreferencesNow, loadPreferencesFromServer } from '../api/preferences';
+import { syncPreferencesNow, loadPreferencesFromServer } from '../api/preferences';
 import { fetchChatModels, type ChatModelEntry } from '../api/chat';
 
 function broadcastConnection(connected: boolean) {
@@ -79,6 +79,7 @@ export function Settings() {
   const [textColor, setTextColorState] = useState(getDiscoveryTextColor());
   const [confirmAction, setConfirmAction] = useState<null | 'reindex' | 'clear'>(null);
   const [syncing, setSyncing] = useState(false);
+  const [saving, setSaving] = useState<false | 'saving' | 'saved'>(false);
   const [discoveryError, setDiscoveryError] = useState('');
 
   useEffect(() => {
@@ -229,8 +230,7 @@ export function Settings() {
           setFontSizeState(n);
           setDiscoveryFontSize(n);
           document.documentElement.style.setProperty('--reading-font-size', `${n}px`);
-          syncPreferences();
-        }))}
+                 }))}
         {row('Chat text color',
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input
@@ -240,8 +240,7 @@ export function Settings() {
                 setTextColorState(e.target.value);
                 setDiscoveryTextColor(e.target.value);
                 document.documentElement.style.setProperty('--reading-text-color', e.target.value);
-                syncPreferences();
-              }}
+                             }}
               style={{ width: 32, height: 22, border: '1px solid #444', borderRadius: 4, background: '#313244', cursor: 'pointer', padding: 0 }}
             />
             <button onClick={() => {
@@ -251,8 +250,7 @@ export function Settings() {
               setDiscoveryTextColor('#cdd6f4');
               document.documentElement.style.setProperty('--reading-font-size', '13px');
               document.documentElement.style.setProperty('--reading-text-color', '#cdd6f4');
-              syncPreferences();
-            }} style={{ fontSize: '0.6rem', color: '#6c7086', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                         }} style={{ fontSize: '0.6rem', color: '#6c7086', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
               Reset
             </button>
           </div>
@@ -336,8 +334,7 @@ export function Settings() {
         <SectionHeader>SYNC SCHEDULING</SectionHeader>
         {row('Auto-sync', <Toggle checked={autoSync} onChange={v => { setAutoSyncState(v); setPref('autoSync', v as any); syncPreferences(); }} />)}
         {row('Interval', segmented(['6h', '12h', '24h', '48h'], `${syncInterval}h`, v => {
-          const n = parseInt(v); setSyncIntervalState(n); setSyncInterval(n); syncPreferences();
-        }))}
+          const n = parseInt(v); setSyncIntervalState(n); setSyncInterval(n);        }))}
         {row('Sync on startup', <Toggle checked={syncOnStartup} onChange={v => { setSyncOnStartupState(v); setPref('syncOnStartup', v as any); syncPreferences(); }} />)}
         <button onClick={handleSyncNow} disabled={syncing} style={{ ...btnStyle, display: 'flex', alignItems: 'center', gap: 4 }}>
           <ArrowsClockwise size={12} /> {syncing ? 'Syncing...' : 'Sync now'}
@@ -363,18 +360,14 @@ export function Settings() {
         )}
         {row(<span>Context depth<div style={{ fontSize: '0.6rem', color: '#585b70', marginTop: 1 }}>More = better answers, slower</div></span>,
           segmented(['4', '8', '15', '25'], String(chatMaxChunks), v => {
-            const n = parseInt(v); setChatMaxChunksState(n); setPref('chatMaxChunks', n as any); syncPreferences();
-          })
+            const n = parseInt(v); setChatMaxChunksState(n); setPref('chatMaxChunks', n as any);          })
         )}
         {row('Related docs', segmented(['3', '5', '8', '10'], String(chatRelatedMax), v => {
-          const n = parseInt(v); setChatRelatedMaxState(n); setPref('chatRelatedMax', n as any); syncPreferences();
-        }))}
+          const n = parseInt(v); setChatRelatedMaxState(n); setPref('chatRelatedMax', n as any);        }))}
         {row('Minimum match', segmented(['Fair', 'Good', 'Best'], chatRelatedMinLabel, v => {
-          setChatRelatedMinLabelState(v); setChatRelatedMinLabel(v); syncPreferences();
-        }))}
+          setChatRelatedMinLabelState(v); setChatRelatedMinLabel(v);        }))}
         {row('Item pane height', segmented(['300', '450', '600', '800'], String(itemPaneHeight), v => {
-          const n = parseInt(v); setItemPaneHeightState(n); setItemPaneHeight(n); syncPreferences();
-        }))}
+          const n = parseInt(v); setItemPaneHeightState(n); setItemPaneHeight(n);        }))}
       </section>
 
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
@@ -399,8 +392,7 @@ export function Settings() {
                     onChange={v => {
                       setSourcePref(src.key, v);
                       setSourcePrefs(prev => ({ ...prev, [src.key]: v }));
-                      syncPreferences();
-                    }}
+                                         }}
                   />
                 )}
               </div>
@@ -414,26 +406,22 @@ export function Settings() {
           const val = v as 'keyword' | 'semantic';
           setScoreModeState(val);
           setDiscoveryScoreMode(val);
-          syncPreferences();
-        }))}
+                 }))}
         {row('Min score', segmented(['0.0', '0.2', '0.3', '0.4', '0.5'], String(minScore), v => {
           const n = parseFloat(v);
           setMinScoreState(n);
           setDiscoveryMinScore(n);
-          syncPreferences();
-        }))}
+                 }))}
         {row('Top results', segmented(['10', '15', '25', '50'], String(topK), v => {
           const n = parseInt(v);
           setTopKState(n);
           setDiscoveryTopK(n);
-          syncPreferences();
-        }))}
+                 }))}
         {row('Page size', segmented(['5', '10', '20', '50'], String(listPageSize), v => {
           const n = parseInt(v);
           setListPageSizeState(n);
           setListPageSize(n);
-          syncPreferences();
-        }))}
+                 }))}
         <div style={{ fontSize: '0.65rem', color: '#585b70', marginTop: '0.25rem' }}>
           keyword: fast, no API cost · semantic: accurate, uses embedding model
         </div>
@@ -445,9 +433,37 @@ export function Settings() {
           const n = parseInt(v);
           setCacheTtlMinutesState(n);
           setCacheTtlMinutes(n);
-          syncPreferences();
-        }))}
+                 }))}
       </section>
+
+      {isLoggedIn && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+          <button
+            disabled={saving === 'saving'}
+            onClick={async () => {
+              setSaving('saving');
+              try {
+                await syncPreferencesNow();
+                setSaving('saved');
+                setTimeout(() => setSaving(false), 2000);
+              } catch {
+                setSaving(false);
+              }
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: saving === 'saved' ? '#a6e3a1' : 'var(--accent, #89b4fa)',
+              border: 'none', borderRadius: 6, padding: '6px 16px',
+              fontSize: '0.75rem', fontWeight: 600,
+              color: '#1e1e2e', cursor: saving === 'saving' ? 'wait' : 'pointer',
+            }}
+          >
+            {saving === 'saving' ? <><CircleNotch size={14} className="spin" /> Saving...</>
+              : saving === 'saved' ? <><Check size={14} weight="bold" /> Saved</>
+              : <><FloppyDisk size={14} /> Save Preferences</>}
+          </button>
+        </div>
+      )}
 
       <section>
         <SectionHeader>DANGER ZONE</SectionHeader>
