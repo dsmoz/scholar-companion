@@ -93,10 +93,20 @@ export function streamSummarize(
 }
 
 function triggerDownload(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  // Dispatch to Zotero's parent window which has access to nsIFilePicker + IOUtils
+  const target = window.parent ?? window;
+  blob.arrayBuffer().then(buf => {
+    const isText = blob.type.startsWith('text/');
+    const content = isText
+      ? new TextDecoder().decode(buf)
+      : Array.from(new Uint8Array(buf));
+    target.dispatchEvent(new CustomEvent('zotero-ai-command', {
+      detail: {
+        command: 'saveFile',
+        filename,
+        content,
+        mimeType: blob.type,
+      },
+    }));
+  });
 }

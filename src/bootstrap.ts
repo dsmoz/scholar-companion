@@ -600,6 +600,39 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
       break;
     }
 
+    case 'saveFile': {
+      const { filename, content, mimeType } = event?.detail ?? {};
+      if (!filename || !content) break;
+      try {
+        const fp = Components.classes['@mozilla.org/filepicker;1']
+          .createInstance(Components.interfaces.nsIFilePicker);
+        fp.init(win, 'Save Chat Export', Components.interfaces.nsIFilePicker.modeSave);
+        fp.defaultString = filename;
+        if (mimeType === 'text/markdown') {
+          fp.appendFilter('Markdown', '*.md');
+        } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+          fp.appendFilter('Word Document', '*.docx');
+        } else if (mimeType === 'application/pdf') {
+          fp.appendFilter('PDF', '*.pdf');
+        }
+        fp.appendFilters(Components.interfaces.nsIFilePicker.filterAll);
+        const result = await new Promise<number>(resolve => fp.open(resolve));
+        if (result === Components.interfaces.nsIFilePicker.returnOK ||
+            result === Components.interfaces.nsIFilePicker.returnReplace) {
+          const path = fp.file.path;
+          if (typeof content === 'string') {
+            await IOUtils.writeUTF8(path, content);
+          } else {
+            // Binary data passed as array of numbers
+            await IOUtils.write(path, new Uint8Array(content));
+          }
+        }
+      } catch (e) {
+        console.error('[Scholar Companion] File save failed:', e);
+      }
+      break;
+    }
+
     case 'applyReadingPrefs': {
       const fontSize = String(event?.detail?.fontSize ?? 13) + 'px';
       const textColor = String(event?.detail?.textColor ?? '#cdd6f4');
