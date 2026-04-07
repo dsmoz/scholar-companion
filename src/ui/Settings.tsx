@@ -392,14 +392,10 @@ export function Settings() {
                 {row(
                   <span>
                     <span style={{ color: 'var(--text, #cdd6f4)' }}>{src.label}</span>
-                    {!src.enabled && (
-                      <span style={{ marginLeft: 6, fontSize: '0.65rem', color: '#f38ba8' }}>disabled on server</span>
-                    )}
                     <div style={{ fontSize: '0.65rem', color: '#585b70', marginTop: 1 }}>{src.description}</div>
                   </span>,
                   <Toggle
                     checked={src.key in sourcePrefs ? sourcePrefs[src.key] : src.default_enabled_in_plugin}
-                    disabled={!src.enabled}
                     onChange={v => {
                       setSourcePref(src.key, v);
                       setSourcePrefs(prev => ({ ...prev, [src.key]: v }));
