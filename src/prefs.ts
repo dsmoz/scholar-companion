@@ -35,10 +35,18 @@ const DEFAULTS = {
 type PrefKey = keyof typeof DEFAULTS;
 
 function _prefBranch(): any {
-  // Use Mozilla's native pref service — persists across sessions and works in all contexts
+  // Use Mozilla's native pref service — persists across sessions and works in all contexts.
+  // Try multiple paths: globalThis.Services (bootstrap sandbox), window-level Services
+  // (chrome panels), and Components.classes fallback (XUL dialogs).
   try {
-    return (globalThis as any).Services?.prefs?.getBranch('') ?? null;
-  } catch { return null; }
+    const svc = (globalThis as any).Services
+      ?? (typeof window !== 'undefined' && (window as any).Services)
+      ?? (typeof Components !== 'undefined' && (Components as any).classes?.['@mozilla.org/preferences-service;1']
+          ?.getService((Components as any).interfaces.nsIPrefService));
+    if (svc?.prefs) return svc.prefs.getBranch('');
+    if (svc?.getBranch) return svc.getBranch('');
+  } catch { /* not available */ }
+  return null;
 }
 
 function get<K extends PrefKey>(key: K): typeof DEFAULTS[K] {
