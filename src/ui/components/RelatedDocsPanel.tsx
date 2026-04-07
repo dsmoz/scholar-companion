@@ -52,7 +52,7 @@ export function RelatedDocsPanel({ sourceKeys = [], query, context }: Props) {
     }
   }, [sourceKeys.join(','), query ?? '', context ?? '']);
 
-  if (!loading && items.length === 0) return null;
+  if (!loading && items.length === 0 && !sourceKeys.length && !query) return null;
 
   return (
     <div style={{
@@ -82,6 +82,10 @@ export function RelatedDocsPanel({ sourceKeys = [], query, context }: Props) {
         <div style={{ paddingBottom: 6 }}>
           {loading ? (
             <div style={{ padding: '4px 10px', color: '#6c7086', fontSize: '0.7rem' }}>Loading…</div>
+          ) : items.length === 0 ? (
+            <div style={{ padding: '4px 10px', color: '#6c7086', fontSize: '0.7rem' }}>
+              Document not yet indexed — index it to see related items.
+            </div>
           ) : (
             items.map(item => (
               <div key={item.zotero_key} style={{
