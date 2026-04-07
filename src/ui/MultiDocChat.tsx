@@ -176,6 +176,7 @@ export function MultiDocChat({ zoteroKeys }: Props) {
             <MagnifyingGlass size={12} /> {scopeStatus.summary}
           </div>
         )}
+        <div style={{ flex: 1 }} />
         <RelatedDocsPanel
           sourceKeys={zoteroKeys}
           context={[...messages].reverse().find(m => m.role === 'user')?.text}

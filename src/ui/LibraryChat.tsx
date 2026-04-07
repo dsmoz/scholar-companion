@@ -173,6 +173,7 @@ export function LibraryChat() {
               )}
             </div>
           ))}
+          <div style={{ flex: 1 }} />
           {lastQuery && <RelatedDocsPanel query={lastQuery} disabled={streaming} />}
           <div ref={bottomRef} />
         </div>
