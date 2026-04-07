@@ -19,17 +19,10 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
   // before we call registerSection (otherwise the refresh notification is lost)
   await (Zotero as any).uiReadyPromise;
 
-  // Register the item pane section
+  // Register the item pane section exactly once
   if (!_sectionRegistered) {
     _sectionRegistered = true;
     try {
-      // Clean up stale registration from previous plugin load
-      try { (Zotero as any).ItemPaneManager.unregisterSection('scholar-companion'); } catch { /* ok */ }
-      // Register Fluent l10n for the item pane labels
-      try {
-        (Zotero as any).Intl?.addFluentFileSource?.('scholar-companion', `${_rootURI}locale/{locale}/scholar-companion.ftl`);
-      } catch { /* older Zotero or missing API */ }
-
       (Zotero as any).ItemPaneManager.registerSection({
         paneID: 'scholar-companion',
         pluginID: 'scholar-companion@dsmoz',
@@ -42,42 +35,28 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
           icon: `${_rootURI}content/icons/icon20.png`,
         },
         onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
-          try {
-            const key = item?.key;
-            if (!key) return;
-            if ((body as any)._aiKey === key) return;
-            (body as any)._aiKey = key;
-
-            let title = '';
-            try { title = item.getField?.('title') ?? ''; } catch { /* attachment/note */ }
-            let creators: Array<{ firstName: string; lastName: string }> = [];
-            try {
-              creators = (item.getCreators?.() ?? []).map((c: any) => ({
-                firstName: c.firstName ?? '', lastName: c.lastName ?? c.name ?? '',
-              }));
-            } catch { /* ignore */ }
-
-            const src = 'chrome://scholar-companion/content/panel.html?panel=item-chat'
-              + '&key=' + encodeURIComponent(key)
-              + '&title=' + encodeURIComponent(title)
-              + '&authors=' + encodeURIComponent(JSON.stringify(creators));
-            const minH = getItemPaneHeight();
-            body.style.cssText = 'height:100%;min-height:' + minH + 'px;overflow:hidden;padding:0;';
-            let iframe = (body as any)._aiIframe as HTMLIFrameElement | undefined;
-            if (!iframe) {
-              iframe = body.ownerDocument.createElementNS('http://www.w3.org/1999/xhtml', 'iframe') as HTMLIFrameElement;
-              iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
-              body.replaceChildren(iframe);
-              (body as any)._aiIframe = iframe;
-            }
-            iframe.src = src;
-          } catch (e) {
-            console.error('[Scholar Companion] onRender error:', e);
+          const key = item.key;
+          const title = encodeURIComponent(item.getField('title') ?? '');
+          const authors = encodeURIComponent(JSON.stringify(
+            (item.getCreators?.() ?? []).map((c: any) => ({
+              firstName: c.firstName ?? '', lastName: c.lastName ?? c.name ?? '',
+            }))
+          ));
+          const src = `chrome://scholar-companion/content/panel.html?panel=item-chat&key=${key}&title=${title}&authors=${authors}`;
+          if ((body as any)._aiIframe?.src === src) return;
+          const minH = getItemPaneHeight();
+          body.style.cssText = `height:100%;min-height:${minH}px;overflow:hidden;padding:0;`;
+          let iframe = (body as any)._aiIframe as HTMLIFrameElement | undefined;
+          if (!iframe) {
+            iframe = body.ownerDocument.createElement('iframe') as HTMLIFrameElement;
+            iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+            body.replaceChildren(iframe);
+            (body as any)._aiIframe = iframe;
           }
+          iframe.src = src;
         },
         onDestroy: ({ body }: { body: HTMLElement }) => {
           delete (body as any)._aiIframe;
-          delete (body as any)._aiKey;
         },
       });
     } catch(e) { (Zotero as any).logError(e); }
@@ -98,9 +77,6 @@ function shutdown() {
   unregisterEventHooks();
   if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
   windowListeners.clear();
-  try {
-    (Zotero as any).ItemPaneManager.unregisterSection('scholar-companion');
-  } catch { /* may not exist */ }
 }
 
 async function onMainWindowLoad({ window: win }: { window: Window }) {
