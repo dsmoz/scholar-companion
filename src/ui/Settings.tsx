@@ -23,7 +23,7 @@ import {
   getDiscoveryFontSize, setDiscoveryFontSize,
   getDiscoveryTextColor, setDiscoveryTextColor,
 } from '../prefs';
-import { fetchDiscoverySources, clearSourceCache, type SourceEntry } from '../api/discovery';
+import { fetchDiscoverySources, clearSourceCache, syncSourcePrefsToServer, type SourceEntry } from '../api/discovery';
 import { fetchChatModels, type ChatModelEntry } from '../api/chat';
 
 function broadcastConnection(connected: boolean) {
@@ -395,7 +395,9 @@ export function Settings() {
                     disabled={!src.enabled}
                     onChange={v => {
                       setSourcePref(src.key, v);
-                      setSourcePrefs(prev => ({ ...prev, [src.key]: v }));
+                      const updated = { ...sourcePrefs, [src.key]: v };
+                      setSourcePrefs(updated);
+                      syncSourcePrefsToServer(updated);
                     }}
                   />
                 )}

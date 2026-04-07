@@ -50,6 +50,21 @@ export function clearSourceCache(): void {
 }
 
 /**
+ * Push discovery source preferences to the server so CLI/MCP tools
+ * respect the same enabled sources as the plugin.
+ */
+export async function syncSourcePrefsToServer(sourcePrefs: SourcePrefs): Promise<void> {
+  try {
+    await apiFetch('/preferences', {
+      method: 'PUT',
+      body: JSON.stringify({ preferences: { discovery_sources: sourcePrefs } }),
+    });
+  } catch (err) {
+    console.warn('[Scholar Companion] Failed to sync source prefs to server:', err);
+  }
+}
+
+/**
  * Fetch available discovery sources from the server registry.
  * Cached for the lifetime of the Zotero session.
  * Runs legacy pref migration on first call.
