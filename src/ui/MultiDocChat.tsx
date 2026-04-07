@@ -152,7 +152,10 @@ export function MultiDocChat({ zoteroKeys }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      <RelatedDocsPanel sourceKeys={zoteroKeys} />
+      <RelatedDocsPanel
+        sourceKeys={zoteroKeys}
+        context={[...messages].reverse().find(m => m.role === 'user')?.text}
+      />
 
       {/* Input */}
       <div style={{ padding: '6px', borderTop: '1px solid #313244', display: 'flex', gap: 6 }}>

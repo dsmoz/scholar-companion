@@ -21,9 +21,11 @@ interface Props {
   sourceKeys?: string[];
   /** Freetext query — used instead of keys for library chat (semantic search). */
   query?: string;
+  /** Conversation context (last user message) — boosts contextually relevant results. */
+  context?: string;
 }
 
-export function RelatedDocsPanel({ sourceKeys = [], query }: Props) {
+export function RelatedDocsPanel({ sourceKeys = [], query, context }: Props) {
   const [items, setItems] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
@@ -41,14 +43,14 @@ export function RelatedDocsPanel({ sourceKeys = [], query }: Props) {
         .finally(() => setLoading(false));
     } else if (sourceKeys.length > 0) {
       setLoading(true);
-      similarToMany(sourceKeys, limit)
+      similarToMany(sourceKeys, limit, context)
         .then(r => setItems(filter(r)))
         .catch(() => setItems([]))
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, [sourceKeys.join(','), query ?? '']);
+  }, [sourceKeys.join(','), query ?? '', context ?? '']);
 
   if (!loading && items.length === 0) return null;
 
@@ -86,7 +88,7 @@ export function RelatedDocsPanel({ sourceKeys = [], query }: Props) {
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '3px 10px',
               }}>
-                <ScoreChip score={item.score} />
+                <ScoreChip score={item.score} signals={item.signals} />
                 <span style={{
                   flex: 1, color: '#cdd6f4', fontSize: '0.72rem',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
