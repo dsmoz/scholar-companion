@@ -58,7 +58,6 @@ export function RelatedDocsPanel({ sourceKeys = [], query, context }: Props) {
     <div style={{
       borderTop: '1px solid #313244',
       background: '#181825',
-      flexShrink: 0,
     }}>
       {/* Header row */}
       <button

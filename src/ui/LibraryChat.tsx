@@ -173,9 +173,9 @@ export function LibraryChat() {
               )}
             </div>
           ))}
+          {lastQuery && <RelatedDocsPanel query={lastQuery} />}
           <div ref={bottomRef} />
         </div>
-        {lastQuery && <RelatedDocsPanel query={lastQuery} />}
         <div style={{ padding: '6px', borderTop: '1px solid #313244', display: 'flex', gap: 6 }}>
           <input
             value={input}
