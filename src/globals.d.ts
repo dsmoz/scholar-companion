@@ -13,7 +13,7 @@ declare const Zotero: {
     unregisterObserver: (id: string) => void;
   };
   Items: {
-    get: (id: number) => { isRegularItem: () => boolean } | undefined;
+    get: (id: number) => { key: string; isRegularItem: () => boolean } | undefined;
     trashTx: (ids: number[]) => Promise<void>;
   };
   URI: {

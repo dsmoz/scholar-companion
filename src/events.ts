@@ -1,5 +1,6 @@
 // src/events.ts
 import { apiFetch } from './api/client';
+import { syncMetadata } from './api/sync';
 
 let notifierID: string | null = null;
 
@@ -16,6 +17,15 @@ export function registerEventHooks() {
           if (hasRegular) await queueSync();
         }
         if (event === 'modify') {
+          // Sync relatedness metadata for modified items (tags, collections, etc.)
+          const keys: string[] = [];
+          for (const id of ids) {
+            const item = Zotero.Items.get(id);
+            if (item && item.isRegularItem()) keys.push(item.key);
+          }
+          if (keys.length > 0) {
+            syncMetadata(keys).catch(() => {});
+          }
           await queueSync();
         }
       },
