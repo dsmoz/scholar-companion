@@ -57,6 +57,8 @@ copyFileSync(join(root, 'addon/content/icons/icon16.png'), join(dist, 'content/i
 copyFileSync(join(root, 'addon/content/icons/icon20.png'), join(dist, 'content/icons/icon20.png'));
 copyFileSync(join(root, 'addon/content/icons/icon16.svg'), join(dist, 'content/icons/icon16.svg'));
 copyFileSync(join(root, 'addon/content/icons/icon20.svg'), join(dist, 'content/icons/icon20.svg'));
+mkdirSync(join(dist, 'locale/en-US'), { recursive: true });
+copyFileSync(join(root, 'addon/locale/en-US/scholar-companion.ftl'), join(dist, 'locale/en-US/scholar-companion.ftl'));
 
 // 3. Write Zotero 7 bootstrap shim using the official registerChrome pattern.
 // loadSubScript runs the CJS bundle in `ctx`; the bundle writes to ctx.exports,
@@ -75,6 +77,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   var manifestURI = Services.io.newURI(rootURI + "manifest.json");
   chromeHandle = aomStartup.registerChrome(manifestURI, [
     ["content", "scholar-companion", rootURI + "content/"],
+    ["locale", "scholar-companion", "en-US", rootURI + "locale/en-US/"],
   ]);
 
   await Zotero.initializationPromise;

@@ -141,6 +141,7 @@ export function streamChat(
   onError: (err: string) => void,
   maxChunks?: number,
   onScopeStatus?: (status: ScopeStatus) => void,
+  itemMeta?: { title?: string; authors?: string },
 ): () => void {
   const base = getApiUrl();
   const url = `${base}/api/plugin/chat/stream`;
@@ -154,6 +155,8 @@ export function streamChat(
       question,
       max_chunks: maxChunks ?? getChatMaxChunks(),
       model: getChatModel(),
+      ...(itemMeta?.title ? { item_title: itemMeta.title } : {}),
+      ...(itemMeta?.authors ? { item_authors: itemMeta.authors } : {}),
     }),
     signal: controller.signal,
   }).then(async resp => {

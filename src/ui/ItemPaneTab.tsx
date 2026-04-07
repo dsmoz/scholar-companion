@@ -109,6 +109,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
       },
       undefined,
       (status) => setScopeStatus(status),
+      { title, authors: authors.map(a => `${a.firstName} ${a.lastName}`.trim()).join('; ') },
     );
   }
 

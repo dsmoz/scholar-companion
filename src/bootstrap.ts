@@ -25,16 +25,21 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
     try {
       // Clean up stale registration from previous plugin load
       try { (Zotero as any).ItemPaneManager.unregisterSection('scholar-companion'); } catch { /* ok */ }
+      // Register Fluent l10n for the item pane labels
+      try {
+        (Zotero as any).Intl?.addFluentFileSource?.('scholar-companion', `${_rootURI}locale/{locale}/scholar-companion.ftl`);
+      } catch { /* older Zotero or missing API */ }
+
       (Zotero as any).ItemPaneManager.registerSection({
         paneID: 'scholar-companion',
         pluginID: 'scholar-companion@dsmoz',
         header: {
-          label: 'Scholar Companion',
-          icon: `${_rootURI}content/icons/icon16.svg`,
+          l10nID: 'scholar-companion-header',
+          icon: `${_rootURI}content/icons/icon16.png`,
         },
         sidenav: {
-          label: 'Scholar Companion',
-          icon: `${_rootURI}content/icons/icon20.svg`,
+          l10nID: 'scholar-companion-sidenav',
+          icon: `${_rootURI}content/icons/icon20.png`,
         },
         onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
           try {
