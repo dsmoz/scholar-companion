@@ -1,6 +1,6 @@
 // src/bootstrap.ts
 import { registerEventHooks, unregisterEventHooks } from './events';
-import { registerMenus, registerContextMenu, registerCollectionContextMenu, setMenusConnected } from './menu';
+import { registerMenus, registerContextMenu, setMenusConnected } from './menu';
 import { getSyncOnStartup, getAutoSync, getSyncInterval, getItemPaneHeight, getApiUrl, getApiToken } from './prefs';
 import { triggerSync } from './api/sync';
 import { fetchSyncStatus, updateItemMetadata } from './api/sync-status';
@@ -118,18 +118,12 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
   win.document.getElementById('zotero-ai-update-metadata')?.remove();
   win.document.getElementById('zotero-ai-index-selected')?.remove();
   win.document.getElementById('zotero-ai-chat-docs')?.remove();
-  // Collection context menu: remove event listener
-  const collHandler = (win as any).__scholarCollectionMenuHandler;
-  if (collHandler) {
-    win.document.removeEventListener('popupshowing', collHandler, true);
-    delete (win as any).__scholarCollectionMenuHandler;
-  }
+  win.document.getElementById('zotero-ai-chat-collection')?.remove();
 }
 
 function initWindow(win: Window) {
   registerMenus(win);
   registerContextMenu(win);
-  registerCollectionContextMenu(win);
 
   // Start with menus disabled until connection is verified
   setMenusConnected(win, false);

@@ -42,9 +42,7 @@ const CONNECTION_REQUIRED_IDS = [
   'zotero-ai-update-metadata',
   'zotero-ai-index-selected',
   'zotero-ai-cascade-delete',
-  // collection context menu
   'zotero-ai-chat-collection',
-  'zotero-ai-library-chat-ctx',
 ];
 
 /** Enable or disable all connection-dependent menu items. */
@@ -76,12 +74,13 @@ export function registerMenus(win: Window) {
   const popup = (doc as any).createXULElement('menupopup');
 
   const items: Array<{ id: string; label: string; command: string; icon: keyof typeof ICONS }> = [
-    { id: 'zotero-ai-library-chat', label: 'Library Chat',   command: 'openLibraryChat', icon: 'chat'     },
-    { id: 'zotero-ai-graph',        label: 'Similarity Graph', command: 'openGraph',     icon: 'graph'     },
-    { id: 'zotero-ai-discovery',    label: 'Discovery',        command: 'openDiscovery', icon: 'compass'   },
-    { id: 'zotero-ai-health',       label: 'Library Health',   command: 'openHealth',    icon: 'heartbeat' },
-    { id: 'zotero-ai-queue',        label: 'Index Queue',      command: 'openQueue',     icon: 'stack'     },
-    { id: 'zotero-ai-settings',     label: 'Settings',         command: 'openSettings',  icon: 'gearSix'   },
+    { id: 'zotero-ai-library-chat', label: 'Library Chat',          command: 'openLibraryChat',    icon: 'books'     },
+    { id: 'zotero-ai-chat-collection', label: 'Chat with Collection', command: 'chatWithCollection', icon: 'folder'   },
+    { id: 'zotero-ai-graph',        label: 'Similarity Graph',      command: 'openGraph',          icon: 'graph'     },
+    { id: 'zotero-ai-discovery',    label: 'Discovery',             command: 'openDiscovery',      icon: 'compass'   },
+    { id: 'zotero-ai-health',       label: 'Library Health',        command: 'openHealth',         icon: 'heartbeat' },
+    { id: 'zotero-ai-queue',        label: 'Index Queue',           command: 'openQueue',          icon: 'stack'     },
+    { id: 'zotero-ai-settings',     label: 'Settings',              command: 'openSettings',       icon: 'gearSix'   },
   ];
 
   for (const item of items) {
@@ -134,55 +133,7 @@ export function registerContextMenu(win: Window) {
   }
 }
 
-/**
- * Inject Scholar Companion items into the collection context menu.
- *
- * Zotero 7 dynamically builds the collection tree context menu.
- * We listen for `popupshowing` on the document and check if the popup
- * originates from the collection tree area (left sidebar).
- */
-export function registerCollectionContextMenu(win: Window) {
-  const doc = win.document;
-
-  const MENU_ITEMS: Array<{ id: string; label: string; command: string; icon: keyof typeof ICONS }> = [
-    { id: 'zotero-ai-chat-collection',  label: 'Chat with Collection', command: 'chatWithCollection', icon: 'folder' },
-    { id: 'zotero-ai-library-chat-ctx', label: 'Chat with Library',    command: 'openLibraryChat',    icon: 'books'  },
-  ];
-
-  const handler = (e: Event) => {
-    const popup = e.target as Element;
-    if (!popup || popup.tagName?.toLowerCase() !== 'menupopup') return;
-
-    // Log popup details for debugging
-    const popupId = popup.getAttribute('id') || '(no id)';
-    const childCount = popup.children.length;
-    const firstChildLabel = popup.children[0]?.getAttribute('label') || popup.children[0]?.getAttribute('data-l10n-id') || '(none)';
-    console.log(`[Scholar Companion] popupshowing: id=${popupId}, children=${childCount}, first=${firstChildLabel}`);
-
-    // Detect collection context menu by its ID, l10n attributes, or label content
-    const isCollectionMenu =
-      popupId.includes('collection') ||
-      popup.querySelector('[data-l10n-id*="collection"], [data-l10n-id*="subcollection"], [label*="Subcollection"], [label*="Collection"]');
-    if (!isCollectionMenu) return;
-
-    // Avoid duplicates if popup is reused
-    if (popup.querySelector('#zotero-ai-collection-sep')) return;
-
-    const sep = (doc as any).createXULElement('menuseparator');
-    sep.setAttribute('id', 'zotero-ai-collection-sep');
-    popup.appendChild(sep);
-
-    for (const ci of MENU_ITEMS) {
-      const menuitem = (doc as any).createXULElement('menuitem');
-      menuitem.setAttribute('id', ci.id);
-      menuitem.setAttribute('label', ci.label);
-      menuitem.setAttribute('image', svgIcon(ICONS[ci.icon]));
-      menuitem.setAttribute('class', 'menuitem-iconic');
-      menuitem.setAttribute('oncommand', `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'${ci.command}'},bubbles:true}))`);
-      popup.appendChild(menuitem);
-    }
-  };
-
-  doc.addEventListener('popupshowing', handler, true);
-  (win as any).__scholarCollectionMenuHandler = handler;
-}
+// Collection context menu injection is not possible in Zotero 7 —
+// the collection tree uses a custom React-based context menu outside
+// the normal DOM event flow. Instead, collection chat items are added
+// to the Tools > Scholar Companion menu (see registerMenus).
