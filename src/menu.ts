@@ -132,47 +132,32 @@ export function registerContextMenu(win: Window) {
 }
 
 /**
- * Register Scholar Companion items on the collection right-click menu
- * using Zotero 7's MenuManager API.
+ * Register Scholar Companion items on the collection right-click menu.
+ * The collection context menu element is #zotero-collectionmenu (confirmed
+ * via zotero-plugin-toolkit v5 source). Must be called per-window.
  */
-export function registerCollectionMenu() {
-  const pluginID = 'scholar-companion@dsmoz';
-  (Zotero as any).MenuManager.registerMenu({
-    menuID: 'scholar-companion-collection',
-    pluginID,
-    target: 'main/library/collection',
-    menus: [
-      {
-        menuType: 'menuitem',
-        label: 'Chat with Collection',
-        icon: svgIcon(ICONS.folder),
-        onShowing: (_event: any, context: any) => {
-          context.setVisible(context.collectionTreeRow?.type === 'collection');
-        },
-        onCommand: (_event: any, context: any) => {
-          const win = context.window ?? (Zotero as any).getMainWindow();
-          win.dispatchEvent(new win.CustomEvent('zotero-ai-command', {
-            detail: { command: 'chatWithCollection' }, bubbles: true,
-          }));
-        },
-      },
-      {
-        menuType: 'menuitem',
-        label: 'Chat with Library',
-        icon: svgIcon(ICONS.books),
-        onCommand: (_event: any, context: any) => {
-          const win = context.window ?? (Zotero as any).getMainWindow();
-          win.dispatchEvent(new win.CustomEvent('zotero-ai-command', {
-            detail: { command: 'openLibraryChat' }, bubbles: true,
-          }));
-        },
-      },
-    ],
-  });
-}
+export function registerCollectionContextMenu(win: Window) {
+  const doc = win.document;
+  const collectionMenu = doc.querySelector('#zotero-collectionmenu') as Element | null;
+  console.log('[Scholar Companion] zotero-collectionmenu found:', !!collectionMenu);
+  if (!collectionMenu) return;
 
-export function unregisterCollectionMenu() {
-  try {
-    (Zotero as any).MenuManager.unregisterMenu('scholar-companion-collection');
-  } catch { /* may not exist */ }
+  const sep = (doc as any).createXULElement('menuseparator');
+  sep.setAttribute('id', 'zotero-ai-collection-sep');
+  collectionMenu.appendChild(sep);
+
+  const collectionItems: Array<{ id: string; label: string; command: string; icon: keyof typeof ICONS }> = [
+    { id: 'zotero-ai-chat-collection',  label: 'Chat with Collection', command: 'chatWithCollection', icon: 'folder' },
+    { id: 'zotero-ai-library-chat-ctx', label: 'Chat with Library',    command: 'openLibraryChat',    icon: 'books'  },
+  ];
+
+  for (const ci of collectionItems) {
+    const menuitem = (doc as any).createXULElement('menuitem');
+    menuitem.setAttribute('id', ci.id);
+    menuitem.setAttribute('label', ci.label);
+    menuitem.setAttribute('image', svgIcon(ICONS[ci.icon]));
+    menuitem.setAttribute('class', 'menuitem-iconic');
+    menuitem.setAttribute('oncommand', `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'${ci.command}'},bubbles:true}))`);
+    collectionMenu.appendChild(menuitem);
+  }
 }
