@@ -153,12 +153,17 @@ export function registerCollectionContextMenu(win: Window) {
     const popup = e.target as Element;
     if (!popup || popup.tagName?.toLowerCase() !== 'menupopup') return;
 
-    // Only inject into collection-related popups.
-    // Detect by checking if the popup contains typical collection menu items
-    // (like "New Subcollection..." or "Rename Collection") or by checking
-    // its parent/context is the collection tree.
-    const hasCollectionItems = popup.querySelector('[label*="Subcollection"], [label*="Rename Collection"], [data-l10n-id*="collection"]');
-    if (!hasCollectionItems) return;
+    // Log popup details for debugging
+    const popupId = popup.getAttribute('id') || '(no id)';
+    const childCount = popup.children.length;
+    const firstChildLabel = popup.children[0]?.getAttribute('label') || popup.children[0]?.getAttribute('data-l10n-id') || '(none)';
+    console.log(`[Scholar Companion] popupshowing: id=${popupId}, children=${childCount}, first=${firstChildLabel}`);
+
+    // Detect collection context menu by its ID, l10n attributes, or label content
+    const isCollectionMenu =
+      popupId.includes('collection') ||
+      popup.querySelector('[data-l10n-id*="collection"], [data-l10n-id*="subcollection"], [label*="Subcollection"], [label*="Collection"]');
+    if (!isCollectionMenu) return;
 
     // Avoid duplicates if popup is reused
     if (popup.querySelector('#zotero-ai-collection-sep')) return;
