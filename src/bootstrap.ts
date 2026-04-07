@@ -83,7 +83,13 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
   }
 
   // Register collection context menu via MenuManager (global, not per-window)
-  try { registerCollectionMenu(); } catch(e) { console.warn('[Scholar Companion] MenuManager registration failed:', e); }
+  console.log('[Scholar Companion] MenuManager available:', typeof (Zotero as any).MenuManager, Object.keys((Zotero as any).MenuManager || {}));
+  try {
+    registerCollectionMenu();
+    console.log('[Scholar Companion] Collection menu registered successfully');
+  } catch(e) {
+    console.error('[Scholar Companion] MenuManager registration failed:', e);
+  }
 
   // Initialize any already-open windows (plugin loaded after Zotero started)
   for (const win of (Zotero as any).getMainWindows()) {
