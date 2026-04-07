@@ -5,6 +5,7 @@ import { streamLibraryChat, listLibrarySessions, loadLibrarySession } from '../a
 import type { LibrarySessionSummary } from '../api/libraryChat';
 import type { Source } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
+import { ReadingToolbar } from './components/ReadingToolbar';
 import { renderMarkdown, formatApaSourceText } from './utils/renderMarkdown';
 
 interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
@@ -116,6 +117,7 @@ export function LibraryChat() {
 
       {/* Chat area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <ReadingToolbar />
         <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {messages.length === 0 && (
             <div style={{ textAlign: 'center', color: '#6c7086', fontSize: '0.75rem', marginTop: '3rem' }}>

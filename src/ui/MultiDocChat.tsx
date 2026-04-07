@@ -5,6 +5,7 @@ import { streamMultiDocChat, fetchDocMetadata } from '../api/multiDocChat';
 import type { DocMeta } from '../api/multiDocChat';
 import type { Source, ScopeStatus } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
+import { ReadingToolbar } from './components/ReadingToolbar';
 import { renderMarkdown, formatApaSourceText } from './utils/renderMarkdown';
 
 interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
@@ -106,6 +107,8 @@ export function MultiDocChat({ zoteroKeys }: Props) {
           )}
         </div>
       </div>
+
+      <ReadingToolbar />
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 6 }}>

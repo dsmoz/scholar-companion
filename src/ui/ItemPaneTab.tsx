@@ -4,6 +4,7 @@ import { PaperPlaneTilt, MagnifyingGlass, User, Chat, CaretUp, CaretDown, Circle
 import { streamChat, fetchItemMetadata, loadChatSession } from '../api/chat';
 import type { Source, ScopeStatus } from '../api/chat';
 import { similarItems, SearchResult } from '../api/search';
+import { ReadingToolbar } from './components/ReadingToolbar';
 import { renderMarkdown, formatApaSourceText } from './utils/renderMarkdown';
 import { getChatRelatedMax } from '../prefs';
 import { fetchAuthorProfile, AuthorProfile } from '../api/author';
@@ -130,6 +131,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
 
       {tab === 'chat' && (
         <>
+          <ReadingToolbar />
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ textAlign: 'center', color: '#6c7086', fontSize: '0.7rem', padding: '4px 0' }}>
               Chatting with: {title}
