@@ -5,6 +5,7 @@ import { streamChat, fetchItemMetadata, loadChatSession } from '../api/chat';
 import type { Source, ScopeStatus } from '../api/chat';
 import { similarItems, SearchResult } from '../api/search';
 import { ReadingToolbar } from './components/ReadingToolbar';
+import { TypingDots } from './components/TypingDots';
 import { renderMarkdown, formatApaSourceText, collapseSources } from './utils/renderMarkdown';
 import { getChatRelatedMax } from '../prefs';
 import { fetchAuthorProfile, AuthorProfile } from '../api/author';
@@ -147,8 +148,9 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                 borderRadius: 6, padding: '6px 10px', maxWidth: '90%', color: '#cdd6f4',
               }}>
                 {m.role === 'assistant' ? (
-                  // renderMarkdown runs DOMPurify.sanitize before setting innerHTML
-                  <AssistantMessage html={renderMarkdown(m.text, m.sources)} />
+                  streaming && i === messages.length - 1 && !m.text
+                    ? <TypingDots />
+                    : <AssistantMessage html={renderMarkdown(m.text, m.sources)} />
                 ) : (
                   <span>{m.text}</span>
                 )}

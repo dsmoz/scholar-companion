@@ -7,6 +7,7 @@ import { metadataCache } from '../api/chat';
 import type { Source, ScopeStatus } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
 import { ReadingToolbar } from './components/ReadingToolbar';
+import { TypingDots } from './components/TypingDots';
 import { renderMarkdown, formatApaSourceText, collapseSources } from './utils/renderMarkdown';
 
 interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
@@ -136,7 +137,9 @@ export function MultiDocChat({ zoteroKeys, initialDocs }: Props) {
             borderRadius: 6, padding: '6px 10px', maxWidth: '90%', color: '#cdd6f4',
           }}>
             {m.role === 'assistant' ? (
-              <AssistantMessage html={renderMarkdown(m.text, m.sources)} />
+              streaming && i === messages.length - 1 && !m.text
+                ? <TypingDots />
+                : <AssistantMessage html={renderMarkdown(m.text, m.sources)} />
             ) : (
               <span>{m.text}</span>
             )}
