@@ -601,7 +601,7 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
     }
 
     case 'saveFile': {
-      const { filename, content, mimeType } = event?.detail ?? {};
+      const { filename, content, mimeType, encoding } = event?.detail ?? {};
       if (!filename || !content) break;
       try {
         const fp = Components.classes['@mozilla.org/filepicker;1']
@@ -620,11 +620,14 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         if (result === Components.interfaces.nsIFilePicker.returnOK ||
             result === Components.interfaces.nsIFilePicker.returnReplace) {
           const path = fp.file.path;
-          if (typeof content === 'string') {
-            await IOUtils.writeUTF8(path, content);
+          if (encoding === 'base64') {
+            // Decode base64 string to binary
+            const binary = atob(content);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            await IOUtils.write(path, bytes);
           } else {
-            // Binary data passed as array of numbers
-            await IOUtils.write(path, new Uint8Array(content));
+            await IOUtils.writeUTF8(path, content);
           }
         }
       } catch (e) {

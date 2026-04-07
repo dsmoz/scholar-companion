@@ -93,19 +93,27 @@ export function streamSummarize(
 }
 
 function triggerDownload(blob: Blob, filename: string): void {
-  // Dispatch to Zotero's parent window which has access to nsIFilePicker + IOUtils
+  // Dispatch to Zotero's parent window which has access to nsIFilePicker + IOUtils.
+  // Binary data is sent as base64 string to reliably cross XUL browser boundary.
   const target = window.parent ?? window;
   blob.arrayBuffer().then(buf => {
     const isText = blob.type.startsWith('text/');
-    const content = isText
-      ? new TextDecoder().decode(buf)
-      : Array.from(new Uint8Array(buf));
+    let content: string;
+    if (isText) {
+      content = new TextDecoder().decode(buf);
+    } else {
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      content = btoa(binary);
+    }
     target.dispatchEvent(new CustomEvent('zotero-ai-command', {
       detail: {
         command: 'saveFile',
         filename,
         content,
         mimeType: blob.type,
+        encoding: isText ? 'utf8' : 'base64',
       },
     }));
   });
