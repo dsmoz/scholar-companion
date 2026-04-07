@@ -1,10 +1,11 @@
 // src/bootstrap.ts
 import { registerEventHooks, unregisterEventHooks } from './events';
-import { registerMenus, registerContextMenu } from './menu';
+import { registerMenus, registerContextMenu, setMenusConnected } from './menu';
 import { getSyncOnStartup, getAutoSync, getSyncInterval, getItemPaneHeight } from './prefs';
 import { triggerSync } from './api/sync';
 import { fetchSyncStatus, updateItemMetadata } from './api/sync-status';
-import { apiFetch } from './api/client';
+import { apiFetch, checkConnection } from './api/client';
+import { getApiToken } from './prefs';
 
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 const windowListeners = new Map<Window, EventListener>();
@@ -98,12 +99,26 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
 function initWindow(win: Window) {
   registerMenus(win);
   registerContextMenu(win);
+
+  // Start with menus disabled until connection is verified
+  setMenusConnected(win, false);
+  if (getApiToken()) {
+    checkConnection()
+      .then(() => setMenusConnected(win, true))
+      .catch(() => setMenusConnected(win, false));
+  }
+
   const handler: EventListener = (e: Event) =>
     handleCommand((e as CustomEvent).detail.command, win, e as CustomEvent).catch((err: unknown) =>
       console.error('[Scholar Companion] Command error:', err)
     );
   win.addEventListener('zotero-ai-command', handler);
   windowListeners.set(win, handler);
+
+  // Listen for connection state changes from Settings panel
+  win.addEventListener('zotero-ai-connection', ((e: CustomEvent) => {
+    setMenusConnected(win, e.detail?.connected === true);
+  }) as EventListener);
 }
 
 function scheduleSync() {

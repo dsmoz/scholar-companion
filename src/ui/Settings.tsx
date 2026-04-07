@@ -1,6 +1,6 @@
 // src/ui/Settings.tsx
 import React, { useState, useEffect } from 'react';
-import { ArrowsClockwise, Eye, EyeSlash, CopySimple, SignIn, SignOut, WifiHigh, WifiSlash } from '@phosphor-icons/react';
+import { ArrowsClockwise, Eye, EyeSlash, CopySimple, SignIn, SignOut, WifiHigh, WifiSlash, CircleNotch } from '@phosphor-icons/react';
 import { SectionHeader } from './components/SectionHeader';
 import { Toggle } from './components/Toggle';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -26,10 +26,22 @@ import {
 import { fetchDiscoverySources, clearSourceCache, type SourceEntry } from '../api/discovery';
 import { fetchChatModels, type ChatModelEntry } from '../api/chat';
 
+function broadcastConnection(connected: boolean) {
+  try {
+    const xulWin = window.top ?? window;
+    const target: Window = (xulWin.opener as Window) ?? xulWin;
+    target.dispatchEvent(new CustomEvent('zotero-ai-connection', {
+      detail: { connected },
+      bubbles: true,
+    }));
+  } catch { /* cross-origin or closed */ }
+}
+
 export function Settings() {
   // Connection state
   const [isLoggedIn, setIsLoggedIn] = useState(!!getApiToken());
   const [online, setOnline] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [clientId, setClientIdState] = useState(getClientId());
   const [displayName, setDisplayNameState] = useState(getDisplayName());
   const [token, setTokenState] = useState(getApiToken());
@@ -85,11 +97,14 @@ export function Settings() {
   }, []);
 
   async function testConnection() {
+    setConnecting(true);
     try {
       await checkConnection();
       setOnline(true);
+      broadcastConnection(true);
     } catch (err: any) {
       setOnline(false);
+      broadcastConnection(false);
       // Token expired or invalid — auto-disconnect
       if (err?.status === 401) {
         disconnect();
@@ -99,6 +114,8 @@ export function Settings() {
         setTokenState('');
         setLoginError('Session expired. Please log in again.');
       }
+    } finally {
+      setConnecting(false);
     }
   }
 
@@ -115,12 +132,17 @@ export function Settings() {
       setUsername('');
       setPassword('');
       // Token is persisted — check connection
+      setConnecting(true);
       try {
         await checkConnection();
         setOnline(true);
+        broadcastConnection(true);
       } catch (err) {
         console.error('[Scholar Companion] Health check failed after login:', err);
         setOnline(false);
+        broadcastConnection(false);
+      } finally {
+        setConnecting(false);
       }
       // Clear stale cache and fetch fresh data
       clearSourceCache();
@@ -150,6 +172,7 @@ export function Settings() {
     setTokenState('');
     setDiscoverySources([]);
     setDiscoveryError('');
+    broadcastConnection(false);
   }
 
   async function handleSyncNow() {
@@ -235,9 +258,11 @@ export function Settings() {
         {/* Status indicator */}
         {row('Status',
           <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.75rem' }}>
-            {isLoggedIn && online
-              ? <><WifiHigh size={14} weight="bold" style={{ color: '#a6e3a1' }} /> <span style={{ color: '#a6e3a1' }}>Online</span></>
-              : <><WifiSlash size={14} weight="bold" style={{ color: '#f38ba8' }} /> <span style={{ color: '#f38ba8' }}>Offline</span></>
+            {connecting
+              ? <><CircleNotch size={14} weight="bold" className="spin" style={{ color: '#89b4fa' }} /> <span style={{ color: '#89b4fa' }}>Connecting…</span></>
+              : isLoggedIn && online
+                ? <><WifiHigh size={14} weight="bold" style={{ color: '#a6e3a1' }} /> <span style={{ color: '#a6e3a1' }}>Online</span></>
+                : <><WifiSlash size={14} weight="bold" style={{ color: '#f38ba8' }} /> <span style={{ color: '#f38ba8' }}>Offline</span></>
             }
           </span>
         )}
