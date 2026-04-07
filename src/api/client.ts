@@ -55,8 +55,15 @@ export async function apiFetch<T = unknown>(
 
 export async function checkConnection(): Promise<{ latency: number; clientName?: string }> {
   const start = Date.now();
-  const data = await apiFetch<{ status: string; client_name?: string }>('/health');
-  return { latency: Date.now() - start, clientName: data.client_name };
+  try {
+    const data = await apiFetch<{ status: string; client_name?: string }>('/health');
+    const latency = Date.now() - start;
+    console.log('[Scholar Companion] Connection OK:', data.status, '- latency:', latency, 'ms');
+    return { latency, clientName: data.client_name };
+  } catch (err) {
+    console.error('[Scholar Companion] Connection check failed:', err);
+    throw err;
+  }
 }
 
 export interface LoginResult {

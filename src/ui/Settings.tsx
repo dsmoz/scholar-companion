@@ -21,7 +21,7 @@ import {
   getCacheTtlMinutes, setCacheTtlMinutes,
   getChatModel, getChatMaxChunks,
 } from '../prefs';
-import { fetchDiscoverySources, type SourceEntry } from '../api/discovery';
+import { fetchDiscoverySources, clearSourceCache, type SourceEntry } from '../api/discovery';
 import { fetchChatModels, type ChatModelEntry } from '../api/chat';
 
 export function Settings() {
@@ -62,13 +62,21 @@ export function Settings() {
   const [chatModels, setChatModels] = useState<ChatModelEntry[]>([]);
   const [confirmAction, setConfirmAction] = useState<null | 'reindex' | 'clear'>(null);
   const [syncing, setSyncing] = useState(false);
+  const [discoveryError, setDiscoveryError] = useState('');
 
   useEffect(() => {
     if (isLoggedIn) {
       // On mount only: validate stored token
       testConnection();
-      fetchDiscoverySources().then(setDiscoverySources).catch(() => {});
-      fetchChatModels().then(setChatModels).catch(() => {});
+      fetchDiscoverySources()
+        .then(sources => { setDiscoverySources(sources); setDiscoveryError(''); })
+        .catch(err => {
+          console.error('[Scholar Companion] Mount: discovery sources failed:', err);
+          setDiscoveryError(err?.message || 'Failed to load sources');
+        });
+      fetchChatModels()
+        .then(setChatModels)
+        .catch(err => console.error('[Scholar Companion] Mount: chat models failed:', err));
     }
   }, []);
 
@@ -93,6 +101,7 @@ export function Settings() {
   async function handleLogin() {
     setLoginError('');
     setLoginLoading(true);
+    setDiscoveryError('');
     try {
       const result = await login(username, password);
       setIsLoggedIn(true);
@@ -102,9 +111,24 @@ export function Settings() {
       setUsername('');
       setPassword('');
       // Token is persisted — check connection
-      try { await checkConnection(); setOnline(true); } catch { setOnline(false); }
-      fetchDiscoverySources().then(setDiscoverySources).catch(() => {});
-      fetchChatModels().then(setChatModels).catch(() => {});
+      try {
+        await checkConnection();
+        setOnline(true);
+      } catch (err) {
+        console.error('[Scholar Companion] Health check failed after login:', err);
+        setOnline(false);
+      }
+      // Clear stale cache and fetch fresh data
+      clearSourceCache();
+      fetchDiscoverySources()
+        .then(sources => { setDiscoverySources(sources); setDiscoveryError(''); })
+        .catch(err => {
+          console.error('[Scholar Companion] Post-login: discovery sources failed:', err);
+          setDiscoveryError(err?.message || 'Failed to load sources');
+        });
+      fetchChatModels()
+        .then(setChatModels)
+        .catch(err => console.error('[Scholar Companion] Post-login: chat models failed:', err));
     } catch (err: any) {
       setLoginError(err.message || 'Login failed');
     } finally {
@@ -114,11 +138,14 @@ export function Settings() {
 
   function handleDisconnect() {
     disconnect();
+    clearSourceCache();
     setIsLoggedIn(false);
     setOnline(false);
     setClientIdState('');
     setDisplayNameState('');
     setTokenState('');
+    setDiscoverySources([]);
+    setDiscoveryError('');
   }
 
   async function handleSyncNow() {
@@ -287,7 +314,13 @@ export function Settings() {
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
         <SectionHeader>DISCOVERY SOURCES</SectionHeader>
         {discoverySources.length === 0
-          ? <div style={{ color: '#6c7086', fontSize: '0.75rem' }}>{isLoggedIn ? 'Loading sources from server…' : 'Connect to load sources'}</div>
+          ? <div style={{ color: discoveryError ? '#f38ba8' : '#6c7086', fontSize: '0.75rem' }}>
+              {!isLoggedIn
+                ? 'Connect to load sources'
+                : discoveryError
+                  ? `Error: ${discoveryError}`
+                  : 'Loading sources from server…'}
+            </div>
           : discoverySources.map(src => (
               <div key={src.key} style={{ marginBottom: '0.5rem' }}>
                 {row(

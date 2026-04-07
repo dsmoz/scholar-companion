@@ -45,6 +45,10 @@ interface SourcesResponse {
 // Module-level cache — fetched once per Zotero session then reused.
 let _cachedSources: SourceEntry[] | null = null;
 
+export function clearSourceCache(): void {
+  _cachedSources = null;
+}
+
 /**
  * Fetch available discovery sources from the server registry.
  * Cached for the lifetime of the Zotero session.
@@ -53,10 +57,16 @@ let _cachedSources: SourceEntry[] | null = null;
 export async function fetchDiscoverySources(): Promise<SourceEntry[]> {
   if (_cachedSources !== null) return _cachedSources;
   migrateLegacySourcePrefs();
-  const data = await apiFetch<SourcesResponse>('/discovery/sources');
-  _cachedSources = data.sources;
-  initSourcePrefs(_cachedSources);
-  return _cachedSources;
+  try {
+    const data = await apiFetch<SourcesResponse>('/discovery/sources');
+    _cachedSources = data.sources;
+    console.log(`[Scholar Companion] Loaded ${data.sources.length} discovery sources`);
+    initSourcePrefs(_cachedSources);
+    return _cachedSources;
+  } catch (err) {
+    console.error('[Scholar Companion] Failed to fetch discovery sources:', err);
+    throw err;
+  }
 }
 
 /**
