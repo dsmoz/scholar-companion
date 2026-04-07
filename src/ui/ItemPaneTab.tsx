@@ -5,7 +5,7 @@ import { streamChat, fetchItemMetadata, loadChatSession } from '../api/chat';
 import type { Source, ScopeStatus } from '../api/chat';
 import { similarItems, SearchResult } from '../api/search';
 import { ReadingToolbar } from './components/ReadingToolbar';
-import { renderMarkdown, formatApaSourceText } from './utils/renderMarkdown';
+import { renderMarkdown, formatApaSourceText, collapseSources } from './utils/renderMarkdown';
 import { getChatRelatedMax } from '../prefs';
 import { fetchAuthorProfile, AuthorProfile } from '../api/author';
 import { ScoreChip } from './components/ScoreChip';
@@ -152,17 +152,16 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                 {m.sources && m.sources.length > 0 && (
                   <div className="sources-section">
                     {(() => {
-                      const primary = m.sources.filter(s => s.scope !== 'expanded');
-                      const expanded = m.sources.filter(s => s.scope === 'expanded');
+                      const { primary, expanded } = collapseSources(m.sources);
                       return (
                         <>
                           {primary.length > 0 && (
                             <>
                               <div className="sources-section-label">Sources</div>
-                              {primary.map((s, si) => (
+                              {primary.map((c, si) => (
                                 <div key={si} className="source-entry">
-                                  <span className="source-entry__num">[{si + 1}]</span>
-                                  {formatApaSourceText(s)}
+                                  <span className="source-entry__num">[{c.label}]</span>
+                                  {formatApaSourceText(c.source)}
                                 </div>
                               ))}
                             </>
@@ -172,10 +171,10 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                               <div className="sources-section-label" style={{ marginTop: primary.length > 0 ? 6 : 0, display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <MagnifyingGlass size={10} /> From your library
                               </div>
-                              {expanded.map((s, si) => (
+                              {expanded.map((c, si) => (
                                 <div key={`exp-${si}`} className="source-entry" style={{ opacity: 0.85 }}>
-                                  <span className="source-entry__num">[{primary.length + si + 1}]</span>
-                                  {formatApaSourceText(s)}
+                                  <span className="source-entry__num">[{c.label}]</span>
+                                  {formatApaSourceText(c.source)}
                                 </div>
                               ))}
                             </>

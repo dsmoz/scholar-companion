@@ -6,7 +6,7 @@ import type { DocMeta } from '../api/multiDocChat';
 import type { Source, ScopeStatus } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
 import { ReadingToolbar } from './components/ReadingToolbar';
-import { renderMarkdown, formatApaSourceText } from './utils/renderMarkdown';
+import { renderMarkdown, formatApaSourceText, collapseSources } from './utils/renderMarkdown';
 
 interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
 
@@ -132,17 +132,16 @@ export function MultiDocChat({ zoteroKeys }: Props) {
             {m.sources && m.sources.length > 0 && (
               <div className="sources-section">
                 {(() => {
-                  const primary = m.sources.filter(s => s.scope !== 'expanded');
-                  const expanded = m.sources.filter(s => s.scope === 'expanded');
+                  const { primary, expanded } = collapseSources(m.sources);
                   return (
                     <>
                       {primary.length > 0 && (
                         <>
                           <div className="sources-section-label">Sources</div>
-                          {primary.map((s, si) => (
+                          {primary.map((c, si) => (
                             <div key={si} className="source-entry">
-                              <span className="source-entry__num">[{si + 1}]</span>
-                              {formatApaSourceText(s)}
+                              <span className="source-entry__num">[{c.label}]</span>
+                              {formatApaSourceText(c.source)}
                             </div>
                           ))}
                         </>
@@ -152,10 +151,10 @@ export function MultiDocChat({ zoteroKeys }: Props) {
                           <div className="sources-section-label" style={{ marginTop: primary.length > 0 ? 6 : 0, display: 'flex', alignItems: 'center', gap: 4 }}>
                             <MagnifyingGlass size={10} /> From your library
                           </div>
-                          {expanded.map((s, si) => (
+                          {expanded.map((c, si) => (
                             <div key={`exp-${si}`} className="source-entry" style={{ opacity: 0.85 }}>
-                              <span className="source-entry__num">[{primary.length + si + 1}]</span>
-                              {formatApaSourceText(s)}
+                              <span className="source-entry__num">[{c.label}]</span>
+                              {formatApaSourceText(c.source)}
                             </div>
                           ))}
                         </>

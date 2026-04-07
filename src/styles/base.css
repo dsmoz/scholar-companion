@@ -370,10 +370,35 @@ input:focus, textarea:focus {
   vertical-align: super;
   line-height: 0;
   cursor: default;
+  position: relative;
 }
 
-.citation-ref[title] {
+.citation-ref[data-tip] {
   cursor: help;
+}
+
+.citation-ref[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface0, #313244);
+  color: var(--text, #cdd6f4);
+  font-size: 0.65rem;
+  font-weight: var(--font-normal);
+  vertical-align: baseline;
+  line-height: 1.35;
+  padding: 4px 8px;
+  border-radius: var(--radius-md, 4px);
+  border: 1px solid var(--color-border-subtle, #45475a);
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: var(--z-overlay, 100);
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
 }
 
 .citation-ref--expanded {

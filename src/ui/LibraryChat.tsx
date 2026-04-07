@@ -6,7 +6,7 @@ import type { LibrarySessionSummary } from '../api/libraryChat';
 import type { Source } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
 import { ReadingToolbar } from './components/ReadingToolbar';
-import { renderMarkdown, formatApaSourceText } from './utils/renderMarkdown';
+import { renderMarkdown, formatApaSourceText, collapseSources } from './utils/renderMarkdown';
 
 interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
 
@@ -138,13 +138,37 @@ export function LibraryChat() {
               )}
               {m.sources && m.sources.length > 0 && (
                 <div className="sources-section">
-                  <div className="sources-section-label">Sources</div>
-                  {m.sources.map((s, si) => (
-                    <div key={si} className="source-entry">
-                      <span className="source-entry__num">[{si + 1}]</span>
-                      {formatApaSourceText(s)}
-                    </div>
-                  ))}
+                  {(() => {
+                    const { primary, expanded } = collapseSources(m.sources);
+                    return (
+                      <>
+                        {primary.length > 0 && (
+                          <>
+                            <div className="sources-section-label">Sources</div>
+                            {primary.map((c, si) => (
+                              <div key={si} className="source-entry">
+                                <span className="source-entry__num">[{c.label}]</span>
+                                {formatApaSourceText(c.source)}
+                              </div>
+                            ))}
+                          </>
+                        )}
+                        {expanded.length > 0 && (
+                          <>
+                            <div className="sources-section-label" style={{ marginTop: primary.length > 0 ? 6 : 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              From your library
+                            </div>
+                            {expanded.map((c, si) => (
+                              <div key={`exp-${si}`} className="source-entry" style={{ opacity: 0.85 }}>
+                                <span className="source-entry__num">[{c.label}]</span>
+                                {formatApaSourceText(c.source)}
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>

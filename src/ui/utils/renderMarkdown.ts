@@ -12,6 +12,10 @@ function buildCitationTooltip(s: Source): string {
   return parts.join(' \u2014 ');
 }
 
+function escapeAttr(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function renderSingleCitation(num: number, primaryCount: number, primary: Source[], expanded: Source[]): string {
   const isExpanded = num > primaryCount && num <= primaryCount + expanded.length;
   const source = isExpanded
@@ -20,9 +24,10 @@ function renderSingleCitation(num: number, primaryCount: number, primary: Source
 
   const cssClass = isExpanded ? 'citation-ref citation-ref--expanded' : 'citation-ref';
   const tooltip = source ? buildCitationTooltip(source) : '';
-  const titleAttr = tooltip ? ` title="${tooltip.replace(/"/g, '&quot;')}"` : '';
+  // Use data-tip for CSS tooltip (native title unreliable in XUL browser iframes)
+  const tipAttr = tooltip ? ` data-tip="${escapeAttr(tooltip)}"` : '';
 
-  return `<sup class="${cssClass}"${titleAttr}>[${num}]</sup>`;
+  return `<sup class="${cssClass}"${tipAttr}>[${num}]</sup>`;
 }
 
 // Matches both [2] and [2, 3, 4] citation formats
@@ -54,4 +59,54 @@ export function formatApaSourceText(s: Source): string {
   if (s.year) parts.push(`(${s.year}).`);
   if (s.title) parts.push(s.title + '.');
   return parts.join(' ');
+}
+
+/** Key for deduplication: title (lowercased) + zotero_key */
+function sourceKey(s: Source): string {
+  if (s.zotero_key) return s.zotero_key;
+  return (s.title || '').toLowerCase().trim();
+}
+
+/**
+ * Deduplicate sources that reference the same document.
+ * Returns collapsed entries with index ranges, e.g. "[1-5]" when 5 sources
+ * all point to the same document.
+ */
+export interface CollapsedSource {
+  source: Source;
+  indices: number[];
+  label: string;  // e.g. "1-5" or "3"
+  scope: 'primary' | 'expanded';
+}
+
+export function collapseSources(sources: Source[]): { primary: CollapsedSource[]; expanded: CollapsedSource[] } {
+  const primarySrc = sources.filter(s => s.scope !== 'expanded');
+  const expandedSrc = sources.filter(s => s.scope === 'expanded');
+
+  function collapse(arr: Source[], offset: number, scope: 'primary' | 'expanded'): CollapsedSource[] {
+    const groups = new Map<string, { source: Source; indices: number[] }>();
+    arr.forEach((s, i) => {
+      const key = sourceKey(s);
+      const existing = groups.get(key);
+      if (existing) {
+        existing.indices.push(offset + i + 1);
+      } else {
+        groups.set(key, { source: s, indices: [offset + i + 1] });
+      }
+    });
+
+    const result: CollapsedSource[] = [];
+    for (const { source, indices } of groups.values()) {
+      const first = indices[0];
+      const last = indices[indices.length - 1];
+      const label = indices.length > 1 ? `${first}-${last}` : `${first}`;
+      result.push({ source, indices, label, scope });
+    }
+    return result;
+  }
+
+  return {
+    primary: collapse(primarySrc, 0, 'primary'),
+    expanded: collapse(expandedSrc, primarySrc.length, 'expanded'),
+  };
 }
