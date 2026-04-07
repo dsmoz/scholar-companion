@@ -1,11 +1,10 @@
 // src/bootstrap.ts
 import { registerEventHooks, unregisterEventHooks } from './events';
 import { registerMenus, registerContextMenu, setMenusConnected } from './menu';
-import { getSyncOnStartup, getAutoSync, getSyncInterval, getItemPaneHeight } from './prefs';
+import { getSyncOnStartup, getAutoSync, getSyncInterval, getItemPaneHeight, getApiUrl, getApiToken } from './prefs';
 import { triggerSync } from './api/sync';
 import { fetchSyncStatus, updateItemMetadata } from './api/sync-status';
 import { apiFetch, checkConnection } from './api/client';
-import { getApiToken } from './prefs';
 
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 const windowListeners = new Map<Window, EventListener>();
@@ -127,9 +126,26 @@ function initWindow(win: Window) {
   // Start with menus disabled until connection is verified
   setMenusConnected(win, false);
   if (getApiToken()) {
-    checkConnection()
-      .then(() => setMenusConnected(win, true))
-      .catch(() => setMenusConnected(win, false));
+    // Use XMLHttpRequest for startup — fetch() may not be available in the bootstrap sandbox
+    const url = `${getApiUrl()}/api/plugin/health`;
+    try {
+      const xhr = new (win as any).XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.timeout = 8000;
+      const token = getApiToken();
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          console.log('[Scholar Companion] Startup connection OK');
+          setMenusConnected(win, true);
+        }
+      };
+      xhr.onerror = () => console.warn('[Scholar Companion] Startup connection failed');
+      xhr.ontimeout = () => console.warn('[Scholar Companion] Startup connection timed out');
+      xhr.send();
+    } catch (e) {
+      console.warn('[Scholar Companion] Startup connection check error:', e);
+    }
   }
 
   const handler: EventListener = (e: Event) =>
