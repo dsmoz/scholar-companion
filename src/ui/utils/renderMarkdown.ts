@@ -57,7 +57,10 @@ export function formatApaSourceText(s: Source): string {
   const parts: string[] = [];
   if (s.authors) parts.push(s.authors + '.');
   if (s.year) parts.push(`(${s.year}).`);
-  if (s.title) parts.push(s.title + '.');
+  // Detect raw Zotero keys (8 uppercase alphanumeric chars) used as title fallback
+  const isRawKey = s.title && /^[A-Z0-9]{8}$/.test(s.title);
+  if (s.title && !isRawKey) parts.push(s.title + '.');
+  if (parts.length === 0) parts.push(`[${s.zotero_key || s.title || 'Unknown'}]`);
   return parts.join(' ');
 }
 

@@ -155,8 +155,8 @@ export function streamChat(
       question,
       max_chunks: maxChunks ?? getChatMaxChunks(),
       model: getChatModel(),
-      ...(itemMeta?.title ? { item_title: itemMeta.title } : {}),
-      ...(itemMeta?.authors ? { item_authors: itemMeta.authors } : {}),
+      item_title: itemMeta?.title ?? '',
+      item_authors: itemMeta?.authors ?? '',
     }),
     signal: controller.signal,
   }).then(async resp => {
