@@ -55,7 +55,7 @@ export async function apiFetch<T = unknown>(
 
 export async function checkConnection(): Promise<{ latency: number; clientName?: string }> {
   const base = getApiUrl();
-  const url = `${base}/api/plugin/health`;
+  const url = `${base}/health`;
   const start = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);

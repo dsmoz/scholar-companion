@@ -127,7 +127,7 @@ function initWindow(win: Window) {
   setMenusConnected(win, false);
   if (getApiToken()) {
     // Use XMLHttpRequest for startup — fetch() may not be available in the bootstrap sandbox
-    const url = `${getApiUrl()}/api/plugin/health`;
+    const url = `${getApiUrl()}/health`;
     try {
       const xhr = new (win as any).XMLHttpRequest();
       xhr.open('GET', url, true);
