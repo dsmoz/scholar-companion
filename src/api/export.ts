@@ -10,15 +10,24 @@ export async function exportSession(
   sessionId: string,
   format: ExportFormat,
 ): Promise<void> {
+  console.log('[AI Companion] exportSession called:', sessionId, format);
   const base = getApiUrl();
-  const resp = await fetch(`${base}/api/plugin/chat/export`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ session_id: sessionId, format }),
-  });
-  if (!resp.ok) throw new Error(`Export failed: HTTP ${resp.status}`);
-  const blob = await resp.blob();
-  triggerDownload(blob, `chat-${sessionId.slice(0, 12)}.${format}`);
+  console.log('[AI Companion] exportSession URL:', `${base}/api/plugin/chat/export`);
+  try {
+    const resp = await fetch(`${base}/api/plugin/chat/export`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ session_id: sessionId, format }),
+    });
+    console.log('[AI Companion] exportSession response:', resp.status, resp.headers.get('content-type'));
+    if (!resp.ok) throw new Error(`Export failed: HTTP ${resp.status}`);
+    const blob = await resp.blob();
+    console.log('[AI Companion] exportSession blob:', blob.size, blob.type);
+    triggerDownload(blob, `chat-${sessionId.slice(0, 12)}.${format}`);
+  } catch (err) {
+    console.error('[AI Companion] exportSession error:', err);
+    throw err;
+  }
 }
 
 /** Client-side markdown export — no backend needed. */
@@ -93,8 +102,28 @@ export function streamSummarize(
 }
 
 function triggerDownload(blob: Blob, filename: string): void {
-  // Dispatch to Zotero's parent window which has access to nsIFilePicker + IOUtils.
-  // Binary data is sent as base64 string to reliably cross XUL browser boundary.
+  console.log('[AI Companion] triggerDownload:', filename, 'type:', blob.type, 'size:', blob.size);
+
+  // Strategy 1: anchor click with blob URL (works in standard browser contexts)
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 500);
+    console.log('[AI Companion] Download triggered via anchor click');
+    return;
+  } catch (e) {
+    console.warn('[AI Companion] Anchor download failed, trying event dispatch:', e);
+  }
+
+  // Strategy 2: dispatch to parent window for bootstrap handler
   const target = window.parent ?? window;
   blob.arrayBuffer().then(buf => {
     const isText = blob.type.startsWith('text/');
@@ -115,6 +144,7 @@ function triggerDownload(blob: Blob, filename: string): void {
         mimeType: blob.type,
         encoding: isText ? 'utf8' : 'base64',
       },
+      bubbles: true,
     }));
-  });
+  }).catch(err => console.error('[AI Companion] triggerDownload failed:', err));
 }

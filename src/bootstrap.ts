@@ -602,34 +602,32 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
 
     case 'saveFile': {
       const { filename, content, mimeType, encoding } = event?.detail ?? {};
-      if (!filename || !content) break;
+      console.log('[Scholar Companion] saveFile received:', filename, 'mime:', mimeType, 'encoding:', encoding, 'content length:', content?.length);
+      if (!filename || !content) { console.warn('[Scholar Companion] saveFile aborted: missing filename or content'); break; }
       try {
-        const fp = Components.classes['@mozilla.org/filepicker;1']
-          .createInstance(Components.interfaces.nsIFilePicker);
-        fp.init(win, 'Save Chat Export', Components.interfaces.nsIFilePicker.modeSave);
-        fp.defaultString = filename;
-        if (mimeType === 'text/markdown') {
-          fp.appendFilter('Markdown', '*.md');
-        } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-          fp.appendFilter('Word Document', '*.docx');
-        } else if (mimeType === 'application/pdf') {
-          fp.appendFilter('PDF', '*.pdf');
+        // Save to OS Downloads directory (reliable, no file picker needed)
+        const downloadsDir = (Services as any).dirsvc.get('DfltDwnld', Components.interfaces.nsIFile).path;
+        const savePath = PathUtils.join(downloadsDir, filename);
+        console.log('[Scholar Companion] Saving to:', savePath);
+
+        if (encoding === 'base64') {
+          const binary = atob(content);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          await IOUtils.write(savePath, bytes);
+        } else {
+          await IOUtils.writeUTF8(savePath, content);
         }
-        fp.appendFilters(Components.interfaces.nsIFilePicker.filterAll);
-        const result = await new Promise<number>(resolve => fp.open(resolve));
-        if (result === Components.interfaces.nsIFilePicker.returnOK ||
-            result === Components.interfaces.nsIFilePicker.returnReplace) {
-          const path = fp.file.path;
-          if (encoding === 'base64') {
-            // Decode base64 string to binary
-            const binary = atob(content);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            await IOUtils.write(path, bytes);
-          } else {
-            await IOUtils.writeUTF8(path, content);
-          }
-        }
+
+        console.log('[Scholar Companion] File saved successfully:', savePath);
+        // Show a brief notification via Zotero's built-in progress window
+        try {
+          const pw = new (Zotero as any).ProgressWindow({ closeOnClick: true });
+          pw.changeHeadline('Export Complete');
+          pw.addDescription(savePath);
+          pw.show();
+          pw.startCloseTimer(4000);
+        } catch { /* notification not critical */ }
       } catch (e) {
         console.error('[Scholar Companion] File save failed:', e);
       }
