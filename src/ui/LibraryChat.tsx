@@ -1,6 +1,6 @@
 // src/ui/LibraryChat.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { PaperPlaneTilt, Plus } from '@phosphor-icons/react';
+import { PaperPlaneTilt, Plus, Books } from '@phosphor-icons/react';
 import { streamLibraryChat, listLibrarySessions, loadLibrarySession } from '../api/libraryChat';
 import type { LibrarySessionSummary } from '../api/libraryChat';
 import type { Source } from '../api/chat';
@@ -118,6 +118,14 @@ export function LibraryChat() {
 
       {/* Chat area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <div style={{
+          padding: '8px 10px', borderBottom: '1px solid #313244',
+          background: '#181825', flexShrink: 0,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <Books size={18} weight="duotone" style={{ color: 'var(--accent, #89b4fa)', flexShrink: 0 }} />
+          <span style={{ color: '#cdd6f4', fontWeight: 600, fontSize: '0.8rem' }}>My Library</span>
+        </div>
         <ReadingToolbar />
         <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {messages.length === 0 && (

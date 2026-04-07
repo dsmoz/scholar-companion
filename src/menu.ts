@@ -24,6 +24,9 @@ const ICONS = {
   palette:   'M200.77,53.89A103.27,103.27,0,0,0,128,24h-1.07A104,104,0,0,0,24,128c0,43,26.58,79.06,69.36,94.17A32,32,0,0,0,136,192a16,16,0,0,1,16-16h46.21a31.81,31.81,0,0,0,31.2-24.88,104.43,104.43,0,0,0,2.59-24A103.28,103.28,0,0,0,200.77,53.89Zm13,93.71A15.89,15.89,0,0,1,198.21,160H152a32,32,0,0,0-32,32,16,16,0,0,1-21.31,15.07C62.49,194.3,40,164,40,128a88,88,0,0,1,87.09-88h.9a88.35,88.35,0,0,1,88,87.25A88.86,88.86,0,0,1,213.81,147.6ZM140,76a12,12,0,1,1-12-12A12,12,0,0,1,140,76ZM96,100A12,12,0,1,1,84,88,12,12,0,0,1,96,100Zm0,56a12,12,0,1,1-12-12A12,12,0,0,1,96,156Zm88-56a12,12,0,1,1-12-12A12,12,0,0,1,184,100Z',
   sparkle:   'M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z',
   database:  'M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z',
+  // Collection context menu
+  folder:    'M216,72H131.31L104,44.69A15.86,15.86,0,0,0,92.69,40H40A16,16,0,0,0,24,56V200.62A15.4,15.4,0,0,0,39.38,216H216.89A15.13,15.13,0,0,0,232,200.89V88A16,16,0,0,0,216,72ZM40,56H92.69l16,16H40ZM216,200H40V88H216Z',
+  books:     'M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15l46.81-10,3.33,15.87L139.33,66ZM169.16,208l-3.33-15.87,46.82-10.06,3.33,15.87ZM96,216H48a16,16,0,0,1-16-16V56A16,16,0,0,1,48,40H96a16,16,0,0,1,16,16V200A16,16,0,0,1,96,216ZM48,56V200H96V56Z',
 } as const;
 
 /** IDs of menu items that require a server connection (everything except settings). */
@@ -39,6 +42,9 @@ const CONNECTION_REQUIRED_IDS = [
   'zotero-ai-update-metadata',
   'zotero-ai-index-selected',
   'zotero-ai-cascade-delete',
+  // collection context menu
+  'zotero-ai-chat-collection',
+  'zotero-ai-library-chat-ctx',
 ];
 
 /** Enable or disable all connection-dependent menu items. */
@@ -125,5 +131,30 @@ export function registerContextMenu(win: Window) {
     menuitem.setAttribute('class', 'menuitem-iconic');
     menuitem.setAttribute('oncommand', `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'${ci.command}'},bubbles:true}))`);
     itemContextMenu.appendChild(menuitem);
+  }
+}
+
+export function registerCollectionContextMenu(win: Window) {
+  const doc = win.document;
+  const collectionMenu = doc.getElementById('zotero-collectionmenu');
+  if (!collectionMenu) return;
+
+  const sep = (doc as any).createXULElement('menuseparator');
+  sep.setAttribute('id', 'zotero-ai-collection-sep');
+  collectionMenu.appendChild(sep);
+
+  const collectionItems: Array<{ id: string; label: string; command: string; icon: keyof typeof ICONS }> = [
+    { id: 'zotero-ai-chat-collection',  label: 'Chat with Collection', command: 'chatWithCollection', icon: 'folder' },
+    { id: 'zotero-ai-library-chat-ctx', label: 'Chat with Library',    command: 'openLibraryChat',    icon: 'books'  },
+  ];
+
+  for (const ci of collectionItems) {
+    const menuitem = (doc as any).createXULElement('menuitem');
+    menuitem.setAttribute('id', ci.id);
+    menuitem.setAttribute('label', ci.label);
+    menuitem.setAttribute('image', svgIcon(ICONS[ci.icon]));
+    menuitem.setAttribute('class', 'menuitem-iconic');
+    menuitem.setAttribute('oncommand', `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'${ci.command}'},bubbles:true}))`);
+    collectionMenu.appendChild(menuitem);
   }
 }

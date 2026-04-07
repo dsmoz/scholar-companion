@@ -1,6 +1,6 @@
 // src/ui/MultiDocChat.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper, MagnifyingGlass, CircleNotch } from '@phosphor-icons/react';
+import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper, MagnifyingGlass, CircleNotch, Folder } from '@phosphor-icons/react';
 import { streamMultiDocChat, fetchDocMetadata } from '../api/multiDocChat';
 import type { DocMeta } from '../api/multiDocChat';
 import { metadataCache } from '../api/chat';
@@ -16,6 +16,7 @@ interface Props {
   zoteroKeys: string[];
   initialAbstract?: string;
   initialDocs?: DocMeta[];
+  scope?: { type: string; name: string; count: number };
 }
 
 function generateSessionId(keys: string[]): string {
@@ -33,7 +34,7 @@ function DocIcon({ itemType }: { itemType: string }) {
   return <FilePdf size={14} weight="duotone" style={style} />;
 }
 
-export function MultiDocChat({ zoteroKeys, initialDocs }: Props) {
+export function MultiDocChat({ zoteroKeys, initialDocs, scope }: Props) {
   const [docs, setDocs] = useState<DocMeta[]>(initialDocs ?? []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -96,37 +97,53 @@ export function MultiDocChat({ zoteroKeys, initialDocs }: Props) {
         padding: '8px 10px', borderBottom: '1px solid #313244',
         background: '#181825', flexShrink: 0,
       }}>
-        <div style={{ color: '#6c7086', fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-          Chatting with
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {docs.length > 0 ? docs.map(doc => (
-            <div key={doc.key} style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#cdd6f4', fontSize: '0.75rem' }}>
-              <span style={{ color: 'var(--accent, #89b4fa)' }}>
-                <DocIcon itemType={doc.item_type} />
-              </span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {doc.title}
-              </span>
-              {doc.date && (
-                <span style={{ color: '#6c7086', fontSize: '0.65rem', flexShrink: 0 }}>
-                  {doc.date.slice(0, 4)}
-                </span>
+        {scope ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#cdd6f4', fontSize: '0.8rem' }}>
+            <Folder size={18} weight="duotone" style={{ color: 'var(--accent, #89b4fa)', flexShrink: 0 }} />
+            <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {scope.name}
+            </span>
+            <span style={{ color: '#6c7086', fontSize: '0.65rem', flexShrink: 0 }}>
+              {scope.count} item{scope.count !== 1 ? 's' : ''}
+            </span>
+          </div>
+        ) : (
+          <>
+            <div style={{ color: '#6c7086', fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+              Chatting with
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {docs.length > 0 ? docs.map(doc => (
+                <div key={doc.key} style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#cdd6f4', fontSize: '0.75rem' }}>
+                  <span style={{ color: 'var(--accent, #89b4fa)' }}>
+                    <DocIcon itemType={doc.item_type} />
+                  </span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {doc.title}
+                  </span>
+                  {doc.date && (
+                    <span style={{ color: '#6c7086', fontSize: '0.65rem', flexShrink: 0 }}>
+                      {doc.date.slice(0, 4)}
+                    </span>
+                  )}
+                </div>
+              )) : (
+                <div style={{ color: '#6c7086', fontSize: '0.7rem' }}>Loading documents…</div>
               )}
             </div>
-          )) : (
-            <div style={{ color: '#6c7086', fontSize: '0.7rem' }}>Loading documents…</div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       <ReadingToolbar />
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {messages.length === 0 && docs.length > 0 && (
+        {messages.length === 0 && (docs.length > 0 || scope) && (
           <div style={{ textAlign: 'center', color: '#6c7086', fontSize: '0.75rem', marginTop: '2rem' }}>
-            Ask a question across {docs.length} document{docs.length !== 1 ? 's' : ''}
+            {scope
+              ? `Ask a question about the "${scope.name}" collection`
+              : `Ask a question across ${docs.length} document${docs.length !== 1 ? 's' : ''}`}
           </div>
         )}
         {messages.map((m, i) => (
@@ -205,7 +222,7 @@ export function MultiDocChat({ zoteroKeys, initialDocs }: Props) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && sendMessage()}
-          placeholder={`Ask across ${docs.length || zoteroKeys.length} document${(docs.length || zoteroKeys.length) !== 1 ? 's' : ''}…`}
+          placeholder={scope ? `Ask about "${scope.name}"…` : `Ask across ${docs.length || zoteroKeys.length} document${(docs.length || zoteroKeys.length) !== 1 ? 's' : ''}…`}
           style={{ flex: 1, fontSize: '0.75rem', padding: '4px 8px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4' }}
         />
         <button onClick={sendMessage} disabled={streaming} aria-label="Send" style={{

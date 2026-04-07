@@ -26,6 +26,7 @@ if (panel === 'multi-doc-chat') {
   let keys: string[] = [];
   let initialAbstract = '';
   let initialDocs: Array<{ key: string; title: string; creators: Array<{ firstName: string; lastName: string }>; date: string; item_type: string }> = [];
+  let scope: { type: string; name: string; count: number } | undefined;
   try {
     const parsed = JSON.parse(decodeURIComponent(keysParam));
     if (Array.isArray(parsed)) {
@@ -34,10 +35,11 @@ if (panel === 'multi-doc-chat') {
       keys = parsed.keys ?? [];
       initialAbstract = parsed.abstract ?? '';
       initialDocs = parsed.docs ?? [];
+      if (parsed.scope) scope = parsed.scope;
     }
   } catch { keys = []; }
   const root = createRoot(document.getElementById('root')!);
-  root.render(createElement(MultiDocChat, { zoteroKeys: keys, initialAbstract, initialDocs }));
+  root.render(createElement(MultiDocChat, { zoteroKeys: keys, initialAbstract, initialDocs, scope }));
 } else if (panel === 'item-chat') {
   const key = params.get('key') ?? '';
   const title = decodeURIComponent(params.get('title') ?? '');

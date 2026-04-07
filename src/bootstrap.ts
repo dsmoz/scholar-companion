@@ -1,6 +1,6 @@
 // src/bootstrap.ts
 import { registerEventHooks, unregisterEventHooks } from './events';
-import { registerMenus, registerContextMenu, setMenusConnected } from './menu';
+import { registerMenus, registerContextMenu, registerCollectionContextMenu, setMenusConnected } from './menu';
 import { getSyncOnStartup, getAutoSync, getSyncInterval, getItemPaneHeight, getApiUrl, getApiToken } from './prefs';
 import { triggerSync } from './api/sync';
 import { fetchSyncStatus, updateItemMetadata } from './api/sync-status';
@@ -118,11 +118,15 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
   win.document.getElementById('zotero-ai-update-metadata')?.remove();
   win.document.getElementById('zotero-ai-index-selected')?.remove();
   win.document.getElementById('zotero-ai-chat-docs')?.remove();
+  win.document.getElementById('zotero-ai-collection-sep')?.remove();
+  win.document.getElementById('zotero-ai-chat-collection')?.remove();
+  win.document.getElementById('zotero-ai-library-chat-ctx')?.remove();
 }
 
 function initWindow(win: Window) {
   registerMenus(win);
   registerContextMenu(win);
+  registerCollectionContextMenu(win);
 
   // Start with menus disabled until connection is verified
   setMenusConnected(win, false);
@@ -383,6 +387,60 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
           JSON.stringify({ keys, docs, abstract: '' }),
         );
       } catch(e) {
+        console.error('[Scholar Companion] openDialog failed:', e);
+      }
+      break;
+    }
+
+    case 'chatWithCollection': {
+      const zp = (Zotero as any).getActiveZoteroPane();
+      const collection = zp?.getSelectedCollection();
+      if (!collection) {
+        win.alert('Please right-click a collection to use this feature.');
+        break;
+      }
+      const allItems = collection.getChildItems();
+      const regularItems = allItems.filter(
+        (it: any) => it.isRegularItem() && !it.parentKey
+      );
+      if (regularItems.length === 0) {
+        win.alert(`The collection "${collection.name}" has no regular items to chat with.`);
+        break;
+      }
+      const MAX_COLLECTION_ITEMS = 50;
+      let itemsToChat = regularItems;
+      if (regularItems.length > MAX_COLLECTION_ITEMS) {
+        const proceed = win.confirm(
+          `This collection has ${regularItems.length} items. ` +
+          `Only the first ${MAX_COLLECTION_ITEMS} will be included in the chat.\n\nContinue?`
+        );
+        if (!proceed) break;
+        itemsToChat = regularItems.slice(0, MAX_COLLECTION_ITEMS);
+      }
+      const collKeys = itemsToChat.map((it: any) => it.key);
+      const collDocs = itemsToChat.map((it: any) => ({
+        key: it.key,
+        title: it.getField('title') || it.key,
+        creators: (it.getCreators?.() ?? []).map((c: any) => ({
+          firstName: c.firstName ?? '', lastName: c.lastName ?? c.name ?? '',
+        })),
+        date: it.getField?.('date') || '',
+        item_type: it.itemType || '',
+      }));
+      try {
+        win.openDialog(
+          `chrome://scholar-companion/content/panel.xhtml`,
+          `zotero-ai-chat-docs-${Date.now()}`,
+          `chrome,dialog=no,resizable,centerscreen,width=720,height=600`,
+          'multi-doc-chat',
+          JSON.stringify({
+            keys: collKeys,
+            docs: collDocs,
+            abstract: '',
+            scope: { type: 'collection', name: collection.name, count: regularItems.length },
+          }),
+        );
+      } catch (e) {
         console.error('[Scholar Companion] openDialog failed:', e);
       }
       break;
