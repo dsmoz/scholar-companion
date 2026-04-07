@@ -180,15 +180,18 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
       }
       try {
         const { fetchSyncStatus } = await import('./api/sync-status');
-        const { items: statusItems } = await fetchSyncStatus();
+        const selectedKeys = regularItems.map((it: any) => it.key as string);
+        const { items: statusItems } = await fetchSyncStatus(selectedKeys);
         const statusMap = new Map(statusItems.map((s) => [s.zotero_key, s.sync_status]));
 
         const TAG_MAP: Record<string, { tag: string; color: string }> = {
-          synced:  { tag: 'SC: Synced',  color: '#a6e3a1' },
-          pending: { tag: 'SC: Pending', color: '#f9e2af' },
-          error:   { tag: 'SC: Error',   color: '#f38ba8' },
+          synced:           { tag: 'SC: Synced',  color: '#a6e3a1' },
+          pending:          { tag: 'SC: Pending', color: '#f9e2af' },
+          error:            { tag: 'SC: Error',   color: '#f38ba8' },
+          failed_permanent: { tag: 'SC: Error',   color: '#f38ba8' },
+          deleted:          { tag: 'SC: Error',   color: '#f38ba8' },
         };
-        const ALL_TAGS = Object.values(TAG_MAP).map((t) => t.tag);
+        const ALL_TAGS = [...new Set(Object.values(TAG_MAP).map((t) => t.tag))];
         // Legacy emoji tags to clean up from previous versions
         const LEGACY_TAGS = ['🟢 Synced', '🟡 Pending', '🔴 Error'];
 

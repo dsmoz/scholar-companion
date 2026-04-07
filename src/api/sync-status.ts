@@ -12,7 +12,13 @@ export interface SyncStatusResponse {
   total: number;
 }
 
-export function fetchSyncStatus(): Promise<SyncStatusResponse> {
+export function fetchSyncStatus(keys?: string[]): Promise<SyncStatusResponse> {
+  if (keys && keys.length > 0) {
+    return apiFetch<SyncStatusResponse>('/sync-status', {
+      method: 'POST',
+      body: JSON.stringify({ keys }),
+    });
+  }
   return apiFetch<SyncStatusResponse>('/sync-status');
 }
 
