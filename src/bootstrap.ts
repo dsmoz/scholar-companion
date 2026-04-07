@@ -324,13 +324,22 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         break;
       }
       const keys = regularItems.map((it: any) => it.key);
+      const docs = regularItems.map((it: any) => ({
+        key: it.key,
+        title: it.getField('title') || it.key,
+        creators: (it.getCreators?.() ?? []).map((c: any) => ({
+          firstName: c.firstName ?? '', lastName: c.lastName ?? c.name ?? '',
+        })),
+        date: it.getField?.('date') || '',
+        item_type: it.itemType || '',
+      }));
       try {
         win.openDialog(
           `chrome://scholar-companion/content/panel.xhtml`,
           `zotero-ai-chat-docs-${Date.now()}`,
           `chrome,dialog=no,resizable,centerscreen,width=720,height=600`,
           'multi-doc-chat',
-          JSON.stringify({ keys, abstract: '' }),
+          JSON.stringify({ keys, docs, abstract: '' }),
         );
       } catch(e) {
         console.error('[Scholar Companion] openDialog failed:', e);

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper, MagnifyingGlass, CircleNotch } from '@phosphor-icons/react';
 import { streamMultiDocChat, fetchDocMetadata } from '../api/multiDocChat';
 import type { DocMeta } from '../api/multiDocChat';
+import { metadataCache } from '../api/chat';
 import type { Source, ScopeStatus } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
 import { ReadingToolbar } from './components/ReadingToolbar';
@@ -13,6 +14,7 @@ interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[]
 interface Props {
   zoteroKeys: string[];
   initialAbstract?: string;
+  initialDocs?: DocMeta[];
 }
 
 function generateSessionId(keys: string[]): string {
@@ -30,8 +32,8 @@ function DocIcon({ itemType }: { itemType: string }) {
   return <FilePdf size={14} weight="duotone" style={style} />;
 }
 
-export function MultiDocChat({ zoteroKeys }: Props) {
-  const [docs, setDocs] = useState<DocMeta[]>([]);
+export function MultiDocChat({ zoteroKeys, initialDocs }: Props) {
+  const [docs, setDocs] = useState<DocMeta[]>(initialDocs ?? []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -41,6 +43,15 @@ export function MultiDocChat({ zoteroKeys }: Props) {
   const cancelRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    // If initial docs were passed from Zotero, use them and populate the cache
+    if (initialDocs && initialDocs.length > 0) {
+      setDocs(initialDocs);
+      for (const d of initialDocs) {
+        metadataCache.set(d.key, { key: d.key, title: d.title, creators: d.creators, date: d.date, item_type: d.item_type });
+      }
+      return;
+    }
+    // Otherwise fetch from server
     fetchDocMetadata(zoteroKeys).then(setDocs);
   }, []);
 
