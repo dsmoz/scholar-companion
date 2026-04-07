@@ -20,6 +20,8 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     rootURI,
     document: Zotero.getMainWindow().document,
     console: Zotero.getMainWindow().console,
+    Services: Services,
+    Components: Components,
   };
   ctx._globalThis = ctx;
   Services.scriptloader.loadSubScript(rootURI + "content/bootstrap.js", ctx);
