@@ -2,17 +2,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PaperPlaneTilt, MagnifyingGlass, User, Chat, ChatCircle, CaretUp, CaretDown, CaretLeft, CaretRight, CircleNotch } from '@phosphor-icons/react';
 import { streamChat, fetchItemMetadata, loadChatSession } from '../api/chat';
-import type { Source, ScopeStatus } from '../api/chat';
+import type { ScopeStatus } from '../api/chat';
 import { similarItems, SearchResult } from '../api/search';
 import { ReadingToolbar } from './components/ReadingToolbar';
-import { TypingDots } from './components/TypingDots';
-import { renderMarkdown, formatApaSourceText, collapseSources } from './utils/renderMarkdown';
+import { ChatBubble } from './components/ChatBubble';
+import type { Message } from './components/ChatBubble';
+import { SummaryModal } from './components/SummaryModal';
 import { getChatRelatedMax } from '../prefs';
 import { fetchAuthorProfile, AuthorProfile } from '../api/author';
 import { ScoreChip } from './components/ScoreChip';
 
 type SubTab = 'chat' | 'similar' | 'author';
-interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
 
 interface Props {
   zoteroKey: string;
@@ -33,6 +33,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
   const [authors, setAuthors] = useState<Array<{ firstName: string; lastName: string }>>(initialAuthors);
   const [authorPage, setAuthorPage] = useState(0);
   const [scopeStatus, setScopeStatus] = useState<ScopeStatus | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<(() => void) | null>(null);
 
@@ -135,61 +136,18 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
 
       {tab === 'chat' && (
         <>
-          <ReadingToolbar />
+          <ReadingToolbar
+            sessionId={zoteroKey}
+            messages={messages}
+            onSummarize={() => setShowSummary(true)}
+            streaming={streaming}
+          />
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ textAlign: 'center', color: '#6c7086', fontSize: '0.7rem', padding: '4px 0' }}>
               Chatting with: {title}
             </div>
             {messages.map((m, i) => (
-              <div key={i} style={{
-                alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-                background: m.role === 'user' ? '#313244' : '#1e1e2e',
-                border: m.role === 'assistant' ? '1px solid #444' : 'none',
-                borderRadius: 6, padding: '6px 10px', maxWidth: '90%', color: '#cdd6f4',
-              }}>
-                {m.role === 'assistant' ? (
-                  streaming && i === messages.length - 1 && !m.text
-                    ? <TypingDots />
-                    : <AssistantMessage html={renderMarkdown(m.text, m.sources)} />
-                ) : (
-                  <span>{m.text}</span>
-                )}
-                {m.sources && m.sources.length > 0 && (
-                  <div className="sources-section">
-                    {(() => {
-                      const { primary, expanded } = collapseSources(m.sources);
-                      return (
-                        <>
-                          {primary.length > 0 && (
-                            <>
-                              <div className="sources-section-label">Sources</div>
-                              {primary.map((c, si) => (
-                                <div key={si} className="source-entry">
-                                  <span className="source-entry__num">[{c.label}]</span>
-                                  {formatApaSourceText(c.source)}
-                                </div>
-                              ))}
-                            </>
-                          )}
-                          {expanded.length > 0 && (
-                            <>
-                              <div className="sources-section-label" style={{ marginTop: primary.length > 0 ? 6 : 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <MagnifyingGlass size={10} /> From your library
-                              </div>
-                              {expanded.map((c, si) => (
-                                <div key={`exp-${si}`} className="source-entry" style={{ opacity: 0.85 }}>
-                                  <span className="source-entry__num">[{c.label}]</span>
-                                  {formatApaSourceText(c.source)}
-                                </div>
-                              ))}
-                            </>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
+              <ChatBubble key={i} message={m} isLastMessage={i === messages.length - 1} streaming={streaming} />
             ))}
             {scopeStatus && scopeStatus.scope_status === 'expanding' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#89b4fa', fontSize: '0.65rem', padding: '2px 8px' }}>
@@ -218,6 +176,9 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
               <PaperPlaneTilt size={14} weight="fill" />
             </button>
           </div>
+          {showSummary && (
+            <SummaryModal sessionId={zoteroKey} onClose={() => setShowSummary(false)} />
+          )}
         </>
       )}
 
@@ -380,7 +341,3 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
   );
 }
 
-// Isolated component for DOMPurify-sanitized assistant markdown output
-function AssistantMessage({ html }: { html: string }) {
-  return <div className="chat-markdown" ref={(el) => { if (el) el.innerHTML = html; }} />;
-}

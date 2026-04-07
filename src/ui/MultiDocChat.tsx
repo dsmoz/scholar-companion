@@ -4,13 +4,12 @@ import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper, Mag
 import { streamMultiDocChat, fetchDocMetadata } from '../api/multiDocChat';
 import type { DocMeta } from '../api/multiDocChat';
 import { metadataCache } from '../api/chat';
-import type { Source, ScopeStatus } from '../api/chat';
+import type { ScopeStatus } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
 import { ReadingToolbar } from './components/ReadingToolbar';
-import { TypingDots } from './components/TypingDots';
-import { renderMarkdown, formatApaSourceText, collapseSources } from './utils/renderMarkdown';
-
-interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
+import { ChatBubble } from './components/ChatBubble';
+import type { Message } from './components/ChatBubble';
+import { SummaryModal } from './components/SummaryModal';
 
 interface Props {
   zoteroKeys: string[];
@@ -41,6 +40,7 @@ export function MultiDocChat({ zoteroKeys, initialDocs, scope }: Props) {
   const [streaming, setStreaming] = useState(false);
   const [scopeStatus, setScopeStatus] = useState<ScopeStatus | null>(null);
   const [strictScope, setStrictScope] = useState(true);
+  const [showSummary, setShowSummary] = useState(false);
   const sessionId = useRef(generateSessionId(zoteroKeys));
   const bottomRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -152,7 +152,12 @@ export function MultiDocChat({ zoteroKeys, initialDocs, scope }: Props) {
         )}
       </div>
 
-      <ReadingToolbar />
+      <ReadingToolbar
+        sessionId={sessionId.current}
+        messages={messages}
+        onSummarize={() => setShowSummary(true)}
+        streaming={streaming}
+      />
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -164,55 +169,7 @@ export function MultiDocChat({ zoteroKeys, initialDocs, scope }: Props) {
           </div>
         )}
         {messages.map((m, i) => (
-          <div key={i} style={{
-            alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-            background: m.role === 'user' ? '#313244' : '#1e1e2e',
-            border: m.role === 'assistant' ? '1px solid #444' : 'none',
-            borderRadius: 6, padding: '6px 10px', maxWidth: '90%', color: '#cdd6f4',
-          }}>
-            {m.role === 'assistant' ? (
-              streaming && i === messages.length - 1 && !m.text
-                ? <TypingDots />
-                : <AssistantMessage html={renderMarkdown(m.text, m.sources)} />
-            ) : (
-              <span>{m.text}</span>
-            )}
-            {m.sources && m.sources.length > 0 && (
-              <div className="sources-section">
-                {(() => {
-                  const { primary, expanded } = collapseSources(m.sources);
-                  return (
-                    <>
-                      {primary.length > 0 && (
-                        <>
-                          <div className="sources-section-label">Sources</div>
-                          {primary.map((c, si) => (
-                            <div key={si} className="source-entry">
-                              <span className="source-entry__num">[{c.label}]</span>
-                              {formatApaSourceText(c.source)}
-                            </div>
-                          ))}
-                        </>
-                      )}
-                      {expanded.length > 0 && (
-                        <>
-                          <div className="sources-section-label" style={{ marginTop: primary.length > 0 ? 6 : 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <MagnifyingGlass size={10} /> From your library
-                          </div>
-                          {expanded.map((c, si) => (
-                            <div key={`exp-${si}`} className="source-entry" style={{ opacity: 0.85 }}>
-                              <span className="source-entry__num">[{c.label}]</span>
-                              {formatApaSourceText(c.source)}
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            )}
-          </div>
+          <ChatBubble key={i} message={m} isLastMessage={i === messages.length - 1} streaming={streaming} />
         ))}
         {scopeStatus && scopeStatus.scope_status === 'expanding' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#89b4fa', fontSize: '0.65rem', padding: '2px 8px' }}>
@@ -249,11 +206,10 @@ export function MultiDocChat({ zoteroKeys, initialDocs, scope }: Props) {
           <PaperPlaneTilt size={14} weight="fill" />
         </button>
       </div>
+      {showSummary && (
+        <SummaryModal sessionId={sessionId.current} onClose={() => setShowSummary(false)} />
+      )}
     </div>
   );
 }
 
-// Isolated component for DOMPurify-sanitized assistant markdown output
-function AssistantMessage({ html }: { html: string }) {
-  return <div className="chat-markdown" ref={(el) => { if (el) el.innerHTML = html; }} />;
-}

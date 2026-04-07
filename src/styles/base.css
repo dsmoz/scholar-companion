@@ -434,6 +434,79 @@ input:focus, textarea:focus {
   margin-right: 0.2em;
 }
 
+/* ── Chat bubble with copy button ── */
+.chat-bubble {
+  position: relative;
+}
+
+.chat-bubble__copy {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  background: var(--surface0);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.chat-bubble:hover .chat-bubble__copy {
+  opacity: 1;
+}
+
+.chat-bubble__copy:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── Summary modal ── */
+.summary-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+}
+
+.summary-modal {
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  width: min(90%, 560px);
+  max-height: 80%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.summary-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border);
+}
+
+.summary-modal__title {
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.summary-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-3);
+}
+
 /* Spinner animation for scope expansion indicator */
 @keyframes spin {
   from { transform: rotate(0deg); }

@@ -3,13 +3,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { PaperPlaneTilt, Plus, Books } from '@phosphor-icons/react';
 import { streamLibraryChat, listLibrarySessions, loadLibrarySession } from '../api/libraryChat';
 import type { LibrarySessionSummary } from '../api/libraryChat';
-import type { Source } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
 import { ReadingToolbar } from './components/ReadingToolbar';
-import { TypingDots } from './components/TypingDots';
-import { renderMarkdown, formatApaSourceText, collapseSources } from './utils/renderMarkdown';
-
-interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
+import { ChatBubble } from './components/ChatBubble';
+import type { Message } from './components/ChatBubble';
+import { SummaryModal } from './components/SummaryModal';
 
 function generateSessionId(): string {
   return 'library_' + Array.from(crypto.getRandomValues(new Uint8Array(8)))
@@ -23,6 +21,7 @@ export function LibraryChat() {
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [lastQuery, setLastQuery] = useState('');
+  const [showSummary, setShowSummary] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<(() => void) | null>(null);
 
@@ -126,7 +125,12 @@ export function LibraryChat() {
           <Books size={18} weight="duotone" style={{ color: 'var(--accent, #89b4fa)', flexShrink: 0 }} />
           <span style={{ color: '#cdd6f4', fontWeight: 600, fontSize: '0.8rem' }}>My Library</span>
         </div>
-        <ReadingToolbar />
+        <ReadingToolbar
+          sessionId={activeSessionId}
+          messages={messages}
+          onSummarize={() => setShowSummary(true)}
+          streaming={streaming}
+        />
         <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {messages.length === 0 && (
             <div style={{ textAlign: 'center', color: '#6c7086', fontSize: '0.75rem', marginTop: '3rem' }}>
@@ -134,55 +138,7 @@ export function LibraryChat() {
             </div>
           )}
           {messages.map((m, i) => (
-            <div key={i} style={{
-              alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-              background: m.role === 'user' ? '#313244' : '#1e1e2e',
-              border: m.role === 'assistant' ? '1px solid #444' : 'none',
-              borderRadius: 6, padding: '6px 10px', maxWidth: '90%', color: '#cdd6f4',
-            }}>
-              {m.role === 'assistant' ? (
-                streaming && i === messages.length - 1 && !m.text
-                  ? <TypingDots />
-                  : <AssistantMessage html={renderMarkdown(m.text, m.sources)} />
-              ) : (
-                <span>{m.text}</span>
-              )}
-              {m.sources && m.sources.length > 0 && (
-                <div className="sources-section">
-                  {(() => {
-                    const { primary, expanded } = collapseSources(m.sources);
-                    return (
-                      <>
-                        {primary.length > 0 && (
-                          <>
-                            <div className="sources-section-label">Sources</div>
-                            {primary.map((c, si) => (
-                              <div key={si} className="source-entry">
-                                <span className="source-entry__num">[{c.label}]</span>
-                                {formatApaSourceText(c.source)}
-                              </div>
-                            ))}
-                          </>
-                        )}
-                        {expanded.length > 0 && (
-                          <>
-                            <div className="sources-section-label" style={{ marginTop: primary.length > 0 ? 6 : 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-                              From your library
-                            </div>
-                            {expanded.map((c, si) => (
-                              <div key={`exp-${si}`} className="source-entry" style={{ opacity: 0.85 }}>
-                                <span className="source-entry__num">[{c.label}]</span>
-                                {formatApaSourceText(c.source)}
-                              </div>
-                            ))}
-                          </>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
+            <ChatBubble key={i} message={m} isLastMessage={i === messages.length - 1} streaming={streaming} />
           ))}
           <div style={{ flex: 1 }} />
           {lastQuery && <RelatedDocsPanel query={lastQuery} disabled={streaming} />}
@@ -203,12 +159,11 @@ export function LibraryChat() {
             <PaperPlaneTilt size={14} weight="fill" />
           </button>
         </div>
+        {showSummary && (
+          <SummaryModal sessionId={activeSessionId} onClose={() => setShowSummary(false)} />
+        )}
       </div>
     </div>
   );
 }
 
-// Isolated component for DOMPurify-sanitized assistant markdown output
-function AssistantMessage({ html }: { html: string }) {
-  return <div className="chat-markdown" ref={(el) => { if (el) el.innerHTML = html; }} />;
-}
