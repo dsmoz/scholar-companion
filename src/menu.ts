@@ -137,15 +137,12 @@ export function registerContextMenu(win: Window) {
 /**
  * Inject Scholar Companion items into the collection context menu.
  *
- * Zotero 7 does not expose a static `zotero-collectionmenu` DOM element.
- * Instead, the collection tree builds its context menu dynamically.
- * We listen for the `popupshowing` event on the collection tree and
- * inject our items into whatever menupopup opens from it.
+ * Zotero 7 dynamically builds the collection tree context menu.
+ * We listen for `popupshowing` on the document and check if the popup
+ * originates from the collection tree area (left sidebar).
  */
 export function registerCollectionContextMenu(win: Window) {
   const doc = win.document;
-  const collectionTree = doc.getElementById('collection-tree');
-  if (!collectionTree) return;
 
   const MENU_ITEMS: Array<{ id: string; label: string; command: string; icon: keyof typeof ICONS }> = [
     { id: 'zotero-ai-chat-collection',  label: 'Chat with Collection', command: 'chatWithCollection', icon: 'folder' },
@@ -154,7 +151,15 @@ export function registerCollectionContextMenu(win: Window) {
 
   const handler = (e: Event) => {
     const popup = e.target as Element;
-    if (popup.tagName?.toLowerCase() !== 'menupopup') return;
+    if (!popup || popup.tagName?.toLowerCase() !== 'menupopup') return;
+
+    // Only inject into collection-related popups.
+    // Detect by checking if the popup contains typical collection menu items
+    // (like "New Subcollection..." or "Rename Collection") or by checking
+    // its parent/context is the collection tree.
+    const hasCollectionItems = popup.querySelector('[label*="Subcollection"], [label*="Rename Collection"], [data-l10n-id*="collection"]');
+    if (!hasCollectionItems) return;
+
     // Avoid duplicates if popup is reused
     if (popup.querySelector('#zotero-ai-collection-sep')) return;
 
@@ -173,7 +178,6 @@ export function registerCollectionContextMenu(win: Window) {
     }
   };
 
-  collectionTree.addEventListener('popupshowing', handler, true);
-  // Stash the handler so we can remove it on unload
+  doc.addEventListener('popupshowing', handler, true);
   (win as any).__scholarCollectionMenuHandler = handler;
 }

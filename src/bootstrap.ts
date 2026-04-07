@@ -121,7 +121,7 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
   // Collection context menu: remove event listener
   const collHandler = (win as any).__scholarCollectionMenuHandler;
   if (collHandler) {
-    win.document.getElementById('collection-tree')?.removeEventListener('popupshowing', collHandler, true);
+    win.document.removeEventListener('popupshowing', collHandler, true);
     delete (win as any).__scholarCollectionMenuHandler;
   }
 }
