@@ -18,10 +18,45 @@ export function ChatBubble({ message, isLastMessage, streaming }: ChatBubbleProp
   const isAssistant = message.role === 'assistant';
 
   function copyText() {
-    navigator.clipboard.writeText(message.text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+    // Build plain text with sources
+    let plainText = message.text;
+    if (message.sources?.length) {
+      const { primary, expanded } = collapseSources(message.sources);
+      const allCollapsed = [...primary, ...expanded];
+      if (allCollapsed.length) {
+        plainText += '\n\nSources:\n';
+        plainText += allCollapsed.map(c => `[${c.label}] ${formatApaSourceText(c.source)}`).join('\n');
+      }
+    }
+
+    // Build HTML with superscript citations preserved for Word paste
+    let htmlText = renderMarkdown(message.text, message.sources);
+    if (message.sources?.length) {
+      const { primary, expanded } = collapseSources(message.sources);
+      if (primary.length || expanded.length) {
+        htmlText += '<hr style="margin:8px 0;border:none;border-top:1px solid #ccc"><p><strong>Sources</strong></p><ul>';
+        for (const c of [...primary, ...expanded]) {
+          htmlText += `<li>[${c.label}] ${formatApaSourceText(c.source)}</li>`;
+        }
+        htmlText += '</ul>';
+      }
+    }
+
+    // Use ClipboardItem for rich text (superscripts in Word), fallback to plain text
+    if (typeof ClipboardItem !== 'undefined') {
+      navigator.clipboard.write([new ClipboardItem({
+        'text/plain': new Blob([plainText], { type: 'text/plain' }),
+        'text/html': new Blob([htmlText], { type: 'text/html' }),
+      })]).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      });
+    } else {
+      navigator.clipboard.writeText(plainText).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      });
+    }
   }
 
   return (
