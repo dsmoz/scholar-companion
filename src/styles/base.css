@@ -372,6 +372,14 @@ input:focus, textarea:focus {
   cursor: default;
 }
 
+.citation-ref[title] {
+  cursor: help;
+}
+
+.citation-ref--expanded {
+  color: var(--accent-teal);
+}
+
 /* Sources list below assistant message */
 .sources-section {
   margin-top: 0.75em;

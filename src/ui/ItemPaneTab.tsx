@@ -3,28 +3,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { PaperPlaneTilt, MagnifyingGlass, User, Chat, CaretUp, CaretDown, CircleNotch } from '@phosphor-icons/react';
 import { streamChat, fetchItemMetadata, loadChatSession } from '../api/chat';
 import type { Source, ScopeStatus } from '../api/chat';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
 import { similarItems, SearchResult } from '../api/search';
+import { renderMarkdown, formatApaSourceText } from './utils/renderMarkdown';
 import { getChatRelatedMax } from '../prefs';
 import { fetchAuthorProfile, AuthorProfile } from '../api/author';
 import { ScoreChip } from './components/ScoreChip';
 
 type SubTab = 'chat' | 'similar' | 'author';
 interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
-
-function renderMarkdown(text: string): string {
-  const html = DOMPurify.sanitize(marked.parse(text) as string);
-  return html.replace(/\[(\d+)\]/g, '<sup class="citation-ref">[$1]</sup>');
-}
-
-function formatApaSource(s: Source, index: number): string {
-  const parts: string[] = [];
-  if (s.authors) parts.push(s.authors + '.');
-  if (s.year) parts.push(`(${s.year}).`);
-  if (s.title) parts.push(s.title + '.');
-  return `[${index + 1}] ${parts.join(' ')}`;
-}
 
 interface Props {
   zoteroKey: string;
@@ -157,7 +143,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
               }}>
                 {m.role === 'assistant' ? (
                   // renderMarkdown runs DOMPurify.sanitize before setting innerHTML
-                  <AssistantMessage html={renderMarkdown(m.text)} />
+                  <AssistantMessage html={renderMarkdown(m.text, m.sources)} />
                 ) : (
                   <span>{m.text}</span>
                 )}
@@ -172,7 +158,10 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                             <>
                               <div className="sources-section-label">Sources</div>
                               {primary.map((s, si) => (
-                                <div key={si} className="source-entry">{formatApaSource(s, si)}</div>
+                                <div key={si} className="source-entry">
+                                  <span className="source-entry__num">[{si + 1}]</span>
+                                  {formatApaSourceText(s)}
+                                </div>
                               ))}
                             </>
                           )}
@@ -183,7 +172,8 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                               </div>
                               {expanded.map((s, si) => (
                                 <div key={`exp-${si}`} className="source-entry" style={{ opacity: 0.85 }}>
-                                  {formatApaSource(s, primary.length + si)}
+                                  <span className="source-entry__num">[{primary.length + si + 1}]</span>
+                                  {formatApaSourceText(s)}
                                 </div>
                               ))}
                             </>

@@ -20,6 +20,8 @@ import {
   getListPageSize, setListPageSize,
   getCacheTtlMinutes, setCacheTtlMinutes,
   getChatModel, getChatMaxChunks,
+  getDiscoveryFontSize, setDiscoveryFontSize,
+  getDiscoveryTextColor, setDiscoveryTextColor,
 } from '../prefs';
 import { fetchDiscoverySources, clearSourceCache, type SourceEntry } from '../api/discovery';
 import { fetchChatModels, type ChatModelEntry } from '../api/chat';
@@ -60,6 +62,8 @@ export function Settings() {
   const [chatModel, setChatModelState] = useState(getChatModel());
   const [chatMaxChunks, setChatMaxChunksState] = useState(getChatMaxChunks());
   const [chatModels, setChatModels] = useState<ChatModelEntry[]>([]);
+  const [fontSize, setFontSizeState] = useState(getDiscoveryFontSize());
+  const [textColor, setTextColorState] = useState(getDiscoveryTextColor());
   const [confirmAction, setConfirmAction] = useState<null | 'reindex' | 'clear'>(null);
   const [syncing, setSyncing] = useState(false);
   const [discoveryError, setDiscoveryError] = useState('');
@@ -193,6 +197,36 @@ export function Settings() {
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
         <SectionHeader>APPEARANCE</SectionHeader>
         {row('Theme', segmented(['Auto', 'Light', 'Dark'], theme, v => { setThemeState(v); setTheme(v.toLowerCase()); }))}
+        {row('Chat font size', segmented(['11', '13', '15', '17'], String(fontSize), v => {
+          const n = parseInt(v);
+          setFontSizeState(n);
+          setDiscoveryFontSize(n);
+          document.documentElement.style.setProperty('--reading-font-size', `${n}px`);
+        }))}
+        {row('Chat text color',
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input
+              type="color"
+              value={textColor}
+              onChange={e => {
+                setTextColorState(e.target.value);
+                setDiscoveryTextColor(e.target.value);
+                document.documentElement.style.setProperty('--reading-text-color', e.target.value);
+              }}
+              style={{ width: 32, height: 22, border: '1px solid #444', borderRadius: 4, background: '#313244', cursor: 'pointer', padding: 0 }}
+            />
+            <button onClick={() => {
+              setFontSizeState(13);
+              setTextColorState('#cdd6f4');
+              setDiscoveryFontSize(13);
+              setDiscoveryTextColor('#cdd6f4');
+              document.documentElement.style.setProperty('--reading-font-size', '13px');
+              document.documentElement.style.setProperty('--reading-text-color', '#cdd6f4');
+            }} style={{ fontSize: '0.6rem', color: '#6c7086', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+              Reset
+            </button>
+          </div>
+        )}
       </section>
 
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>

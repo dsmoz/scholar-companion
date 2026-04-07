@@ -1,32 +1,17 @@
 // src/ui/MultiDocChat.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper, MagnifyingGlass, CircleNotch } from '@phosphor-icons/react';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
 import { streamMultiDocChat, fetchDocMetadata } from '../api/multiDocChat';
 import type { DocMeta } from '../api/multiDocChat';
 import type { Source, ScopeStatus } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
+import { renderMarkdown, formatApaSourceText } from './utils/renderMarkdown';
 
 interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
 
 interface Props {
   zoteroKeys: string[];
   initialAbstract?: string;
-}
-
-// All assistant text is sanitized with DOMPurify before rendering
-function renderMarkdown(text: string): string {
-  const html = DOMPurify.sanitize(marked.parse(text) as string);
-  return html.replace(/\[(\d+)\]/g, '<sup class="citation-ref">[$1]</sup>');
-}
-
-function formatApaSourceText(s: Source): string {
-  const parts: string[] = [];
-  if (s.authors) parts.push(s.authors + '.');
-  if (s.year) parts.push(`(${s.year}).`);
-  if (s.title) parts.push(s.title + '.');
-  return parts.join(' ');
 }
 
 function generateSessionId(keys: string[]): string {
@@ -137,7 +122,7 @@ export function MultiDocChat({ zoteroKeys }: Props) {
             borderRadius: 6, padding: '6px 10px', maxWidth: '90%', color: '#cdd6f4',
           }}>
             {m.role === 'assistant' ? (
-              <AssistantMessage html={renderMarkdown(m.text)} />
+              <AssistantMessage html={renderMarkdown(m.text, m.sources)} />
             ) : (
               <span>{m.text}</span>
             )}
