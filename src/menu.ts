@@ -134,27 +134,46 @@ export function registerContextMenu(win: Window) {
   }
 }
 
+/**
+ * Inject Scholar Companion items into the collection context menu.
+ *
+ * Zotero 7 does not expose a static `zotero-collectionmenu` DOM element.
+ * Instead, the collection tree builds its context menu dynamically.
+ * We listen for the `popupshowing` event on the collection tree and
+ * inject our items into whatever menupopup opens from it.
+ */
 export function registerCollectionContextMenu(win: Window) {
   const doc = win.document;
-  const collectionMenu = doc.getElementById('zotero-collectionmenu');
-  if (!collectionMenu) return;
+  const collectionTree = doc.getElementById('collection-tree');
+  if (!collectionTree) return;
 
-  const sep = (doc as any).createXULElement('menuseparator');
-  sep.setAttribute('id', 'zotero-ai-collection-sep');
-  collectionMenu.appendChild(sep);
-
-  const collectionItems: Array<{ id: string; label: string; command: string; icon: keyof typeof ICONS }> = [
+  const MENU_ITEMS: Array<{ id: string; label: string; command: string; icon: keyof typeof ICONS }> = [
     { id: 'zotero-ai-chat-collection',  label: 'Chat with Collection', command: 'chatWithCollection', icon: 'folder' },
     { id: 'zotero-ai-library-chat-ctx', label: 'Chat with Library',    command: 'openLibraryChat',    icon: 'books'  },
   ];
 
-  for (const ci of collectionItems) {
-    const menuitem = (doc as any).createXULElement('menuitem');
-    menuitem.setAttribute('id', ci.id);
-    menuitem.setAttribute('label', ci.label);
-    menuitem.setAttribute('image', svgIcon(ICONS[ci.icon]));
-    menuitem.setAttribute('class', 'menuitem-iconic');
-    menuitem.setAttribute('oncommand', `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'${ci.command}'},bubbles:true}))`);
-    collectionMenu.appendChild(menuitem);
-  }
+  const handler = (e: Event) => {
+    const popup = e.target as Element;
+    if (popup.tagName?.toLowerCase() !== 'menupopup') return;
+    // Avoid duplicates if popup is reused
+    if (popup.querySelector('#zotero-ai-collection-sep')) return;
+
+    const sep = (doc as any).createXULElement('menuseparator');
+    sep.setAttribute('id', 'zotero-ai-collection-sep');
+    popup.appendChild(sep);
+
+    for (const ci of MENU_ITEMS) {
+      const menuitem = (doc as any).createXULElement('menuitem');
+      menuitem.setAttribute('id', ci.id);
+      menuitem.setAttribute('label', ci.label);
+      menuitem.setAttribute('image', svgIcon(ICONS[ci.icon]));
+      menuitem.setAttribute('class', 'menuitem-iconic');
+      menuitem.setAttribute('oncommand', `window.dispatchEvent(new CustomEvent('zotero-ai-command',{detail:{command:'${ci.command}'},bubbles:true}))`);
+      popup.appendChild(menuitem);
+    }
+  };
+
+  collectionTree.addEventListener('popupshowing', handler, true);
+  // Stash the handler so we can remove it on unload
+  (win as any).__scholarCollectionMenuHandler = handler;
 }

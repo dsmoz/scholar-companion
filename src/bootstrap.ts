@@ -118,9 +118,12 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
   win.document.getElementById('zotero-ai-update-metadata')?.remove();
   win.document.getElementById('zotero-ai-index-selected')?.remove();
   win.document.getElementById('zotero-ai-chat-docs')?.remove();
-  win.document.getElementById('zotero-ai-collection-sep')?.remove();
-  win.document.getElementById('zotero-ai-chat-collection')?.remove();
-  win.document.getElementById('zotero-ai-library-chat-ctx')?.remove();
+  // Collection context menu: remove event listener
+  const collHandler = (win as any).__scholarCollectionMenuHandler;
+  if (collHandler) {
+    win.document.getElementById('collection-tree')?.removeEventListener('popupshowing', collHandler, true);
+    delete (win as any).__scholarCollectionMenuHandler;
+  }
 }
 
 function initWindow(win: Window) {
