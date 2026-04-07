@@ -1,6 +1,6 @@
 // src/ui/MultiDocChat.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper, MagnifyingGlass, CircleNotch, Folder } from '@phosphor-icons/react';
+import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper, MagnifyingGlass, CircleNotch, Folder, ArrowsIn, ArrowsOut } from '@phosphor-icons/react';
 import { streamMultiDocChat, fetchDocMetadata } from '../api/multiDocChat';
 import type { DocMeta } from '../api/multiDocChat';
 import { metadataCache } from '../api/chat';
@@ -40,6 +40,7 @@ export function MultiDocChat({ zoteroKeys, initialDocs, scope }: Props) {
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [scopeStatus, setScopeStatus] = useState<ScopeStatus | null>(null);
+  const [strictScope, setStrictScope] = useState(true);
   const sessionId = useRef(generateSessionId(zoteroKeys));
   const bottomRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -87,6 +88,7 @@ export function MultiDocChat({ zoteroKeys, initialDocs, scope }: Props) {
         setScopeStatus(null);
       },
       (status) => setScopeStatus(status),
+      scope ? !strictScope : undefined,
     );
   }
 
@@ -106,6 +108,21 @@ export function MultiDocChat({ zoteroKeys, initialDocs, scope }: Props) {
             <span style={{ color: '#6c7086', fontSize: '0.65rem', flexShrink: 0 }}>
               {scope.count} item{scope.count !== 1 ? 's' : ''}
             </span>
+            <button
+              onClick={() => setStrictScope(s => !s)}
+              title={strictScope ? 'Only searching within this collection' : 'Can expand to your full library'}
+              style={{
+                marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4,
+                background: strictScope ? '#313244' : 'var(--accent, #89b4fa)',
+                color: strictScope ? '#6c7086' : '#1e1e2e',
+                border: 'none', borderRadius: 10, padding: '2px 8px',
+                fontSize: '0.6rem', cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              {strictScope
+                ? <><ArrowsIn size={10} /> Collection only</>
+                : <><ArrowsOut size={10} /> Library</>}
+            </button>
           </div>
         ) : (
           <>

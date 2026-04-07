@@ -57,6 +57,7 @@ export function streamMultiDocChat(
   onDone: (sources: Source[]) => void,
   onError: (err: string) => void,
   onScopeStatus?: (status: ScopeStatus) => void,
+  allowExpansion?: boolean,
 ): () => void {
   const base = getApiUrl();
   const url = `${base}/api/plugin/chat/multi/stream`;
@@ -65,7 +66,7 @@ export function streamMultiDocChat(
   fetch(url, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Accept': 'text/event-stream' },
-    body: JSON.stringify({ zotero_keys: zoteroKeys, question, session_id: sessionId, max_chunks: getChatMaxChunks(), model: getChatModel() }),
+    body: JSON.stringify({ zotero_keys: zoteroKeys, question, session_id: sessionId, max_chunks: getChatMaxChunks(), model: getChatModel(), allow_expansion: allowExpansion ?? true }),
     signal: controller.signal,
   }).then(async resp => {
     if (!resp.ok) { onError(`HTTP ${resp.status}`); return; }
