@@ -3,6 +3,7 @@ import { registerEventHooks, unregisterEventHooks } from './events';
 import { registerMenus, registerContextMenu } from './menu';
 import { getSyncOnStartup, getAutoSync, getSyncInterval, getItemPaneHeight } from './prefs';
 import { triggerSync } from './api/sync';
+import { fetchSyncStatus, updateItemMetadata } from './api/sync-status';
 import { apiFetch } from './api/client';
 
 let syncTimer: ReturnType<typeof setInterval> | null = null;
@@ -179,11 +180,8 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         break;
       }
       try {
-        console.log('[Scholar Companion] colorSyncStatus: fetching status for', regularItems.length, 'items');
-        const { fetchSyncStatus } = await import('./api/sync-status');
         const selectedKeys = regularItems.map((it: any) => it.key as string);
         const resp = await fetchSyncStatus(selectedKeys);
-        console.log('[Scholar Companion] colorSyncStatus: got response', JSON.stringify(resp).slice(0, 200));
         const statusItems = resp?.items ?? [];
         const statusMap = new Map(statusItems.map((s) => [s.zotero_key, s.sync_status]));
 
@@ -201,10 +199,7 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         const libID = regularItems[0].libraryID;
         const uniqueEntries = new Map(Object.values(TAG_MAP).map(e => [e.tag, e]));
         for (const entry of uniqueEntries.values()) {
-          console.log('[Scholar Companion] colorSyncStatus: setColor', entry.tag, entry.color);
-          try { await (Zotero as any).Tags.setColor(libID, entry.tag, entry.color); } catch (ce) {
-            console.warn('[Scholar Companion] setColor failed:', entry.tag, ce);
-          }
+          try { await (Zotero as any).Tags.setColor(libID, entry.tag, entry.color); } catch { /* ignore */ }
         }
 
         let colored = 0;
@@ -244,7 +239,6 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
       );
       if (!confirmed) break;
       try {
-        const { updateItemMetadata } = await import('./api/sync-status');
         let queued = 0;
         for (const it of regularItems) {
           try {
