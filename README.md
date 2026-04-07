@@ -13,6 +13,7 @@ flowchart TD
     Flask --> Sync["Sync & Jobs\nsync · job_queue"]
     Flask --> Discovery["Discovery\nsearch · history · Tavily"]
     Discovery -.->|web search| Tavily(("Tavily API"))
+    Chat --> Export["Export & Summary\nexport · summarize\nSummaryModal"]
     Chat -.->|stream| Anthropic(("Anthropic API\nHaiku / Sonnet"))
     Chat -.->|fallback| OpenRouter(("OpenRouter"))
     Chat -.->|fallback| LMStudio(("LM Studio"))
@@ -43,6 +44,7 @@ flowchart TD
 
 | Version | Date | Summary |
 |---------|------|---------|
+| 0.6.0 | 2026-04-07 | Copy bubble text, export (MD/DOCX/PDF), summarize session; shared ChatBubble component |
 | 0.5.0 | 2026-03-29 | Tavily web source, item-type icons, tag pills, PDF rename, domain author fallback |
 | 0.4.0 | 2026-03-29 | Author tab with abstracts/sort, Similar tab dedup, abstract context injection in chat |
 | 0.3.0 | 2026-03-28 | LLM chat (item/library/multi-doc), citations, context maintenance, related docs |

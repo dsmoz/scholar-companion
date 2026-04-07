@@ -3,6 +3,21 @@
 All notable changes to Zotero AI Companion are documented here.
 Format: Keep a Changelog · Versioning: Semantic Versioning
 
+## [0.6.0] - 2026-04-07
+
+### Added
+
+- **Copy button on assistant bubbles**: Hover bottom-right to copy plain text; CopySimple icon switches to Check for 1.5s confirmation
+- **Export session**: Toolbar dropdown with Markdown (client-side), DOCX, and PDF options; Markdown always available, DOCX/PDF require backend support
+- **Summarize session**: Toolbar button streams an LLM-generated summary in a modal overlay; copy-to-clipboard and download-as-Markdown from modal
+- **Backend export endpoint**: `POST /api/plugin/chat/export` returns session as MD/DOCX binary
+- **Backend summarize endpoint**: `POST /api/plugin/chat/summarize` SSE stream without modifying session history
+
+### Changed
+
+- **Shared ChatBubble component**: Extracted identical bubble rendering from ItemPaneTab, LibraryChat, and MultiDocChat into `ChatBubble.tsx`; eliminates ~120 lines of duplicated code
+- **ReadingToolbar extended**: Now accepts `sessionId`, `messages`, `onSummarize`, `streaming` props; shows export/summarize buttons when messages exist
+
 ## [0.5.0] - 2026-03-29
 
 ### Added
