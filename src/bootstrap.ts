@@ -28,22 +28,25 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
         paneID: 'scholar-companion',
         pluginID: 'scholar-companion@dsmoz',
         header: {
-          l10nID: 'scholar-companion-header',
-          icon: `${_rootURI}content/icons/icon16.png`,
+          label: 'Scholar Companion',
+          icon: `${_rootURI}content/icons/icon16.svg`,
         },
         sidenav: {
-          l10nID: 'scholar-companion-sidenav',
-          icon: `${_rootURI}content/icons/icon20.png`,
+          label: 'Scholar Companion',
+          icon: `${_rootURI}content/icons/icon20.svg`,
         },
         onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
           const key = item.key;
+          // Use item key as stable identity — only re-render when item changes
+          if ((body as any)._aiKey === key) return;
+          (body as any)._aiKey = key;
+
           const title = encodeURIComponent(item.getField('title') ?? '');
           const creators = (item.getCreators?.() ?? []).map((c: any) => ({
             firstName: c.firstName ?? '', lastName: c.lastName ?? c.name ?? '',
           }));
           const authorsParam = encodeURIComponent(JSON.stringify(creators));
           const src = `chrome://scholar-companion/content/panel.html?panel=item-chat&key=${key}&title=${title}&authors=${authorsParam}`;
-          if ((body as any)._aiIframe?.src === src) return;
           const minH = getItemPaneHeight();
           body.style.cssText = `height:100%;min-height:${minH}px;overflow:hidden;padding:0;`;
           let iframe = (body as any)._aiIframe as HTMLIFrameElement | undefined;
@@ -57,6 +60,7 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
         },
         onDestroy: ({ body }: { body: HTMLElement }) => {
           delete (body as any)._aiIframe;
+          delete (body as any)._aiKey;
         },
       });
     } catch(e) { (Zotero as any).logError(e); }
