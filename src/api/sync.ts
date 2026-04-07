@@ -1,5 +1,7 @@
 // src/api/sync.ts
 import { apiFetch } from './client';
+import { clearAllChatCaches } from './chat';
+import { invalidateHealthCache } from './health';
 
 export interface SyncResult {
   queued: number;
@@ -7,7 +9,11 @@ export interface SyncResult {
 }
 
 export async function triggerSync(): Promise<SyncResult> {
-  return apiFetch<SyncResult>('/sync', { method: 'POST' });
+  const result = await apiFetch<SyncResult>('/sync', { method: 'POST' });
+  // Sync changes library state — invalidate stale caches
+  clearAllChatCaches();
+  invalidateHealthCache();
+  return result;
 }
 
 export async function syncMetadata(keys: string[]): Promise<{ synced: number }> {

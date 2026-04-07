@@ -1,7 +1,8 @@
 // src/api/multiDocChat.ts
 import { apiFetch, getAuthHeaders } from './client';
 import { getApiUrl, getChatMaxChunks, getChatModel } from '../prefs';
-import type { Source, ChatToken, ScopeStatus } from './chat';
+import type { Source, ChatToken, ScopeStatus, ItemMetadata } from './chat';
+import { metadataCache } from './chat';
 
 export interface DocMeta {
   key: string;
@@ -11,15 +12,41 @@ export interface DocMeta {
   item_type: string;
 }
 
+function _metaToDocMeta(m: ItemMetadata): DocMeta {
+  return { key: m.key, title: m.title, creators: m.creators, date: m.date, item_type: m.item_type };
+}
+
 export async function fetchDocMetadata(keys: string[]): Promise<DocMeta[]> {
-  try {
-    return await apiFetch<DocMeta[]>('/chat/multi/metadata', {
-      method: 'POST',
-      body: JSON.stringify({ keys }),
-    });
-  } catch {
-    return keys.map(key => ({ key, title: key, creators: [], date: '', item_type: '' }));
+  // Check cache — only fetch keys not already cached
+  const cachedMap = new Map<string, DocMeta>();
+  const missing: string[] = [];
+  for (const key of keys) {
+    const cached = metadataCache.get(key);
+    if (cached) {
+      cachedMap.set(key, _metaToDocMeta(cached));
+    } else {
+      missing.push(key);
+    }
   }
+
+  if (missing.length > 0) {
+    try {
+      const fetched = await apiFetch<DocMeta[]>('/chat/multi/metadata', {
+        method: 'POST',
+        body: JSON.stringify({ keys: missing }),
+      });
+      for (const doc of fetched) {
+        metadataCache.set(doc.key, { key: doc.key, title: doc.title, creators: doc.creators, date: doc.date, item_type: doc.item_type });
+        cachedMap.set(doc.key, doc);
+      }
+    } catch {
+      for (const key of missing) {
+        cachedMap.set(key, { key, title: key, creators: [], date: '', item_type: '' });
+      }
+    }
+  }
+
+  return keys.map(k => cachedMap.get(k) ?? { key: k, title: k, creators: [], date: '', item_type: '' });
 }
 
 export function streamMultiDocChat(

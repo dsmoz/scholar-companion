@@ -119,4 +119,6 @@ export function disconnect(): void {
   setApiToken('');
   setClientId('');
   setDisplayName('');
+  // Clear all API caches on disconnect
+  import('./chat').then(m => m.clearAllChatCaches());
 }

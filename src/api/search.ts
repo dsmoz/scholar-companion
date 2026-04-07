@@ -14,11 +14,16 @@ export interface SearchResult {
 }
 
 const similarCache = new TTLCache<string, SearchResult[]>(() => getTtlMs());
+const searchCache = new TTLCache<string, SearchResult[]>(() => getTtlMs());
 
 export async function semanticSearch(query: string, limit = 6): Promise<SearchResult[]> {
+  const key = `${query}:${limit}`;
+  const cached = searchCache.get(key);
+  if (cached) return cached;
   const data = await apiFetch<{ results: SearchResult[] }>(
     `/search?q=${encodeURIComponent(query)}&limit=${limit}`
   );
+  searchCache.set(key, data.results);
   return data.results;
 }
 

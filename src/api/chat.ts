@@ -1,6 +1,7 @@
 // src/api/chat.ts
-import { getApiUrl, getChatMaxChunks, getChatModel } from '../prefs';
+import { getApiUrl, getChatMaxChunks, getChatModel, getTtlMs } from '../prefs';
 import { getAuthHeaders } from './client';
+import { TTLCache } from './apiCache';
 
 export interface Source {
   page?: number;
@@ -46,20 +47,42 @@ const FALLBACK_MODELS: ChatModelEntry[] = [
   { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', provider: 'OpenRouter', tier: 'balanced' },
 ];
 
+// ── Caches ──────────────────────────────────────────────────────────────────
+export const metadataCache = new TTLCache<string, ItemMetadata>(() => getTtlMs());
+const sessionCache = new TTLCache<string, ChatSession>(() => 5 * 60 * 1000);
+let _modelsCache: ChatModelEntry[] | null = null;
+
+export function clearAllChatCaches(): void {
+  metadataCache.clear();
+  sessionCache.clear();
+  _modelsCache = null;
+}
+
 export async function fetchChatModels(): Promise<ChatModelEntry[]> {
+  if (_modelsCache) return _modelsCache;
   try {
     const models = await (await import('./client')).apiFetch<ChatModelEntry[]>('/chat/models');
-    return models.length > 0 ? models : FALLBACK_MODELS;
+    _modelsCache = models.length > 0 ? models : FALLBACK_MODELS;
+    return _modelsCache;
   } catch { return FALLBACK_MODELS; }
 }
 
 export async function loadChatSession(zoteroKey: string): Promise<ChatSession | null> {
+  const cached = sessionCache.get(zoteroKey);
+  if (cached) return cached;
   try {
-    return await (await import('./client')).apiFetch<ChatSession>(`/chat/sessions/${zoteroKey}`);
+    const session = await (await import('./client')).apiFetch<ChatSession>(`/chat/sessions/${zoteroKey}`);
+    if (session) sessionCache.set(zoteroKey, session);
+    return session;
   } catch { return null; }
 }
 
+export function invalidateSession(zoteroKey: string): void {
+  sessionCache.clear();  // clear all — session may be keyed differently
+}
+
 export async function clearChatSession(zoteroKey: string): Promise<void> {
+  sessionCache.clear();
   try {
     await (await import('./client')).apiFetch(`/chat/sessions/${zoteroKey}`, { method: 'DELETE' });
   } catch { /* ignore */ }
@@ -84,6 +107,8 @@ export interface ItemMetadata {
 }
 
 export async function fetchItemMetadata(zoteroKey: string): Promise<ItemMetadata | null> {
+  const cached = metadataCache.get(zoteroKey);
+  if (cached) return cached;
   const base = getApiUrl();
   try {
     const resp = await fetch(`${base}/api/plugin/chat/multi/metadata`, {
@@ -95,7 +120,6 @@ export async function fetchItemMetadata(zoteroKey: string): Promise<ItemMetadata
     const data: Array<{ key: string; title: string; creators: any[]; date: string; item_type: string }> = await resp.json();
     if (!data.length) return null;
     const item = data[0];
-    // creators may be strings or {firstName, lastName} dicts
     const creators = (item.creators ?? []).map((c: any) => {
       if (typeof c === 'string') {
         const parts = c.split(' ');
@@ -103,7 +127,9 @@ export async function fetchItemMetadata(zoteroKey: string): Promise<ItemMetadata
       }
       return { firstName: c.firstName ?? '', lastName: c.lastName ?? c.name ?? '' };
     });
-    return { key: item.key, title: item.title, creators, date: item.date, item_type: item.item_type };
+    const meta = { key: item.key, title: item.title, creators, date: item.date, item_type: item.item_type };
+    metadataCache.set(zoteroKey, meta);
+    return meta;
   } catch { return null; }
 }
 
@@ -151,7 +177,10 @@ export function streamChat(
             continue;
           }
           if (parsed.token) onToken(parsed.token);
-          if (parsed.done) onDone(parsed.sources ?? []);
+          if (parsed.done) {
+            invalidateSession(zoteroKey);
+            onDone(parsed.sources ?? []);
+          }
         } catch { /* ignore malformed SSE */ }
       }
     }
