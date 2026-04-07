@@ -34,7 +34,18 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
           l10nID: 'scholar-companion-sidenav',
           icon: `${_rootURI}content/icons/icon20.png`,
         },
-        onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
+        onInit: ({ body }: { body: HTMLElement }) => {
+          const minH = getItemPaneHeight();
+          body.style.cssText = `height:100%;min-height:${minH}px;overflow:hidden;padding:0;`;
+          const doc = body.ownerDocument;
+          const iframe = doc.createElementNS('http://www.w3.org/1999/xhtml', 'iframe') as HTMLIFrameElement;
+          iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+          body.replaceChildren(iframe);
+          (body as any)._aiIframe = iframe;
+        },
+        onItemChange: ({ body, item, setEnabled }: { body: HTMLElement; item: any; setEnabled: (enabled: boolean) => void }) => {
+          if (!item) { setEnabled(false); return false; }
+          setEnabled(true);
           const key = item.key;
           const title = encodeURIComponent(item.getField('title') ?? '');
           const authors = encodeURIComponent(JSON.stringify(
@@ -43,17 +54,26 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
             }))
           ));
           const src = `chrome://scholar-companion/content/panel.html?panel=item-chat&key=${key}&title=${title}&authors=${authors}`;
-          if ((body as any)._aiIframe?.src === src) return;
-          const minH = getItemPaneHeight();
-          body.style.cssText = `height:100%;min-height:${minH}px;overflow:hidden;padding:0;`;
-          let iframe = (body as any)._aiIframe as HTMLIFrameElement | undefined;
-          if (!iframe) {
-            iframe = body.ownerDocument.createElement('iframe') as HTMLIFrameElement;
-            iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
-            body.replaceChildren(iframe);
-            (body as any)._aiIframe = iframe;
+          const iframe = (body as any)._aiIframe as HTMLIFrameElement | undefined;
+          if (iframe && iframe.src !== src) {
+            iframe.src = src;
           }
-          iframe.src = src;
+          return true;
+        },
+        onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
+          if (!item) return;
+          const key = item.key;
+          const title = encodeURIComponent(item.getField('title') ?? '');
+          const authors = encodeURIComponent(JSON.stringify(
+            (item.getCreators?.() ?? []).map((c: any) => ({
+              firstName: c.firstName ?? '', lastName: c.lastName ?? c.name ?? '',
+            }))
+          ));
+          const src = `chrome://scholar-companion/content/panel.html?panel=item-chat&key=${key}&title=${title}&authors=${authors}`;
+          const iframe = (body as any)._aiIframe as HTMLIFrameElement | undefined;
+          if (iframe && iframe.src !== src) {
+            iframe.src = src;
+          }
         },
         onDestroy: ({ body }: { body: HTMLElement }) => {
           delete (body as any)._aiIframe;
