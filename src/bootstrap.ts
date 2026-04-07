@@ -60,7 +60,7 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
             body.style.cssText = 'height:100%;min-height:' + minH + 'px;overflow:hidden;padding:0;';
             let iframe = (body as any)._aiIframe as HTMLIFrameElement | undefined;
             if (!iframe) {
-              iframe = body.ownerDocument.createElement('iframe') as HTMLIFrameElement;
+              iframe = body.ownerDocument.createElementNS('http://www.w3.org/1999/xhtml', 'iframe') as HTMLIFrameElement;
               iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
               body.replaceChildren(iframe);
               (body as any)._aiIframe = iframe;
@@ -84,7 +84,7 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
   }
 
   if (getSyncOnStartup()) {
-    try { await triggerSync(); } catch (e) { /* server may not be running */ }
+    triggerSync().catch(() => { /* server may not be running */ });
   }
   scheduleSync();
 }
