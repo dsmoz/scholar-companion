@@ -1,5 +1,5 @@
 // src/ui/components/ReadingToolbar.tsx — compact font size + color + export/summarize controls
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { TextAa, Minus, Plus, Palette, DownloadSimple, Notepad, FilePdf, FileDoc, FileText } from '@phosphor-icons/react';
 import {
   getDiscoveryFontSize, setDiscoveryFontSize,
@@ -25,6 +25,18 @@ export function ReadingToolbar({ sessionId, messages, onSummarize, streaming }: 
   const [color, setColor] = useState(getDiscoveryTextColor());
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!exportOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [exportOpen]);
 
   function applySize(n: number) {
     const clamped = Math.max(MIN_SIZE, Math.min(MAX_SIZE, n));
@@ -94,7 +106,7 @@ export function ReadingToolbar({ sessionId, messages, onSummarize, streaming }: 
         <>
           <div style={{ width: 1, height: 12, background: '#313244', margin: '0 2px' }} />
           {/* Export dropdown */}
-          <div style={{ position: 'relative' }}>
+          <div ref={exportRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setExportOpen(o => !o)}
               disabled={exporting || streaming}
