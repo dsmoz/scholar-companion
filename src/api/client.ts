@@ -54,13 +54,24 @@ export async function apiFetch<T = unknown>(
 }
 
 export async function checkConnection(): Promise<{ latency: number; clientName?: string }> {
+  const base = getApiUrl();
+  const url = `${base}/api/plugin/health`;
   const start = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    const data = await apiFetch<{ status: string; client_name?: string }>('/health');
+    const resp = await fetch(url, {
+      headers: getAuthHeaders(),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!resp.ok) throw new ApiError(resp.status, `HTTP ${resp.status}`);
+    const data = await resp.json() as { status: string; client_name?: string };
     const latency = Date.now() - start;
     console.log('[Scholar Companion] Connection OK:', data.status, '- latency:', latency, 'ms');
     return { latency, clientName: data.client_name };
   } catch (err) {
+    clearTimeout(timer);
     console.error('[Scholar Companion] Connection check failed:', err);
     throw err;
   }
