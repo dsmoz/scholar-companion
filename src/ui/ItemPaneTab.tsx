@@ -1,6 +1,6 @@
 // src/ui/ItemPaneTab.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { PaperPlaneTilt, MagnifyingGlass, User, Chat, CaretUp, CaretDown, CircleNotch } from '@phosphor-icons/react';
+import { PaperPlaneTilt, MagnifyingGlass, User, Chat, ChatCircle, CaretUp, CaretDown, CaretLeft, CaretRight, CircleNotch } from '@phosphor-icons/react';
 import { streamChat, fetchItemMetadata, loadChatSession } from '../api/chat';
 import type { Source, ScopeStatus } from '../api/chat';
 import { similarItems, SearchResult } from '../api/search';
@@ -30,6 +30,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
   const [authorSort, setAuthorSort] = useState<'title' | 'year'>('year');
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<string>>(new Set());
   const [authors, setAuthors] = useState<Array<{ firstName: string; lastName: string }>>(initialAuthors);
+  const [authorPage, setAuthorPage] = useState(0);
   const [scopeStatus, setScopeStatus] = useState<ScopeStatus | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -69,6 +70,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
   async function loadAuthor(name: string) {
     setSelectedAuthor(name);
     setAuthorProfile(null);
+    setAuthorPage(0);
     try {
       const profile = await fetchAuthorProfile(name);
       setAuthorProfile(profile);
@@ -262,17 +264,20 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
           ) : !authorProfile ? (
             <div style={{ color: '#6c7086', textAlign: 'center', marginTop: '2rem', fontSize: '0.7rem' }}>Loading...</div>
           ) : (() => {
+            const PAGE_SIZE = 10;
             const sortedItems = [...authorProfile.items].sort((a, b) => {
               if (authorSort === 'year') {
                 const ya = (a.date || '').slice(0, 4);
                 const yb = (b.date || '').slice(0, 4);
-                return yb.localeCompare(ya); // newest first
+                return yb.localeCompare(ya);
               }
               return (a.title || '').localeCompare(b.title || '');
             });
+            const totalPages = Math.ceil(sortedItems.length / PAGE_SIZE);
+            const pageItems = sortedItems.slice(authorPage * PAGE_SIZE, (authorPage + 1) * PAGE_SIZE);
             return (
               <div>
-                <button onClick={() => { setSelectedAuthor(null); setAuthorProfile(null); setExpandedAbstracts(new Set()); }} style={{
+                <button onClick={() => { setSelectedAuthor(null); setAuthorProfile(null); setExpandedAbstracts(new Set()); setAuthorPage(0); }} style={{
                   background: 'transparent', border: 'none', color: 'var(--accent, #89b4fa)',
                   fontSize: '0.7rem', cursor: 'pointer', marginBottom: 8, padding: 0,
                 }}>Back</button>
@@ -287,7 +292,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                 )}
                 <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
                   {(['year', 'title'] as const).map(s => (
-                    <button key={s} onClick={() => setAuthorSort(s)} style={{
+                    <button key={s} onClick={() => { setAuthorSort(s); setAuthorPage(0); }} style={{
                       background: authorSort === s ? '#313244' : 'transparent',
                       border: authorSort === s ? '1px solid var(--accent, #89b4fa)' : '1px solid #444',
                       color: authorSort === s ? 'var(--accent, #89b4fa)' : '#6c7086',
@@ -295,7 +300,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                     }}>{s === 'year' ? 'Year' : 'Title'}</button>
                   ))}
                 </div>
-                {sortedItems.map(item => {
+                {pageItems.map(item => {
                   const yearStr = (item.date || '').slice(0, 4);
                   const yearNum = parseInt(yearStr, 10);
                   const year = (yearNum >= 1900 && yearNum <= new Date().getFullYear()) ? yearStr : null;
@@ -303,11 +308,23 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                   const hasAbstract = !!(item.abstract?.trim());
                   return (
                     <div key={item.key} style={{ background: '#313244', borderRadius: 4, padding: '6px 8px', marginBottom: 4 }}>
-                      <div style={{ color: '#cdd6f4', fontSize: '0.75rem', marginBottom: 3 }}>
-                        {item.title}{year ? <span style={{ color: '#6c7086', fontWeight: 400 }}> ({year})</span> : null}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                        <div style={{ flex: 1, color: '#cdd6f4', fontSize: '0.75rem' }}>
+                          {item.title}{year ? <span style={{ color: '#6c7086', fontWeight: 400 }}> ({year})</span> : null}
+                        </div>
+                        <button
+                          onClick={() => window.parent.dispatchEvent(new CustomEvent('zotero-ai-command', {
+                            detail: { command: 'openSingleDocChat', keys: [item.key], abstract: item.abstract || '' },
+                          }))}
+                          title="Chat with this document"
+                          style={{ background: 'transparent', border: 'none', color: 'var(--accent, #89b4fa)',
+                                   cursor: 'pointer', padding: 2, flexShrink: 0 }}
+                        >
+                          <ChatCircle size={16} weight="duotone" />
+                        </button>
                       </div>
                       {hasAbstract && (
-                        <div style={{ marginBottom: 3 }}>
+                        <div style={{ marginTop: 3 }}>
                           {expanded && (
                             <div style={{ color: '#a6adc8', fontSize: '0.65rem', marginBottom: 3, lineHeight: 1.4 }}>
                               {item.abstract}
@@ -324,20 +341,32 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                           }}>{expanded ? <><CaretUp size={10} /> hide abstract</> : <><CaretDown size={10} /> show abstract</>}</button>
                         </div>
                       )}
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button
-                          onClick={() => window.parent.dispatchEvent(new CustomEvent('zotero-ai-command', {
-                            detail: { command: 'openSingleDocChat', keys: [item.key], abstract: item.abstract || '' },
-                          }))}
-                          style={{ background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 3,
-                                   padding: '1px 6px', fontSize: '0.6rem', color: '#1e1e2e', cursor: 'pointer' }}
-                        >
-                          Chat
-                        </button>
-                      </div>
                     </div>
                   );
                 })}
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 }}>
+                    <button
+                      disabled={authorPage === 0}
+                      onClick={() => setAuthorPage(p => p - 1)}
+                      style={{
+                        background: 'transparent', border: 'none', cursor: authorPage === 0 ? 'default' : 'pointer',
+                        color: authorPage === 0 ? '#45475a' : 'var(--accent, #89b4fa)', padding: 2,
+                      }}
+                    ><CaretLeft size={16} /></button>
+                    <span style={{ color: '#6c7086', fontSize: '0.65rem' }}>
+                      {authorPage + 1} / {totalPages}
+                    </span>
+                    <button
+                      disabled={authorPage >= totalPages - 1}
+                      onClick={() => setAuthorPage(p => p + 1)}
+                      style={{
+                        background: 'transparent', border: 'none', cursor: authorPage >= totalPages - 1 ? 'default' : 'pointer',
+                        color: authorPage >= totalPages - 1 ? '#45475a' : 'var(--accent, #89b4fa)', padding: 2,
+                      }}
+                    ><CaretRight size={16} /></button>
+                  </div>
+                )}
               </div>
             );
           })()}
