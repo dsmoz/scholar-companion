@@ -23,7 +23,8 @@ import {
   getDiscoveryFontSize, setDiscoveryFontSize,
   getDiscoveryTextColor, setDiscoveryTextColor,
 } from '../prefs';
-import { fetchDiscoverySources, clearSourceCache, syncSourcePrefsToServer, type SourceEntry } from '../api/discovery';
+import { fetchDiscoverySources, clearSourceCache, type SourceEntry } from '../api/discovery';
+import { syncPreferences, syncPreferencesNow, loadPreferencesFromServer } from '../api/preferences';
 import { fetchChatModels, type ChatModelEntry } from '../api/chat';
 
 function broadcastConnection(connected: boolean) {
@@ -102,10 +103,11 @@ export function Settings() {
       await checkConnection();
       setOnline(true);
       broadcastConnection(true);
+      // Load server-side preferences on connect
+      loadPreferencesFromServer().catch(() => {});
     } catch (err: any) {
       setOnline(false);
       broadcastConnection(false);
-      // Token expired or invalid — auto-disconnect
       if (err?.status === 401) {
         disconnect();
         setIsLoggedIn(false);
@@ -144,6 +146,8 @@ export function Settings() {
       } finally {
         setConnecting(false);
       }
+      // Push local preferences to server (seeds initial state for new clients)
+      syncPreferencesNow().catch(() => {});
       // Clear stale cache and fetch fresh data
       clearSourceCache();
       fetchDiscoverySources()
@@ -219,12 +223,13 @@ export function Settings() {
 
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
         <SectionHeader>APPEARANCE</SectionHeader>
-        {row('Theme', segmented(['Auto', 'Light', 'Dark'], theme, v => { setThemeState(v); setTheme(v.toLowerCase()); }))}
+        {row('Theme', segmented(['Auto', 'Light', 'Dark'], theme, v => { setThemeState(v); setTheme(v.toLowerCase()); syncPreferences(); }))}
         {row('Chat font size', segmented(['11', '13', '15', '17'], String(fontSize), v => {
           const n = parseInt(v);
           setFontSizeState(n);
           setDiscoveryFontSize(n);
           document.documentElement.style.setProperty('--reading-font-size', `${n}px`);
+          syncPreferences();
         }))}
         {row('Chat text color',
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -235,6 +240,7 @@ export function Settings() {
                 setTextColorState(e.target.value);
                 setDiscoveryTextColor(e.target.value);
                 document.documentElement.style.setProperty('--reading-text-color', e.target.value);
+                syncPreferences();
               }}
               style={{ width: 32, height: 22, border: '1px solid #444', borderRadius: 4, background: '#313244', cursor: 'pointer', padding: 0 }}
             />
@@ -245,6 +251,7 @@ export function Settings() {
               setDiscoveryTextColor('#cdd6f4');
               document.documentElement.style.setProperty('--reading-font-size', '13px');
               document.documentElement.style.setProperty('--reading-text-color', '#cdd6f4');
+              syncPreferences();
             }} style={{ fontSize: '0.6rem', color: '#6c7086', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
               Reset
             </button>
@@ -327,11 +334,11 @@ export function Settings() {
 
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
         <SectionHeader>SYNC SCHEDULING</SectionHeader>
-        {row('Auto-sync', <Toggle checked={autoSync} onChange={v => { setAutoSyncState(v); setPref('autoSync', v as any); }} />)}
+        {row('Auto-sync', <Toggle checked={autoSync} onChange={v => { setAutoSyncState(v); setPref('autoSync', v as any); syncPreferences(); }} />)}
         {row('Interval', segmented(['6h', '12h', '24h', '48h'], `${syncInterval}h`, v => {
-          const n = parseInt(v); setSyncIntervalState(n); setSyncInterval(n);
+          const n = parseInt(v); setSyncIntervalState(n); setSyncInterval(n); syncPreferences();
         }))}
-        {row('Sync on startup', <Toggle checked={syncOnStartup} onChange={v => { setSyncOnStartupState(v); setPref('syncOnStartup', v as any); }} />)}
+        {row('Sync on startup', <Toggle checked={syncOnStartup} onChange={v => { setSyncOnStartupState(v); setPref('syncOnStartup', v as any); syncPreferences(); }} />)}
         <button onClick={handleSyncNow} disabled={syncing} style={{ ...btnStyle, display: 'flex', alignItems: 'center', gap: 4 }}>
           <ArrowsClockwise size={12} /> {syncing ? 'Syncing...' : 'Sync now'}
         </button>
@@ -343,7 +350,7 @@ export function Settings() {
           chatModels.length > 0 ? (
             <select
               value={chatModel}
-              onChange={e => { setChatModelState(e.target.value); setPref('chatModel', e.target.value as any); }}
+              onChange={e => { setChatModelState(e.target.value); setPref('chatModel', e.target.value as any); syncPreferences(); }}
               style={{ ...inputStyle, width: 200, cursor: 'pointer' }}
             >
               {chatModels.map(m => (
@@ -356,17 +363,17 @@ export function Settings() {
         )}
         {row(<span>Context depth<div style={{ fontSize: '0.6rem', color: '#585b70', marginTop: 1 }}>More = better answers, slower</div></span>,
           segmented(['4', '8', '15', '25'], String(chatMaxChunks), v => {
-            const n = parseInt(v); setChatMaxChunksState(n); setPref('chatMaxChunks', n as any);
+            const n = parseInt(v); setChatMaxChunksState(n); setPref('chatMaxChunks', n as any); syncPreferences();
           })
         )}
         {row('Related docs', segmented(['3', '5', '8', '10'], String(chatRelatedMax), v => {
-          const n = parseInt(v); setChatRelatedMaxState(n); setPref('chatRelatedMax', n as any);
+          const n = parseInt(v); setChatRelatedMaxState(n); setPref('chatRelatedMax', n as any); syncPreferences();
         }))}
         {row('Minimum match', segmented(['Fair', 'Good', 'Best'], chatRelatedMinLabel, v => {
-          setChatRelatedMinLabelState(v); setChatRelatedMinLabel(v);
+          setChatRelatedMinLabelState(v); setChatRelatedMinLabel(v); syncPreferences();
         }))}
         {row('Item pane height', segmented(['300', '450', '600', '800'], String(itemPaneHeight), v => {
-          const n = parseInt(v); setItemPaneHeightState(n); setItemPaneHeight(n);
+          const n = parseInt(v); setItemPaneHeightState(n); setItemPaneHeight(n); syncPreferences();
         }))}
       </section>
 
@@ -395,9 +402,8 @@ export function Settings() {
                     disabled={!src.enabled}
                     onChange={v => {
                       setSourcePref(src.key, v);
-                      const updated = { ...sourcePrefs, [src.key]: v };
-                      setSourcePrefs(updated);
-                      syncSourcePrefsToServer(updated);
+                      setSourcePrefs(prev => ({ ...prev, [src.key]: v }));
+                      syncPreferences();
                     }}
                   />
                 )}
@@ -412,21 +418,25 @@ export function Settings() {
           const val = v as 'keyword' | 'semantic';
           setScoreModeState(val);
           setDiscoveryScoreMode(val);
+          syncPreferences();
         }))}
         {row('Min score', segmented(['0.0', '0.2', '0.3', '0.4', '0.5'], String(minScore), v => {
           const n = parseFloat(v);
           setMinScoreState(n);
           setDiscoveryMinScore(n);
+          syncPreferences();
         }))}
         {row('Top results', segmented(['10', '15', '25', '50'], String(topK), v => {
           const n = parseInt(v);
           setTopKState(n);
           setDiscoveryTopK(n);
+          syncPreferences();
         }))}
         {row('Page size', segmented(['5', '10', '20', '50'], String(listPageSize), v => {
           const n = parseInt(v);
           setListPageSizeState(n);
           setListPageSize(n);
+          syncPreferences();
         }))}
         <div style={{ fontSize: '0.65rem', color: '#585b70', marginTop: '0.25rem' }}>
           keyword: fast, no API cost · semantic: accurate, uses embedding model
@@ -439,6 +449,7 @@ export function Settings() {
           const n = parseInt(v);
           setCacheTtlMinutesState(n);
           setCacheTtlMinutes(n);
+          syncPreferences();
         }))}
       </section>
 
