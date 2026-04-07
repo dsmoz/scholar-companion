@@ -179,6 +179,7 @@ export function MultiDocChat({ zoteroKeys }: Props) {
         <RelatedDocsPanel
           sourceKeys={zoteroKeys}
           context={[...messages].reverse().find(m => m.role === 'user')?.text}
+          disabled={streaming}
         />
         <div ref={bottomRef} />
       </div>

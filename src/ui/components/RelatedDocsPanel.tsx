@@ -23,14 +23,18 @@ interface Props {
   query?: string;
   /** Conversation context (last user message) — boosts contextually relevant results. */
   context?: string;
+  /** When true, defer the API call until streaming finishes. */
+  disabled?: boolean;
 }
 
-export function RelatedDocsPanel({ sourceKeys = [], query, context }: Props) {
+export function RelatedDocsPanel({ sourceKeys = [], query, context, disabled }: Props) {
   const [items, setItems] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
+    if (disabled) return;
+
     const limit = getChatRelatedMax();
     const minScore = getRelatedMinScore();
     const filter = (results: SearchResult[]) => results.filter(r => r.score >= minScore);
@@ -50,7 +54,7 @@ export function RelatedDocsPanel({ sourceKeys = [], query, context }: Props) {
     } else {
       setLoading(false);
     }
-  }, [sourceKeys.join(','), query ?? '', context ?? '']);
+  }, [sourceKeys.join(','), query ?? '', context ?? '', disabled]);
 
   if (!loading && items.length === 0 && !sourceKeys.length && !query) return null;
 

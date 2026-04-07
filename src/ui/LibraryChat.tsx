@@ -173,7 +173,7 @@ export function LibraryChat() {
               )}
             </div>
           ))}
-          {lastQuery && <RelatedDocsPanel query={lastQuery} />}
+          {lastQuery && <RelatedDocsPanel query={lastQuery} disabled={streaming} />}
           <div ref={bottomRef} />
         </div>
         <div style={{ padding: '6px', borderTop: '1px solid #313244', display: 'flex', gap: 6 }}>
