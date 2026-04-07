@@ -400,3 +400,13 @@ input:focus, textarea:focus {
   font-weight: var(--font-medium);
   margin-right: 0.2em;
 }
+
+/* Spinner animation for scope expansion indicator */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}

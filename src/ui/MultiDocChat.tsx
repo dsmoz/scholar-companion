@@ -1,11 +1,11 @@
 // src/ui/MultiDocChat.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper } from '@phosphor-icons/react';
+import { PaperPlaneTilt, Article, FilePdf, FileText, Globe, Book, Newspaper, MagnifyingGlass, CircleNotch } from '@phosphor-icons/react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { streamMultiDocChat, fetchDocMetadata } from '../api/multiDocChat';
 import type { DocMeta } from '../api/multiDocChat';
-import type { Source } from '../api/chat';
+import type { Source, ScopeStatus } from '../api/chat';
 import { RelatedDocsPanel } from './components/RelatedDocsPanel';
 
 interface Message { role: 'user' | 'assistant'; text: string; sources?: Source[] }
@@ -49,6 +49,7 @@ export function MultiDocChat({ zoteroKeys }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [scopeStatus, setScopeStatus] = useState<ScopeStatus | null>(null);
   const sessionId = useRef(generateSessionId(zoteroKeys));
   const bottomRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -63,6 +64,7 @@ export function MultiDocChat({ zoteroKeys }: Props) {
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: question }]);
     setStreaming(true);
+    setScopeStatus(null);
     let buffer = '';
     setMessages(prev => [...prev, { role: 'assistant', text: '' }]);
 
@@ -78,11 +80,14 @@ export function MultiDocChat({ zoteroKeys }: Props) {
       (sources) => {
         setMessages(prev => [...prev.slice(0, -1), { role: 'assistant', text: buffer, sources }]);
         setStreaming(false);
+        setScopeStatus(null);
       },
       (err) => {
         setMessages(prev => [...prev.slice(0, -1), { role: 'assistant', text: `Error: ${err}` }]);
         setStreaming(false);
+        setScopeStatus(null);
       },
+      (status) => setScopeStatus(status),
     );
   }
 
@@ -138,17 +143,52 @@ export function MultiDocChat({ zoteroKeys }: Props) {
             )}
             {m.sources && m.sources.length > 0 && (
               <div className="sources-section">
-                <div className="sources-section-label">Sources</div>
-                {m.sources.map((s, si) => (
-                  <div key={si} className="source-entry">
-                    <span className="source-entry__num">[{si + 1}]</span>
-                    {formatApaSourceText(s)}
-                  </div>
-                ))}
+                {(() => {
+                  const primary = m.sources.filter(s => s.scope !== 'expanded');
+                  const expanded = m.sources.filter(s => s.scope === 'expanded');
+                  return (
+                    <>
+                      {primary.length > 0 && (
+                        <>
+                          <div className="sources-section-label">Sources</div>
+                          {primary.map((s, si) => (
+                            <div key={si} className="source-entry">
+                              <span className="source-entry__num">[{si + 1}]</span>
+                              {formatApaSourceText(s)}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      {expanded.length > 0 && (
+                        <>
+                          <div className="sources-section-label" style={{ marginTop: primary.length > 0 ? 6 : 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <MagnifyingGlass size={10} /> From your library
+                          </div>
+                          {expanded.map((s, si) => (
+                            <div key={`exp-${si}`} className="source-entry" style={{ opacity: 0.85 }}>
+                              <span className="source-entry__num">[{primary.length + si + 1}]</span>
+                              {formatApaSourceText(s)}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
         ))}
+        {scopeStatus && scopeStatus.scope_status === 'expanding' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#89b4fa', fontSize: '0.65rem', padding: '2px 8px' }}>
+            <CircleNotch size={12} className="spin" /> {scopeStatus.summary || 'Searching your library...'}
+          </div>
+        )}
+        {scopeStatus && scopeStatus.scope_status === 'expanded' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#a6e3a1', fontSize: '0.65rem', padding: '2px 8px' }}>
+            <MagnifyingGlass size={12} /> {scopeStatus.summary}
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 

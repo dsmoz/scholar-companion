@@ -9,6 +9,13 @@ export interface Source {
   title?: string;
   year?: string;
   authors?: string;
+  scope?: 'primary' | 'expanded';
+}
+
+export interface ScopeStatus {
+  scope_status: 'expanding' | 'expanded' | 'primary_only';
+  summary?: string;
+  expanded_count?: number;
 }
 
 export interface ChatMessage {
@@ -63,6 +70,9 @@ export interface ChatToken {
   done?: boolean;
   sources?: Array<{ page: number; text?: string }>;
   error?: string;
+  scope_status?: 'expanding' | 'expanded' | 'primary_only';
+  summary?: string;
+  expanded_count?: number;
 }
 
 export interface ItemMetadata {
@@ -103,7 +113,8 @@ export function streamChat(
   onToken: (token: string) => void,
   onDone: (sources: ChatToken['sources']) => void,
   onError: (err: string) => void,
-  maxChunks?: number
+  maxChunks?: number,
+  onScopeStatus?: (status: ScopeStatus) => void,
 ): () => void {
   const base = getApiUrl();
   const url = `${base}/api/plugin/chat/stream`;
@@ -135,6 +146,10 @@ export function streamChat(
         try {
           const parsed: ChatToken = JSON.parse(line.slice(6));
           if (parsed.error) { onError(parsed.error); return; }
+          if (parsed.scope_status && onScopeStatus) {
+            onScopeStatus({ scope_status: parsed.scope_status, summary: parsed.summary, expanded_count: parsed.expanded_count });
+            continue;
+          }
           if (parsed.token) onToken(parsed.token);
           if (parsed.done) onDone(parsed.sources ?? []);
         } catch { /* ignore malformed SSE */ }

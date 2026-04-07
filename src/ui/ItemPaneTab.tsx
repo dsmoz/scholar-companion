@@ -1,8 +1,8 @@
 // src/ui/ItemPaneTab.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { PaperPlaneTilt, MagnifyingGlass, User, Chat, CaretUp, CaretDown } from '@phosphor-icons/react';
+import { PaperPlaneTilt, MagnifyingGlass, User, Chat, CaretUp, CaretDown, CircleNotch } from '@phosphor-icons/react';
 import { streamChat, fetchItemMetadata, loadChatSession } from '../api/chat';
-import type { Source } from '../api/chat';
+import type { Source, ScopeStatus } from '../api/chat';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { similarItems, SearchResult } from '../api/search';
@@ -43,6 +43,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
   const [authorSort, setAuthorSort] = useState<'title' | 'year'>('year');
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<string>>(new Set());
   const [authors, setAuthors] = useState<Array<{ firstName: string; lastName: string }>>(initialAuthors);
+  const [scopeStatus, setScopeStatus] = useState<ScopeStatus | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<(() => void) | null>(null);
 
@@ -96,6 +97,7 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: question }]);
     setStreaming(true);
+    setScopeStatus(null);
     let buffer = '';
     setMessages(prev => [...prev, { role: 'assistant', text: '' }]);
 
@@ -109,12 +111,15 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
       (sources) => {
         setMessages(prev => [...prev.slice(0, -1), { role: 'assistant', text: buffer, sources }]);
         setStreaming(false);
+        setScopeStatus(null);
       },
       (err) => {
         setMessages(prev => [...prev.slice(0, -1), { role: 'assistant', text: `Error: ${err}` }]);
         setStreaming(false);
+        setScopeStatus(null);
       },
-      undefined
+      undefined,
+      (status) => setScopeStatus(status),
     );
   }
 
@@ -158,14 +163,48 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                 )}
                 {m.sources && m.sources.length > 0 && (
                   <div className="sources-section">
-                    <div className="sources-section-label">Sources</div>
-                    {m.sources.map((s, si) => (
-                      <div key={si} className="source-entry">{formatApaSource(s, si)}</div>
-                    ))}
+                    {(() => {
+                      const primary = m.sources.filter(s => s.scope !== 'expanded');
+                      const expanded = m.sources.filter(s => s.scope === 'expanded');
+                      return (
+                        <>
+                          {primary.length > 0 && (
+                            <>
+                              <div className="sources-section-label">Sources</div>
+                              {primary.map((s, si) => (
+                                <div key={si} className="source-entry">{formatApaSource(s, si)}</div>
+                              ))}
+                            </>
+                          )}
+                          {expanded.length > 0 && (
+                            <>
+                              <div className="sources-section-label" style={{ marginTop: primary.length > 0 ? 6 : 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <MagnifyingGlass size={10} /> From your library
+                              </div>
+                              {expanded.map((s, si) => (
+                                <div key={`exp-${si}`} className="source-entry" style={{ opacity: 0.85 }}>
+                                  {formatApaSource(s, primary.length + si)}
+                                </div>
+                              ))}
+                            </>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
             ))}
+            {scopeStatus && scopeStatus.scope_status === 'expanding' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#89b4fa', fontSize: '0.65rem', padding: '2px 8px' }}>
+                <CircleNotch size={12} className="spin" /> {scopeStatus.summary || 'Searching your library...'}
+              </div>
+            )}
+            {scopeStatus && scopeStatus.scope_status === 'expanded' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#a6e3a1', fontSize: '0.65rem', padding: '2px 8px' }}>
+                <MagnifyingGlass size={12} /> {scopeStatus.summary}
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
           <div style={{ padding: '6px', borderTop: '1px solid #313244', display: 'flex', gap: 6 }}>

@@ -1,7 +1,7 @@
 // src/api/multiDocChat.ts
 import { apiFetch, getAuthHeaders } from './client';
 import { getApiUrl, getChatMaxChunks, getChatModel } from '../prefs';
-import type { Source, ChatToken } from './chat';
+import type { Source, ChatToken, ScopeStatus } from './chat';
 
 export interface DocMeta {
   key: string;
@@ -29,6 +29,7 @@ export function streamMultiDocChat(
   onToken: (token: string) => void,
   onDone: (sources: Source[]) => void,
   onError: (err: string) => void,
+  onScopeStatus?: (status: ScopeStatus) => void,
 ): () => void {
   const base = getApiUrl();
   const url = `${base}/api/plugin/chat/multi/stream`;
@@ -55,6 +56,10 @@ export function streamMultiDocChat(
         try {
           const parsed: ChatToken = JSON.parse(line.slice(6));
           if (parsed.error) { onError(parsed.error); return; }
+          if (parsed.scope_status && onScopeStatus) {
+            onScopeStatus({ scope_status: parsed.scope_status, summary: parsed.summary, expanded_count: parsed.expanded_count });
+            continue;
+          }
           if (parsed.token) onToken(parsed.token);
           if (parsed.done) onDone(parsed.sources ?? []);
         } catch { /* ignore malformed SSE */ }
