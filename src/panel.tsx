@@ -41,8 +41,13 @@ if (panel === 'multi-doc-chat') {
 } else if (panel === 'item-chat') {
   const key = params.get('key') ?? '';
   const title = decodeURIComponent(params.get('title') ?? '');
+  let authors: Array<{ firstName: string; lastName: string }> = [];
+  try {
+    const raw = params.get('authors');
+    if (raw) authors = JSON.parse(decodeURIComponent(raw));
+  } catch { /* ignore */ }
   const root = createRoot(document.getElementById('root')!);
-  root.render(createElement(ItemPaneTab, { zoteroKey: key, title, authors: [] }));
+  root.render(createElement(ItemPaneTab, { zoteroKey: key, title, authors }));
 } else {
   const PANELS: Record<string, React.ComponentType<any>> = {
     graph:          GraphTab,

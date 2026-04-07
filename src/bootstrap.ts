@@ -38,7 +38,11 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
         onRender: ({ body, item }: { body: HTMLElement; item: any }) => {
           const key = item.key;
           const title = encodeURIComponent(item.getField('title') ?? '');
-          const src = `chrome://scholar-companion/content/panel.html?panel=item-chat&key=${key}&title=${title}`;
+          const creators = (item.getCreators?.() ?? []).map((c: any) => ({
+            firstName: c.firstName ?? '', lastName: c.lastName ?? c.name ?? '',
+          }));
+          const authorsParam = encodeURIComponent(JSON.stringify(creators));
+          const src = `chrome://scholar-companion/content/panel.html?panel=item-chat&key=${key}&title=${title}&authors=${authorsParam}`;
           if ((body as any)._aiIframe?.src === src) return;
           const minH = getItemPaneHeight();
           body.style.cssText = `height:100%;min-height:${minH}px;overflow:hidden;padding:0;`;
