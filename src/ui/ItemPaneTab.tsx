@@ -236,10 +236,11 @@ export function ItemPaneTab({ zoteroKey, title, authors: initialAuthors }: Props
                   onClick={() => window.parent.dispatchEvent(new CustomEvent('zotero-ai-command', {
                     detail: { command: 'openSingleDocChat', keys: [item.zotero_key] },
                   }))}
-                  style={{ marginLeft: 'auto', background: 'var(--accent, #89b4fa)', border: 'none', borderRadius: 3,
-                           padding: '1px 6px', fontSize: '0.6rem', color: '#1e1e2e', cursor: 'pointer' }}
+                  title="Chat with this document"
+                  style={{ marginLeft: 'auto', background: 'transparent', border: 'none',
+                           color: 'var(--accent, #89b4fa)', cursor: 'pointer', padding: 2, flexShrink: 0 }}
                 >
-                  Chat
+                  <ChatCircle size={16} weight="duotone" />
                 </button>
               </div>
             </div>
