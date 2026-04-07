@@ -42,7 +42,6 @@ const CONNECTION_REQUIRED_IDS = [
   'zotero-ai-update-metadata',
   'zotero-ai-index-selected',
   'zotero-ai-cascade-delete',
-  'zotero-ai-chat-collection',
 ];
 
 /** Enable or disable all connection-dependent menu items. */
@@ -74,13 +73,12 @@ export function registerMenus(win: Window) {
   const popup = (doc as any).createXULElement('menupopup');
 
   const items: Array<{ id: string; label: string; command: string; icon: keyof typeof ICONS }> = [
-    { id: 'zotero-ai-library-chat', label: 'Library Chat',          command: 'openLibraryChat',    icon: 'books'     },
-    { id: 'zotero-ai-chat-collection', label: 'Chat with Collection', command: 'chatWithCollection', icon: 'folder'   },
-    { id: 'zotero-ai-graph',        label: 'Similarity Graph',      command: 'openGraph',          icon: 'graph'     },
-    { id: 'zotero-ai-discovery',    label: 'Discovery',             command: 'openDiscovery',      icon: 'compass'   },
-    { id: 'zotero-ai-health',       label: 'Library Health',        command: 'openHealth',         icon: 'heartbeat' },
-    { id: 'zotero-ai-queue',        label: 'Index Queue',           command: 'openQueue',          icon: 'stack'     },
-    { id: 'zotero-ai-settings',     label: 'Settings',              command: 'openSettings',       icon: 'gearSix'   },
+    { id: 'zotero-ai-library-chat', label: 'Library Chat',   command: 'openLibraryChat', icon: 'chat'     },
+    { id: 'zotero-ai-graph',        label: 'Similarity Graph', command: 'openGraph',     icon: 'graph'     },
+    { id: 'zotero-ai-discovery',    label: 'Discovery',        command: 'openDiscovery', icon: 'compass'   },
+    { id: 'zotero-ai-health',       label: 'Library Health',   command: 'openHealth',    icon: 'heartbeat' },
+    { id: 'zotero-ai-queue',        label: 'Index Queue',      command: 'openQueue',     icon: 'stack'     },
+    { id: 'zotero-ai-settings',     label: 'Settings',         command: 'openSettings',  icon: 'gearSix'   },
   ];
 
   for (const item of items) {
@@ -133,7 +131,48 @@ export function registerContextMenu(win: Window) {
   }
 }
 
-// Collection context menu injection is not possible in Zotero 7 —
-// the collection tree uses a custom React-based context menu outside
-// the normal DOM event flow. Instead, collection chat items are added
-// to the Tools > Scholar Companion menu (see registerMenus).
+/**
+ * Register Scholar Companion items on the collection right-click menu
+ * using Zotero 7's MenuManager API.
+ */
+export function registerCollectionMenu() {
+  const pluginID = 'scholar-companion@dsmoz';
+  (Zotero as any).MenuManager.registerMenu({
+    menuID: 'scholar-companion-collection',
+    pluginID,
+    target: 'main/library/collection',
+    menus: [
+      {
+        menuType: 'menuitem',
+        label: 'Chat with Collection',
+        icon: svgIcon(ICONS.folder),
+        onShowing: (_event: any, context: any) => {
+          context.setVisible(context.collectionTreeRow?.type === 'collection');
+        },
+        onCommand: (_event: any, context: any) => {
+          const win = context.window ?? (Zotero as any).getMainWindow();
+          win.dispatchEvent(new win.CustomEvent('zotero-ai-command', {
+            detail: { command: 'chatWithCollection' }, bubbles: true,
+          }));
+        },
+      },
+      {
+        menuType: 'menuitem',
+        label: 'Chat with Library',
+        icon: svgIcon(ICONS.books),
+        onCommand: (_event: any, context: any) => {
+          const win = context.window ?? (Zotero as any).getMainWindow();
+          win.dispatchEvent(new win.CustomEvent('zotero-ai-command', {
+            detail: { command: 'openLibraryChat' }, bubbles: true,
+          }));
+        },
+      },
+    ],
+  });
+}
+
+export function unregisterCollectionMenu() {
+  try {
+    (Zotero as any).MenuManager.unregisterMenu('scholar-companion-collection');
+  } catch { /* may not exist */ }
+}

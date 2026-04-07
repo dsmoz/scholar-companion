@@ -1,6 +1,6 @@
 // src/bootstrap.ts
 import { registerEventHooks, unregisterEventHooks } from './events';
-import { registerMenus, registerContextMenu, setMenusConnected } from './menu';
+import { registerMenus, registerContextMenu, registerCollectionMenu, unregisterCollectionMenu, setMenusConnected } from './menu';
 import { getSyncOnStartup, getAutoSync, getSyncInterval, getItemPaneHeight, getApiUrl, getApiToken } from './prefs';
 import { triggerSync } from './api/sync';
 import { fetchSyncStatus, updateItemMetadata } from './api/sync-status';
@@ -82,6 +82,9 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
     } catch(e) { (Zotero as any).logError(e); }
   }
 
+  // Register collection context menu via MenuManager (global, not per-window)
+  try { registerCollectionMenu(); } catch(e) { console.warn('[Scholar Companion] MenuManager registration failed:', e); }
+
   // Initialize any already-open windows (plugin loaded after Zotero started)
   for (const win of (Zotero as any).getMainWindows()) {
     initWindow(win);
@@ -95,6 +98,7 @@ async function startup({ rootURI }: { id: string; version: string; rootURI: stri
 
 function shutdown() {
   unregisterEventHooks();
+  unregisterCollectionMenu();
   if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
   windowListeners.clear();
 }
@@ -118,7 +122,6 @@ function onMainWindowUnload({ window: win }: { window: Window }) {
   win.document.getElementById('zotero-ai-update-metadata')?.remove();
   win.document.getElementById('zotero-ai-index-selected')?.remove();
   win.document.getElementById('zotero-ai-chat-docs')?.remove();
-  win.document.getElementById('zotero-ai-chat-collection')?.remove();
 }
 
 function initWindow(win: Window) {
