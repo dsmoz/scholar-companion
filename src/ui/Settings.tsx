@@ -4,7 +4,7 @@ import { ArrowsClockwise, Eye, EyeSlash, CopySimple, SignIn, SignOut, WifiHigh, 
 import { SectionHeader } from './components/SectionHeader';
 import { Toggle } from './components/Toggle';
 import { ConfirmDialog } from './components/ConfirmDialog';
-import { checkConnection, login, disconnect } from '../api/client';
+import { checkConnection, login, disconnect, verifyProvisioned } from '../api/client';
 import { triggerSync } from '../api/sync';
 import {
   getApiToken, getClientId, getDisplayName,
@@ -134,12 +134,19 @@ export function Settings() {
       setTokenState(result.access_token);
       setUsername('');
       setPassword('');
-      // Token is persisted — check connection
+      // Token is persisted — check connection + provisioning
       setConnecting(true);
       try {
         await checkConnection();
-        setOnline(true);
-        broadcastConnection(true);
+        const provisionMsg = await verifyProvisioned();
+        if (provisionMsg) {
+          setLoginError(provisionMsg);
+          setOnline(false);
+          broadcastConnection(false);
+        } else {
+          setOnline(true);
+          broadcastConnection(true);
+        }
       } catch (err) {
         console.error('[Scholar Companion] Health check failed after login:', err);
         setOnline(false);
