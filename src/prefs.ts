@@ -84,6 +84,9 @@ export const getApiToken = () => get('apiToken') as string;
 export const setApiToken = (v: string) => set('apiToken', v as typeof DEFAULTS['apiToken']);
 export const getClientId = () => get('clientId') as string;
 export const setClientId = (v: string) => set('clientId', v as typeof DEFAULTS['clientId']);
+// userId is persisted from /portal/api/login for future multi-tenant routing
+// (e.g. X-User-Id header) and debugging. The server currently resolves the
+// tenant from the bearer token, so read-sites may not exist yet.
 export const getUserId = () => get('userId') as string;
 export const setUserId = (v: string) => set('userId', v as typeof DEFAULTS['userId']);
 export const getDisplayName = () => get('displayName') as string;

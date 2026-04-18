@@ -139,13 +139,18 @@ export function disconnect(): void {
 export async function verifyProvisioned(): Promise<string | null> {
   const base = getApiUrl();
   const url = `${base}/api/plugin/health/library`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    const resp = await fetch(url, { headers: getAuthHeaders() });
+    const resp = await fetch(url, { headers: getAuthHeaders(), signal: controller.signal });
+    clearTimeout(timer);
     if (resp.ok) return null;
     if (resp.status === 401) return 'Session expired or not authorised. Please reconnect.';
     if (resp.status === 403) return 'Account not provisioned. Finish setup in the DS-MOZ portal, then reconnect.';
     return `Server returned HTTP ${resp.status}. Try again shortly.`;
   } catch (err: any) {
+    clearTimeout(timer);
+    if (err?.name === 'AbortError') return 'Server is not responding. Try again shortly.';
     return `Cannot reach server: ${err?.message || err}`;
   }
 }

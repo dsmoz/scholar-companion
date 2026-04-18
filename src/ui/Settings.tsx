@@ -102,9 +102,17 @@ export function Settings() {
     setConnecting(true);
     try {
       await checkConnection();
+      // /health only validates gateway reachability. Also probe a tenanted
+      // endpoint so an unprovisioned user does not flip to Online on remount.
+      const provisionMsg = await verifyProvisioned();
+      if (provisionMsg) {
+        setOnline(false);
+        broadcastConnection(false);
+        setLoginError(provisionMsg);
+        return;
+      }
       setOnline(true);
       broadcastConnection(true);
-      // Load server-side preferences on connect
       loadPreferencesFromServer().catch(() => {});
     } catch (err: any) {
       setOnline(false);
@@ -128,32 +136,38 @@ export function Settings() {
     setDiscoveryError('');
     try {
       const result = await login(username, password);
+      // Token is persisted — check gateway + tenant provisioning BEFORE
+      // flipping the UI to the connected branch, so a 403 on the tenanted
+      // probe renders its error via the login-form's loginError display.
+      setConnecting(true);
+      let provisionMsg: string | null = null;
+      try {
+        await checkConnection();
+        provisionMsg = await verifyProvisioned();
+      } catch (err: any) {
+        console.error('[Scholar Companion] Health check failed after login:', err);
+        provisionMsg = err?.message || 'Cannot reach server after login.';
+      } finally {
+        setConnecting(false);
+      }
+      if (provisionMsg) {
+        // Undo the persistence from login() so reopening Settings does not
+        // resurrect a half-provisioned state via the mount useEffect.
+        disconnect();
+        setLoginError(provisionMsg);
+        setOnline(false);
+        broadcastConnection(false);
+        return;
+      }
+      // Provisioning succeeded — commit the connected state.
       setIsLoggedIn(true);
       setClientIdState(result.client_id);
       setDisplayNameState(result.display_name);
       setTokenState(result.access_token);
       setUsername('');
       setPassword('');
-      // Token is persisted — check connection + provisioning
-      setConnecting(true);
-      try {
-        await checkConnection();
-        const provisionMsg = await verifyProvisioned();
-        if (provisionMsg) {
-          setLoginError(provisionMsg);
-          setOnline(false);
-          broadcastConnection(false);
-        } else {
-          setOnline(true);
-          broadcastConnection(true);
-        }
-      } catch (err) {
-        console.error('[Scholar Companion] Health check failed after login:', err);
-        setOnline(false);
-        broadcastConnection(false);
-      } finally {
-        setConnecting(false);
-      }
+      setOnline(true);
+      broadcastConnection(true);
       // Push local preferences to server (seeds initial state for new clients)
       syncPreferencesNow().catch(() => {});
       // Clear stale cache and fetch fresh data
