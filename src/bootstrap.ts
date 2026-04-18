@@ -2,7 +2,7 @@
 import { registerEventHooks, unregisterEventHooks } from './events';
 import { registerMenus, registerContextMenu, registerCollectionContextMenu, setMenusConnected } from './menu';
 import { getSyncOnStartup, getAutoSync, getSyncInterval, getItemPaneHeight, getApiUrl, getApiToken } from './prefs';
-import { triggerSync } from './api/sync';
+import { triggerSync, syncItems } from './api/sync';
 import { fetchSyncStatus, updateItemMetadata } from './api/sync-status';
 import { apiFetch, checkConnection } from './api/client';
 
@@ -329,12 +329,16 @@ async function handleCommand(command: string, win: Window, event?: CustomEvent) 
         `Queue ${regularItems.length} item(s) for Qdrant indexing?\n\nProcessing happens in background.`
       );
       if (!confirmed) break;
+      const keys: string[] = regularItems.map((it: any) => it.key);
       try {
-        await triggerSync();
+        await syncItems(keys);
         win.alert('Indexing queued. Monitor progress in the Index Queue panel.');
-      } catch (e) {
+      } catch (e: any) {
         console.error('[Scholar Companion] indexSelected failed:', e);
-        win.alert('Failed to queue indexing. Is the Flask server running?');
+        const msg = e?.status === 401
+          ? 'Not authorised. Please reconnect in Scholar Companion settings.'
+          : 'Failed to queue indexing. Is the server running?';
+        win.alert(msg);
       }
       break;
     }

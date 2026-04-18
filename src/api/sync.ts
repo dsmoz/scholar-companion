@@ -16,6 +16,14 @@ export async function triggerSync(): Promise<SyncResult> {
   return result;
 }
 
+export async function syncItems(keys: string[]): Promise<SyncResult> {
+  return apiFetch<SyncResult>('/sync/items', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys }),
+  });
+}
+
 export async function syncMetadata(keys: string[]): Promise<{ synced: number }> {
   return apiFetch<{ synced: number }>('/sync/metadata', {
     method: 'POST',
