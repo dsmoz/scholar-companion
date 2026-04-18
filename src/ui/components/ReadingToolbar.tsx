@@ -52,12 +52,13 @@ export function ReadingToolbar({ sessionId, messages, onSummarize, streaming }: 
   }
 
   async function handleExport(format: ExportFormat) {
+    console.log('[AI Companion] handleExport called:', format, 'sessionId:', sessionId, 'messages:', messages?.length);
     setExportOpen(false);
     if (format === 'md' && messages) {
       exportAsMarkdown(messages);
       return;
     }
-    if (!sessionId) return;
+    if (!sessionId) { console.warn('[AI Companion] handleExport: no sessionId, aborting'); return; }
     setExporting(true);
     try {
       await exportSession(sessionId, format);

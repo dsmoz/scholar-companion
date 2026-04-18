@@ -1,5 +1,5 @@
 // src/api/client.ts
-import { getApiUrl, getApiToken, setApiToken, setClientId, setDisplayName } from '../prefs';
+import { getApiUrl, getApiToken, setApiToken, setClientId, setUserId, setDisplayName } from '../prefs';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -47,6 +47,11 @@ export async function apiFetch<T = unknown>(
         const body = await resp.json();
         msg = body.error ?? msg;
       } catch { /* ignore */ }
+      if (resp.status === 401) {
+        msg = 'Session expired or not authorised. Please reconnect in Settings.';
+      } else if (resp.status === 403) {
+        msg = 'Account not provisioned. Finish setup in the DS-MOZ portal, then reconnect.';
+      }
       throw new ApiError(resp.status, msg);
     }
     return resp.json() as Promise<T>;
@@ -80,6 +85,7 @@ export async function checkConnection(): Promise<{ latency: number; clientName?:
 export interface LoginResult {
   success: boolean;
   client_id: string;
+  user_id?: string;
   access_token: string;
   expires_in: number;
   display_name: string;
@@ -111,6 +117,7 @@ export async function login(username: string, password: string): Promise<LoginRe
   // Persist credentials
   setApiToken(data.access_token);
   setClientId(data.client_id);
+  setUserId(data.user_id || '');
   setDisplayName(data.display_name || '');
   return data;
 }
@@ -118,7 +125,27 @@ export async function login(username: string, password: string): Promise<LoginRe
 export function disconnect(): void {
   setApiToken('');
   setClientId('');
+  setUserId('');
   setDisplayName('');
   // Clear all API caches on disconnect
   import('./chat').then(m => m.clearAllChatCaches());
+}
+
+/**
+ * Confirm the stored token can reach a tenanted endpoint. Use after login to
+ * distinguish "gateway OK" from "user not provisioned on mcp-scholar yet".
+ * Returns null if provisioned, or an actionable message for the user.
+ */
+export async function verifyProvisioned(): Promise<string | null> {
+  const base = getApiUrl();
+  const url = `${base}/api/plugin/health/library`;
+  try {
+    const resp = await fetch(url, { headers: getAuthHeaders() });
+    if (resp.ok) return null;
+    if (resp.status === 401) return 'Session expired or not authorised. Please reconnect.';
+    if (resp.status === 403) return 'Account not provisioned. Finish setup in the DS-MOZ portal, then reconnect.';
+    return `Server returned HTTP ${resp.status}. Try again shortly.`;
+  } catch (err: any) {
+    return `Cannot reach server: ${err?.message || err}`;
+  }
 }

@@ -5,6 +5,7 @@ const DEFAULTS = {
   apiUrl: 'https://mcp.dsmozconsultancy.com',
   apiToken: '',
   clientId: '',
+  userId: '',
   displayName: '',
   syncInterval: 12,
   syncOnStartup: true,
@@ -83,6 +84,8 @@ export const getApiToken = () => get('apiToken') as string;
 export const setApiToken = (v: string) => set('apiToken', v as typeof DEFAULTS['apiToken']);
 export const getClientId = () => get('clientId') as string;
 export const setClientId = (v: string) => set('clientId', v as typeof DEFAULTS['clientId']);
+export const getUserId = () => get('userId') as string;
+export const setUserId = (v: string) => set('userId', v as typeof DEFAULTS['userId']);
 export const getDisplayName = () => get('displayName') as string;
 export const setDisplayName = (v: string) => set('displayName', v as typeof DEFAULTS['displayName']);
 export const getSyncInterval = () => get('syncInterval') as number;
