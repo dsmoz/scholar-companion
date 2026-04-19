@@ -7,6 +7,7 @@ import { fetchJobs, retryJob, JobsStatus } from '../api/jobs';
 
 export function IndexQueue() {
   const [status, setStatus] = useState<JobsStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -15,8 +16,13 @@ export function IndexQueue() {
   }, []);
 
   async function load() {
-    const s = await fetchJobs();
-    setStatus(s);
+    try {
+      const s = await fetchJobs();
+      setStatus(s);
+      setError(null);
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to reach server');
+    }
   }
 
   async function handleRetry(jobId: string) {
@@ -24,13 +30,20 @@ export function IndexQueue() {
     await load();
   }
 
+  const dotStatus = error ? 'offline' : status === null ? 'degraded' : status.processor_running ? 'connected' : 'offline';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontSize: '0.8rem' }}>
+      {error && (
+        <div style={{ padding: '4px 8px', background: '#1e1e2e', borderBottom: '1px solid #313244', color: '#f38ba8', fontSize: '0.65rem' }}>
+          {error}
+        </div>
+      )}
       <div style={{ padding: '6px 8px', borderBottom: '1px solid #313244' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <span style={{ color: '#cdd6f4' }}>Processor</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <StatusDot status={status?.processor_running ? 'connected' : 'offline'} />
+            <StatusDot status={dotStatus} />
             <button style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'transparent', border: '1px solid #444', borderRadius: 3, color: '#6c7086', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
               {status?.processor_running ? <><Pause size={10} /> Pause</> : <><Play size={10} /> Resume</>}
             </button>
