@@ -78,7 +78,10 @@ export const SCORE_THRESHOLDS: Record<string, number> = {
   Fair: 0.15,
 };
 
-export const getApiUrl = () => get('apiUrl') as string;
+export const getApiUrl = () => {
+  const raw = get('apiUrl') as string;
+  return raw.replace(/\/+$/, '').replace(/\/api\/plugin$/, '');
+};
 export const setApiUrl = (v: string) => set('apiUrl', v as typeof DEFAULTS['apiUrl']);
 export const getApiToken = () => get('apiToken') as string;
 export const setApiToken = (v: string) => set('apiToken', v as typeof DEFAULTS['apiToken']);
