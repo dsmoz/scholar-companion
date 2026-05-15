@@ -272,8 +272,8 @@ export function Settings() {
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
         <SectionHeader>ACCOUNT</SectionHeader>
 
-        {/* Connect URL input */}
-        {row('Connect URL',
+        {/* Connect Server input */}
+        {row('Connect Server',
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <input
               value={apiUrl}
