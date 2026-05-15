@@ -8,6 +8,7 @@ import { checkConnection, login, disconnect, verifyProvisioned } from '../api/cl
 import { triggerSync } from '../api/sync';
 import {
   getApiToken, getClientId, getDisplayName,
+  getApiUrl, setApiUrl,
   getSyncInterval, setSyncInterval,
   getTheme, setTheme, getAutoSync, getChatRelatedMax,
   getSyncOnStartup, setPref,
@@ -46,6 +47,10 @@ export function Settings() {
   const [clientId, setClientIdState] = useState(getClientId());
   const [displayName, setDisplayNameState] = useState(getDisplayName());
   const [token, setTokenState] = useState(getApiToken());
+
+  // Connect URL (server endpoint)
+  const [apiUrl, setApiUrlState] = useState(getApiUrl());
+  const [apiUrlSaved, setApiUrlSaved] = useState(false);
 
   // Login form
   const [username, setUsername] = useState('');
@@ -267,6 +272,31 @@ export function Settings() {
       <section style={{ borderBottom: '1px solid #313244', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
         <SectionHeader>ACCOUNT</SectionHeader>
 
+        {/* Connect URL input */}
+        {row('Connect URL',
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              value={apiUrl}
+              onChange={e => { setApiUrlState(e.target.value); setApiUrlSaved(false); }}
+              placeholder="https://connect.dsmozconsultancy.com"
+              style={{ ...inputStyle, width: 200 }}
+            />
+            <button
+              onClick={() => {
+                const trimmed = apiUrl.trim().replace(/\/+$/, '');
+                setApiUrl(trimmed);
+                setApiUrlState(trimmed);
+                setApiUrlSaved(true);
+                setTimeout(() => setApiUrlSaved(false), 1500);
+              }}
+              title="Save Connect URL"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: apiUrlSaved ? '#a6e3a1' : '#6c7086', padding: 2, display: 'flex' }}
+            >
+              {apiUrlSaved ? <Check size={14} /> : <FloppyDisk size={14} />}
+            </button>
+          </div>
+        )}
+
         {/* Status indicator */}
         {row('Status',
           <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.75rem' }}>
@@ -305,7 +335,7 @@ export function Settings() {
               <SignIn size={12} /> {loginLoading ? 'Connecting...' : 'Connect'}
             </button>
             <div style={{ fontSize: '0.7rem', color: '#a6adc8', marginTop: '0.4rem' }}>
-              Don't have an account? Register at connect.dsmozconsultancy.com
+              Don't have an account? Register at {(() => { try { return new URL(apiUrl).host; } catch { return apiUrl; } })()}
             </div>
           </>
         ) : (

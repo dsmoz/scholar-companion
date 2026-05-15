@@ -78,16 +78,11 @@ export const SCORE_THRESHOLDS: Record<string, number> = {
   Fair: 0.15,
 };
 
-export const setApiUrl = (v: string) => set('apiUrl', v as typeof DEFAULTS['apiUrl']);
 export const getApiUrl = () => {
-  let raw = get('apiUrl') as string;
-  // Migrate legacy host (mcp.dsmozconsultancy.com decommissioned → connect.dsmozconsultancy.com)
-  if (/^https?:\/\/mcp\.dsmozconsultancy\.com\b/i.test(raw)) {
-    raw = 'https://connect.dsmozconsultancy.com';
-    setApiUrl(raw);
-  }
+  const raw = get('apiUrl') as string;
   return raw.replace(/\/+$/, '').replace(/\/api\/plugin$/, '');
 };
+export const setApiUrl = (v: string) => set('apiUrl', v as typeof DEFAULTS['apiUrl']);
 export const getApiToken = () => get('apiToken') as string;
 export const setApiToken = (v: string) => set('apiToken', v as typeof DEFAULTS['apiToken']);
 export const getClientId = () => get('clientId') as string;
