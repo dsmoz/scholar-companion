@@ -2,7 +2,7 @@
 const PREFIX = 'extensions.scholar-companion';
 
 const DEFAULTS = {
-  apiUrl: 'https://mcp.dsmozconsultancy.com',
+  apiUrl: 'https://connect.dsmozconsultancy.com',
   apiToken: '',
   clientId: '',
   userId: '',

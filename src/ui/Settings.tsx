@@ -305,7 +305,7 @@ export function Settings() {
               <SignIn size={12} /> {loginLoading ? 'Connecting...' : 'Connect'}
             </button>
             <div style={{ fontSize: '0.7rem', color: '#a6adc8', marginTop: '0.4rem' }}>
-              Don't have an account? Register at mcp.dsmozconsultancy.com
+              Don't have an account? Register at connect.dsmozconsultancy.com
             </div>
           </>
         ) : (
