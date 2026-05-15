@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Play, Pause, Clock, Spinner, CheckCircle, XCircle } from '@phosphor-icons/react';
 import { SectionHeader } from './components/SectionHeader';
 import { StatusDot } from './components/StatusDot';
-import { fetchJobs, retryJob, JobsStatus } from '../api/jobs';
+import { fetchJobs, retryJob, pauseProcessor, resumeProcessor, retryAllFailed, clearCompleted, JobsStatus } from '../api/jobs';
 
 export function IndexQueue() {
   const [status, setStatus] = useState<JobsStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -15,8 +16,13 @@ export function IndexQueue() {
   }, []);
 
   async function load() {
-    const s = await fetchJobs();
-    setStatus(s);
+    try {
+      const s = await fetchJobs();
+      setStatus(s);
+      setError(null);
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to reach server');
+    }
   }
 
   async function handleRetry(jobId: string) {
@@ -24,14 +30,52 @@ export function IndexQueue() {
     await load();
   }
 
+  async function handleToggleProcessor() {
+    try {
+      if (status?.processor_running) {
+        await pauseProcessor();
+      } else {
+        await resumeProcessor();
+      }
+      await load();
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to toggle processor');
+    }
+  }
+
+  async function handleRetryAll() {
+    try {
+      await retryAllFailed();
+      await load();
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to retry all');
+    }
+  }
+
+  async function handleClearCompleted() {
+    try {
+      await clearCompleted();
+      await load();
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to clear completed');
+    }
+  }
+
+  const dotStatus = error ? 'offline' : status === null ? 'degraded' : status.processor_running ? 'connected' : 'offline';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontSize: '0.8rem' }}>
+      {error && (
+        <div style={{ padding: '4px 8px', background: '#1e1e2e', borderBottom: '1px solid #313244', color: '#f38ba8', fontSize: '0.65rem' }}>
+          {error}
+        </div>
+      )}
       <div style={{ padding: '6px 8px', borderBottom: '1px solid #313244' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <span style={{ color: '#cdd6f4' }}>Processor</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <StatusDot status={status?.processor_running ? 'connected' : 'offline'} />
-            <button style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'transparent', border: '1px solid #444', borderRadius: 3, color: '#6c7086', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <StatusDot status={dotStatus} />
+            <button onClick={handleToggleProcessor} style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'transparent', border: '1px solid #444', borderRadius: 3, color: '#6c7086', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
               {status?.processor_running ? <><Pause size={10} /> Pause</> : <><Play size={10} /> Resume</>}
             </button>
           </div>
@@ -95,10 +139,10 @@ export function IndexQueue() {
       </div>
 
       <div style={{ padding: '6px 8px', borderTop: '1px solid #313244', display: 'flex', gap: 6 }}>
-        <button style={{ fontSize: '0.7rem', padding: '3px 8px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4', cursor: 'pointer' }}>
+        <button onClick={handleRetryAll} disabled={!status?.failed?.length} style={{ fontSize: '0.7rem', padding: '3px 8px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4', cursor: status?.failed?.length ? 'pointer' : 'not-allowed', opacity: status?.failed?.length ? 1 : 0.5 }}>
           Retry all failed
         </button>
-        <button style={{ fontSize: '0.7rem', padding: '3px 8px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4', cursor: 'pointer' }}>
+        <button onClick={handleClearCompleted} disabled={!status?.completed_count} style={{ fontSize: '0.7rem', padding: '3px 8px', background: '#313244', border: '1px solid #444', borderRadius: 4, color: '#cdd6f4', cursor: status?.completed_count ? 'pointer' : 'not-allowed', opacity: status?.completed_count ? 1 : 0.5 }}>
           Clear completed
         </button>
       </div>
