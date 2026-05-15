@@ -16,3 +16,7 @@ Always use `@phosphor-icons/react` for all icons. Never use emojis as icons or v
 ## Pattern 1 — Shared Chat Bubble
 
 All three chat panels (ItemPaneTab, LibraryChat, MultiDocChat) use the shared `ChatBubble` component. Do not duplicate bubble rendering logic — add new per-message features to `ChatBubble.tsx`.
+
+## Backend
+
+Plugin API backend lives in **mcp-scholar** (`/Users/danilodasilva/Documents/Programming/mcp-servers/mcp-scholar`). All endpoints the plugin calls (`/api/plugin/library/chat/stream`, `/api/plugin/chat/stream`, etc.) are implemented there. When debugging API behaviour, read mcp-scholar source first.
